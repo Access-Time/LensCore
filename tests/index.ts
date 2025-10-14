@@ -1,3 +1,3 @@
 export * from './setup';
-export * from './api.test';
-export * from './services.test';
+export * from '../tests/integration/api.test';
+export * from '../tests/unit/services.test';
