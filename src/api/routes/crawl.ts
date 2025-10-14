@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { CrawlingService } from '../services/crawling';
-import { crawlRequestSchema } from './schemas';
+import { CrawlingService } from '../../services/crawling';
+import { crawlRequestSchema } from '../schemas';
 
 const crawlingService = new CrawlingService();
 
