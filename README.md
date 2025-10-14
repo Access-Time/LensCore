@@ -1,8 +1,18 @@
 # LensCore
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
+
+<img src="https://github.com/user-attachments/assets/a249eb4b-2ce5-4972-90ae-b3d2164e2b5a" alt="AccessLine Logo" width="170" align="right" />
+
+<p>
+<a href="https://opensource.org/licenses/MIT"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
+<a href="https://www.docker.com/"><img alt="Docker" src="https://img.shields.io/badge/Docker-Ready-blue.svg"></a>
+<a href="https://www.typescriptlang.org/"><img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-Ready-blue.svg"></a>
+<a href="https://nodejs.org/"><img alt="Node.js" src="https://img.shields.io/badge/Node.js-20+-green.svg"></a>
+<br/>
+<a href="https://pptr.dev/"><img alt="Puppeteer" src="https://img.shields.io/badge/Puppeteer-Web%20Automation-orange.svg"></a>
+<a href="https://github.com/dequelabs/axe-core"><img alt="axe-core" src="https://img.shields.io/badge/axe--core-Accessibility-red.svg"></a>
+<a href="https://expressjs.com/"><img alt="Express" src="https://img.shields.io/badge/Express-API%20Framework-lightgrey.svg"></a>
+</p>
 
 **LensCore** is an open-source accessibility testing and web crawling platform built with a containerized, API-driven architecture. It provides comprehensive web accessibility analysis using axe-core integration and flexible storage options for screenshots and reports.
 
@@ -538,124 +548,6 @@ curl -X POST http://localhost:3001/api/combined \
 ```
 
 ---
-
-### Available Scripts
-
-```bash
-# Development
-npm run dev          # Start development server with hot reload
-npm run build        # Build TypeScript to JavaScript
-npm run start        # Start production server
-
-# Testing
-npm test             # Run unit tests
-npm run test:watch   # Run tests in watch mode
-npm run test:coverage # Run tests with coverage report
-
-# Code Quality
-npm run lint         # Run ESLint
-npm run lint:fix     # Fix ESLint issues automatically
-npm run format       # Format code with Prettier
-npm run format:check # Check code formatting
-npm run typecheck    # Run TypeScript type checking
-```
-
-## 🚀 Deployment
-
-### Docker Deployment
-
-**Build and run:**
-
-```bash
-make up
-```
-
-### Cloud Deployment Examples
-
-**AWS ECS:**
-
-```bash
-# Build and push to ECR
-docker build -t lenscore .
-docker tag lenscore:latest <account>.dkr.ecr.<region>.amazonaws.com/lenscore:latest
-docker push <account>.dkr.ecr.<region>.amazonaws.com/lenscore:latest
-```
-
-**Google Cloud Run:**
-
-```bash
-# Build and deploy
-gcloud builds submit --tag gcr.io/<project>/lenscore
-gcloud run deploy --image gcr.io/<project>/lenscore --platform managed
-```
-
-## 🤝 Contributing
-
-We welcome contributions! Please follow these guidelines:
-
-### Getting Started
-
-1. **Fork the repository**
-2. **Clone your fork:**
-
-   ```bash
-   git clone https://github.com/your-username/LensCore.git
-   cd LensCore
-   ```
-
-3. **Create a feature branch:**
-
-   ```bash
-   git checkout -b feature/amazing-feature
-   ```
-
-4. **Make your changes** and add tests
-
-5. **Run the test suite:**
-
-   ```bash
-   npm test
-   npm run lint
-   npm run format:check
-   ```
-
-6. **Commit your changes:**
-
-   ```bash
-   git commit -m "Add amazing feature"
-   ```
-
-7. **Push to your fork:**
-
-   ```bash
-   git push origin feature/amazing-feature
-   ```
-
-8. **Create a Pull Request**
-
-### Contribution Guidelines
-
-- Follow the existing code style
-- Add tests for new features
-- Update documentation as needed
-- Ensure all tests pass
-- Follow semantic commit messages
-
-### Development Setup
-
-```bash
-# Install dependencies
-make install
-
-# Set up environment
-cp env.example .env
-
-# Start development server
-make dev
-
-# Run tests
-make test
-```
 
 ## 📄 License
 
