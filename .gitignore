@@ -1,7 +1,7 @@
 node_modules/
 dist/
 logs/
-storage/
+/storage/
 .env
 .env.local
 .env.development.local

@@ -1,5 +1,5 @@
 import request from 'supertest';
-import app from '../src/api';
+import app from '../../src/api';
 
 describe('API Endpoints', () => {
   describe('GET /api/health', () => {
@@ -35,7 +35,7 @@ describe('API Endpoints', () => {
         })
         .expect(400);
 
-      expect(response.body).toHaveProperty('code', 'VALIDATION_ERROR');
+        expect(response.body).toHaveProperty('code', 'VALIDATION_ERROR');
     });
   });
 

@@ -1,26 +1,31 @@
+import { AccessibilityRequest, AccessibilityResult } from '../../../src/types';
+
 export class AccessibilityService {
   async initialize() {
-    // Mock implementation - no browser needed
     return Promise.resolve();
   }
 
-  async testAccessibility(request: any) {
-    // Mock implementation - return success result without browser
+  async testAccessibility(request: AccessibilityRequest): Promise<AccessibilityResult> {
     return {
       url: request.url,
       score: 85,
       violations: [],
-      timestamp: new Date().toISOString(),
+      passes: [],
+      incomplete: [],
+      inapplicable: [],
+      timestamp: new Date(),
     };
   }
 
-  async testMultiplePages(requests: any[]) {
-    // Mock implementation - return success results without browser
+  async testMultiplePages(requests: AccessibilityRequest[]): Promise<AccessibilityResult[]> {
     return requests.map((request) => ({
       url: request.url,
       score: 85,
       violations: [],
-      timestamp: new Date().toISOString(),
+      passes: [],
+      incomplete: [],
+      inapplicable: [],
+      timestamp: new Date(),
     }));
   }
 

@@ -1,5 +1,5 @@
-import { CrawlingService } from '../src/services/crawling';
-import { AccessibilityService } from '../src/services/accessibility';
+import { CrawlingService } from '../../src/services/crawling';
+import { AccessibilityService } from '../../src/services/accessibility';
 
 describe('CrawlingService', () => {
   let crawlingService: CrawlingService;
