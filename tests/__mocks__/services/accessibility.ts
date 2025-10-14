@@ -5,7 +5,9 @@ export class AccessibilityService {
     return Promise.resolve();
   }
 
-  async testAccessibility(request: AccessibilityRequest): Promise<AccessibilityResult> {
+  async testAccessibility(
+    request: AccessibilityRequest
+  ): Promise<AccessibilityResult> {
     return {
       url: request.url,
       score: 85,
@@ -17,7 +19,9 @@ export class AccessibilityService {
     };
   }
 
-  async testMultiplePages(requests: AccessibilityRequest[]): Promise<AccessibilityResult[]> {
+  async testMultiplePages(
+    requests: AccessibilityRequest[]
+  ): Promise<AccessibilityResult[]> {
     return requests.map((request) => ({
       url: request.url,
       score: 85,

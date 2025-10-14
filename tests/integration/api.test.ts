@@ -35,7 +35,7 @@ describe('API Endpoints', () => {
         })
         .expect(400);
 
-        expect(response.body).toHaveProperty('code', 'VALIDATION_ERROR');
+      expect(response.body).toHaveProperty('code', 'VALIDATION_ERROR');
     });
   });
 

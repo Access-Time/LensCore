@@ -22,7 +22,9 @@ export class LocalStorageService implements StorageService {
 
   async uploadFile(filePath: string, key: string): Promise<string> {
     try {
-      await fs.mkdir(path.dirname(path.join(this.basePath, key)), { recursive: true });
+      await fs.mkdir(path.dirname(path.join(this.basePath, key)), {
+        recursive: true,
+      });
       await fs.copyFile(filePath, path.join(this.basePath, key));
       return path.join(this.basePath, key);
     } catch (error) {
@@ -35,7 +37,10 @@ export class LocalStorageService implements StorageService {
     try {
       return await fs.readFile(path.join(this.basePath, key));
     } catch (error) {
-      logger.error('Failed to download file from local storage', { error, key });
+      logger.error('Failed to download file from local storage', {
+        error,
+        key,
+      });
       throw error;
     }
   }
@@ -63,10 +68,16 @@ export class S3StorageService implements StorageService {
   private bucket: string;
 
   constructor() {
-    if (!env.AWS_ACCESS_KEY_ID || !env.AWS_SECRET_ACCESS_KEY || !env.AWS_S3_BUCKET) {
-      throw new Error('AWS credentials and bucket must be configured for S3 storage');
+    if (
+      !env.AWS_ACCESS_KEY_ID ||
+      !env.AWS_SECRET_ACCESS_KEY ||
+      !env.AWS_S3_BUCKET
+    ) {
+      throw new Error(
+        'AWS credentials and bucket must be configured for S3 storage'
+      );
     }
-    
+
     this.s3 = new AWS.S3({
       accessKeyId: env.AWS_ACCESS_KEY_ID,
       secretAccessKey: env.AWS_SECRET_ACCESS_KEY,
@@ -78,11 +89,13 @@ export class S3StorageService implements StorageService {
   async uploadFile(filePath: string, key: string): Promise<string> {
     try {
       const fileContent = await fs.readFile(filePath);
-      const result = await this.s3.upload({
-        Bucket: this.bucket,
-        Key: key,
-        Body: fileContent,
-      }).promise();
+      const result = await this.s3
+        .upload({
+          Bucket: this.bucket,
+          Key: key,
+          Body: fileContent,
+        })
+        .promise();
       return result.Location;
     } catch (error) {
       logger.error('Failed to upload file to S3', { error, key });
@@ -92,10 +105,12 @@ export class S3StorageService implements StorageService {
 
   async downloadFile(key: string): Promise<Buffer> {
     try {
-      const result = await this.s3.getObject({
-        Bucket: this.bucket,
-        Key: key,
-      }).promise();
+      const result = await this.s3
+        .getObject({
+          Bucket: this.bucket,
+          Key: key,
+        })
+        .promise();
       return result.Body as Buffer;
     } catch (error) {
       logger.error('Failed to download file from S3', { error, key });
@@ -105,10 +120,12 @@ export class S3StorageService implements StorageService {
 
   async deleteFile(key: string): Promise<void> {
     try {
-      await this.s3.deleteObject({
-        Bucket: this.bucket,
-        Key: key,
-      }).promise();
+      await this.s3
+        .deleteObject({
+          Bucket: this.bucket,
+          Key: key,
+        })
+        .promise();
     } catch (error) {
       logger.error('Failed to delete file from S3', { error, key });
       throw error;
@@ -131,17 +148,19 @@ export class GCSStorageService implements StorageService {
 
   constructor() {
     if (!env.GCS_PROJECT_ID || !env.GCS_BUCKET_NAME) {
-      throw new Error('GCS project ID and bucket name must be configured for GCS storage');
+      throw new Error(
+        'GCS project ID and bucket name must be configured for GCS storage'
+      );
     }
-    
+
     const storageOptions: Record<string, unknown> = {
       projectId: env.GCS_PROJECT_ID,
     };
-    
+
     if (env.GCS_KEY_FILE_PATH) {
       storageOptions['keyFilename'] = env.GCS_KEY_FILE_PATH;
     }
-    
+
     this.storage = new Storage(storageOptions);
     this.bucket = env.GCS_BUCKET_NAME;
   }

@@ -21,11 +21,11 @@ export class CrawlingService {
           '--disable-gpu',
           '--disable-background-timer-throttling',
           '--disable-backgrounding-occluded-windows',
-          '--disable-renderer-backgrounding'
+          '--disable-renderer-backgrounding',
         ],
         timeout: 30000,
       });
-      
+
       logger.info('Browser initialized successfully');
     } catch (error) {
       logger.error('Failed to initialize browser', error);
@@ -72,9 +72,11 @@ export class CrawlingService {
         let page = null;
         try {
           page = await this.browser!.newPage();
-          
+
           await page.setViewport({ width: 1280, height: 720 });
-          await page.setUserAgent('Mozilla/5.0 (compatible; LensCore/1.0; +https://github.com/accesslens/lenscore)');
+          await page.setUserAgent(
+            'Mozilla/5.0 (compatible; LensCore/1.0; +https://github.com/accesslens/lenscore)'
+          );
 
           if (request.headers) {
             await page.setExtraHTTPHeaders(request.headers);
@@ -98,7 +100,7 @@ export class CrawlingService {
           });
 
           const statusCode = response?.status() || 0;
-          
+
           if (statusCode >= 400) {
             logger.warn('HTTP error status', { url, statusCode });
             visited.add(url);
@@ -108,9 +110,11 @@ export class CrawlingService {
           const title = await page.title();
           const content = await page.content();
           const $ = cheerio.load(content);
-          
-          const description = $('meta[name="description"]').attr('content') || 
-                             $('meta[property="og:description"]').attr('content') || '';
+
+          const description =
+            $('meta[name="description"]').attr('content') ||
+            $('meta[property="og:description"]').attr('content') ||
+            '';
 
           results.push({
             url,
@@ -131,16 +135,17 @@ export class CrawlingService {
                   const absoluteUrl = new URL(href, url).toString();
                   const linkUrl = new URL(absoluteUrl);
 
-                  if (linkUrl.origin === baseUrl.origin && 
-                      !linkUrl.pathname.includes('#') &&
-                      !linkUrl.pathname.includes('mailto:') &&
-                      !linkUrl.pathname.includes('tel:')) {
-                    
+                  if (
+                    linkUrl.origin === baseUrl.origin &&
+                    !linkUrl.pathname.includes('#') &&
+                    !linkUrl.pathname.includes('mailto:') &&
+                    !linkUrl.pathname.includes('tel:')
+                  ) {
                     const normalizedUrl = new URL(
                       linkUrl.pathname + linkUrl.search,
                       baseUrl
                     ).toString();
-                    
+
                     if (
                       !visited.has(normalizedUrl) &&
                       !toVisit.has(normalizedUrl) &&
@@ -153,7 +158,8 @@ export class CrawlingService {
                 } catch (error) {
                   logger.debug('Invalid URL found during crawling', {
                     href,
-                    error: error instanceof Error ? error.message : String(error),
+                    error:
+                      error instanceof Error ? error.message : String(error),
                   });
                 }
               }
@@ -163,12 +169,11 @@ export class CrawlingService {
             const promises = linksArray.map(crawlPage);
             await Promise.allSettled(promises);
           }
-
         } catch (error) {
-          logger.error('Failed to crawl page', { 
-            url, 
+          logger.error('Failed to crawl page', {
+            url,
             error: error instanceof Error ? error.message : String(error),
-            stack: error instanceof Error ? error.stack : undefined
+            stack: error instanceof Error ? error.stack : undefined,
           });
           visited.add(url);
         } finally {
@@ -176,9 +181,12 @@ export class CrawlingService {
             try {
               await page.close();
             } catch (closeError) {
-              logger.warn('Failed to close page', { 
-                url, 
-                error: closeError instanceof Error ? closeError.message : String(closeError) 
+              logger.warn('Failed to close page', {
+                url,
+                error:
+                  closeError instanceof Error
+                    ? closeError.message
+                    : String(closeError),
               });
             }
           }
@@ -194,7 +202,7 @@ export class CrawlingService {
         totalPages: results.length,
         crawlTime,
         maxUrls,
-        concurrency
+        concurrency,
       });
 
       return {
