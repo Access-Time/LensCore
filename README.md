@@ -25,7 +25,6 @@
 - [API Documentation](#-api-documentation)
 - [Development Guide](#-development-guide)
 - [Deployment](#-deployment)
-- [Architecture](#-architecture)
 - [Contributing](#-contributing)
 - [License](#-license)
 
@@ -112,12 +111,6 @@
 
    ```bash
    docker-compose up -d
-   ```
-
-2. **Custom configuration:**
-   ```bash
-   # Override specific settings
-   PORT=3002 LOG_LEVEL=debug docker-compose up -d
    ```
 
 ## ⚙️ Configuration
@@ -538,27 +531,6 @@ curl -X POST http://localhost:3001/api/combined \
 
 ---
 
-## 🛠️ Development Guide
-
-### Project Structure
-
-```
-LensCore/
-├── src/
-│   ├── api/           # Express API routes and middleware
-│   ├── core/          # Core business logic
-│   ├── services/      # Service implementations (crawling, accessibility)
-│   ├── storage/       # Storage abstractions (local, S3, GCS)
-│   ├── types/         # TypeScript type definitions
-│   └── utils/         # Utility functions (env, logger)
-├── docs/              # Additional documentation
-├── tests/             # Test files
-├── Dockerfile         # Docker configuration
-├── docker-compose.yml # Docker Compose configuration
-├── package.json       # Node.js dependencies and scripts
-└── tsconfig.json      # TypeScript configuration
-```
-
 ### Available Scripts
 
 ```bash
@@ -580,93 +552,6 @@ npm run format:check # Check code formatting
 npm run typecheck    # Run TypeScript type checking
 ```
 
-### Development Workflow
-
-1. **Clone and setup:**
-
-   ```bash
-   git clone <repository-url>
-   cd LensCore
-   npm install
-   cp env.example .env
-   ```
-
-2. **Start development:**
-
-   ```bash
-   npm run dev
-   ```
-
-3. **Make changes** to the source code in `src/`
-
-4. **Run tests:**
-
-   ```bash
-   npm test
-   ```
-
-5. **Check code quality:**
-   ```bash
-   npm run lint
-   npm run format:check
-   ```
-
-### Testing
-
-LensCore uses Jest for testing with the following test types:
-
-- **Unit Tests**: Test individual functions and classes
-- **Integration Tests**: Test API endpoints and service interactions
-- **End-to-End Tests**: Test complete workflows
-
-```bash
-# Run all tests
-npm test
-
-# Run tests in watch mode
-npm run test:watch
-
-# Run tests with coverage
-npm run test:coverage
-
-# Run specific test file
-npm test -- src/services/accessibility.test.ts
-```
-
-### Adding New Features
-
-1. **Create feature branch:**
-
-   ```bash
-   git checkout -b feature/new-feature
-   ```
-
-2. **Implement changes:**
-   - Add new types in `src/types/`
-   - Implement services in `src/services/`
-   - Add API routes in `src/api/`
-   - Write tests in `tests/`
-
-3. **Test your changes:**
-
-   ```bash
-   npm test
-   npm run lint
-   npm run build
-   ```
-
-4. **Submit pull request**
-
-### Environment Variables for Development
-
-```env
-NODE_ENV=development
-PORT=3001
-LOG_LEVEL=debug
-STORAGE_TYPE=local
-STORAGE_PATH=./storage
-```
-
 ## 🚀 Deployment
 
 ### Docker Deployment
@@ -676,41 +561,6 @@ STORAGE_PATH=./storage
 ```bash
 docker-compose up -d
 ```
-
-**Custom configuration:**
-
-```bash
-# Production environment
-NODE_ENV=production docker-compose up -d
-
-# Custom port
-PORT=3002 docker-compose up -d
-
-# S3 storage
-STORAGE_TYPE=s3 docker-compose up -d
-```
-
-### Production Considerations
-
-1. **Environment Variables:**
-   - Set `NODE_ENV=production`
-   - Configure proper storage credentials
-   - Set appropriate log levels
-
-2. **Security:**
-   - Use HTTPS in production
-   - Implement authentication if needed
-   - Secure storage credentials
-
-3. **Monitoring:**
-   - Monitor health check endpoint
-   - Set up logging aggregation
-   - Monitor resource usage
-
-4. **Scaling:**
-   - Adjust concurrency settings based on resources
-   - Consider load balancing for multiple instances
-   - Monitor memory and CPU usage
 
 ### Cloud Deployment Examples
 
@@ -730,37 +580,6 @@ docker push <account>.dkr.ecr.<region>.amazonaws.com/lenscore:latest
 gcloud builds submit --tag gcr.io/<project>/lenscore
 gcloud run deploy --image gcr.io/<project>/lenscore --platform managed
 ```
-
-## 🏗️ Architecture
-
-### System Overview
-
-LensCore follows a clean architecture pattern with clear separation of concerns:
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   API Layer     │    │  Service Layer  │    │  Storage Layer  │
-│                 │    │                 │    │                 │
-│ • Express       │───▶│ • Crawling      │───▶│ • Local         │
-│ • Middleware    │    │ • Accessibility │    │ • S3            │
-│ • Validation    │    │ • Error Handling│    │ • GCS           │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-```
-
-### Key Components
-
-- **API Layer**: Express.js routes with Zod validation
-- **Service Layer**: Business logic for crawling and accessibility testing
-- **Storage Layer**: Abstracted storage with multiple backends
-- **Utils Layer**: Environment configuration and logging
-
-### Data Flow
-
-1. **Request** → API validation → Service layer
-2. **Crawling** → Puppeteer → Cheerio parsing → URL discovery
-3. **Accessibility** → Puppeteer → axe-core → Violation analysis
-4. **Storage** → Screenshot capture → Configurable backend
-5. **Response** → Aggregated results → JSON response
 
 ## 🤝 Contributing
 
