@@ -1,6 +1,16 @@
 import { CrawlingService } from '../../src/services/crawling';
 import { AccessibilityService } from '../../src/services/accessibility';
 
+jest.mock('../../src/storage', () => ({
+  createStorageService: () => ({
+    uploadFile: jest.fn().mockResolvedValue('mock://uploaded/screenshot.png'),
+    downloadFile: jest.fn(),
+    deleteFile: jest.fn(),
+    getFileUrl: jest.fn(),
+    cleanup: jest.fn(),
+  }),
+}));
+
 describe('CrawlingService', () => {
   let crawlingService: CrawlingService;
 
@@ -13,8 +23,6 @@ describe('CrawlingService', () => {
   });
 
   it('should crawl a website', async () => {
-    await crawlingService.initialize();
-
     const result = await crawlingService.crawlWebsite({
       url: 'https://example.com',
       maxUrls: 1,
@@ -41,8 +49,6 @@ describe('AccessibilityService', () => {
   });
 
   it('should test accessibility', async () => {
-    await accessibilityService.initialize();
-
     const result = await accessibilityService.testAccessibility({
       url: 'https://example.com',
       includeScreenshot: false,
