@@ -31,12 +31,16 @@
 
 - [Quick Start](#-quick-start)
 - [Makefile Commands](#makefile-commands)
-- [Installation](#️-installation)
 - [Configuration](#️-configuration)
 - [API Documentation](#-api-documentation)
 - [License](#-license)
 
 ## ⚡ Quick Start
+
+### Prerequisites
+- **Node.js** 20+ (for local development)
+- **Docker** & **Docker Compose** (for containerized deployment)
+- **Git** (for cloning the repository)
 
 ### Using Docker (Recommended)
 
@@ -108,44 +112,6 @@ make logs        # Tail Docker Compose logs
 
 make env         # Print key env variables from .env
 ```
-
-## 🛠️ Installation
-
-### Prerequisites
-
-- **Node.js** 20+ (for local development)
-- **Docker** & **Docker Compose** (for containerized deployment)
-- **Git** (for cloning the repository)
-
-### Local Development Setup
-
-1. **Clone and install:**
-
-   ```bash
-   git clone <repository-url>
-   cd LensCore
-   make install
-   ```
-
-2. **Environment configuration:**
-
-   ```bash
-   cp env.example .env
-   # Edit .env with your preferred settings
-   ```
-
-3. **Start development:**
-   ```bash
-   make dev
-   ```
-
-### Docker Setup
-
-1. **Build and run:**
-
-   ```bash
-   make up
-   ```
 
 ## ⚙️ Configuration
 
