@@ -31,12 +31,9 @@
 
 - [Quick Start](#-quick-start)
 - [Makefile Commands](#makefile-commands)
-- [Installation](#-installation)
-- [Configuration](#-configuration)
+- [Installation](#️-installation)
+- [Configuration](#️-configuration)
 - [API Documentation](#-api-documentation)
-- [Development Guide](#-development-guide)
-- [Deployment](#-deployment)
-- [Contributing](#-contributing)
 - [License](#-license)
 
 ## ⚡ Quick Start
