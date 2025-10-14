@@ -166,7 +166,6 @@ app.use((error: Error, _req: Request, res: Response, _next: NextFunction) => {
   });
 });
 
-// Only start server if not in test environment
 if (process.env['NODE_ENV'] !== 'test') {
   const server = app.listen(env.PORT, () => {
     logger.info(`LensCore server running on port ${env.PORT}`);

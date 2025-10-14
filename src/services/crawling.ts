@@ -8,16 +8,41 @@ export class CrawlingService {
   private browser: Browser | null = null;
 
   async initialize(): Promise<void> {
-    this.browser = await puppeteer.launch({
-      headless: 'new',
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
+    try {
+      this.browser = await puppeteer.launch({
+        headless: 'new',
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--no-first-run',
+          '--no-zygote',
+          '--disable-gpu',
+          '--disable-background-timer-throttling',
+          '--disable-backgrounding-occluded-windows',
+          '--disable-renderer-backgrounding',
+        ],
+        timeout: 30000,
+      });
+
+      logger.info('Browser initialized successfully');
+    } catch (error) {
+      logger.error('Failed to initialize browser', error);
+      throw error;
+    }
   }
 
   async close(): Promise<void> {
     if (this.browser) {
-      await this.browser.close();
-      this.browser = null;
+      try {
+        await this.browser.close();
+        logger.info('Browser closed successfully');
+      } catch (error) {
+        logger.error('Failed to close browser', error);
+      } finally {
+        this.browser = null;
+      }
     }
   }
 
@@ -44,8 +69,14 @@ export class CrawlingService {
           return;
         }
 
+        let page = null;
         try {
-          const page = await this.browser!.newPage();
+          page = await this.browser!.newPage();
+
+          await page.setViewport({ width: 1280, height: 720 });
+          await page.setUserAgent(
+            'Mozilla/5.0 (compatible; LensCore/1.0; +https://github.com/accesslens/lenscore)'
+          );
 
           if (request.headers) {
             await page.setExtraHTTPHeaders(request.headers);
@@ -69,16 +100,25 @@ export class CrawlingService {
           });
 
           const statusCode = response?.status() || 0;
-          const title = await page.title();
 
+          if (statusCode >= 400) {
+            logger.warn('HTTP error status', { url, statusCode });
+            visited.add(url);
+            return;
+          }
+
+          const title = await page.title();
           const content = await page.content();
           const $ = cheerio.load(content);
+
           const description =
-            $('meta[name="description"]').attr('content') || '';
+            $('meta[name="description"]').attr('content') ||
+            $('meta[property="og:description"]').attr('content') ||
+            '';
 
           results.push({
             url,
-            title,
+            title: title || 'Untitled',
             description,
             statusCode,
             timestamp: new Date(),
@@ -88,49 +128,82 @@ export class CrawlingService {
 
           if (results.length < maxUrls) {
             const links = new Set<string>();
-            $('a').each((_, el) => {
+            $('a[href]').each((_, el) => {
               const href = $(el).attr('href');
-              if (href) {
+              if (href && href.trim()) {
                 try {
                   const absoluteUrl = new URL(href, url).toString();
                   const linkUrl = new URL(absoluteUrl);
 
-                  if (linkUrl.origin === baseUrl.origin) {
+                  if (
+                    linkUrl.origin === baseUrl.origin &&
+                    !linkUrl.pathname.includes('#') &&
+                    !linkUrl.pathname.includes('mailto:') &&
+                    !linkUrl.pathname.includes('tel:')
+                  ) {
                     const normalizedUrl = new URL(
-                      linkUrl.pathname,
+                      linkUrl.pathname + linkUrl.search,
                       baseUrl
                     ).toString();
+
                     if (
                       !visited.has(normalizedUrl) &&
-                      !toVisit.has(normalizedUrl)
+                      !toVisit.has(normalizedUrl) &&
+                      links.size < concurrency
                     ) {
                       toVisit.add(normalizedUrl);
                       links.add(normalizedUrl);
                     }
                   }
                 } catch (error) {
-                  logger.warn('Invalid URL found during crawling', {
+                  logger.debug('Invalid URL found during crawling', {
                     href,
-                    error,
+                    error:
+                      error instanceof Error ? error.message : String(error),
                   });
                 }
               }
             });
 
-            const linksArray = Array.from(links).slice(0, concurrency);
-            await Promise.all(linksArray.map(crawlPage));
+            const linksArray = Array.from(links);
+            const promises = linksArray.map(crawlPage);
+            await Promise.allSettled(promises);
           }
-
-          await page.close();
         } catch (error) {
-          logger.error('Failed to crawl page', { url, error });
+          logger.error('Failed to crawl page', {
+            url,
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+          });
           visited.add(url);
+        } finally {
+          if (page) {
+            try {
+              await page.close();
+            } catch (closeError) {
+              logger.warn('Failed to close page', {
+                url,
+                error:
+                  closeError instanceof Error
+                    ? closeError.message
+                    : String(closeError),
+              });
+            }
+          }
         }
       };
 
       await crawlPage(request.url);
 
       const crawlTime = Date.now() - startTime;
+
+      logger.info('Crawling completed', {
+        url: request.url,
+        totalPages: results.length,
+        crawlTime,
+        maxUrls,
+        concurrency,
+      });
 
       return {
         pages: results,

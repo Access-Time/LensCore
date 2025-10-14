@@ -20,6 +20,7 @@
 ## 📋 Table of Contents
 
 - [Quick Start](#-quick-start)
+- [Makefile Commands](#makefile-commands)
 - [Installation](#-installation)
 - [Configuration](#-configuration)
 - [API Documentation](#-api-documentation)
@@ -45,10 +46,10 @@
    cp env.example .env
    ```
 
-3. **Start the service:**
+3. **Start the service (with Makefile):**
 
    ```bash
-   docker-compose up -d
+   make up
    ```
 
 4. **Verify installation:**
@@ -56,12 +57,17 @@
    curl http://localhost:3001/api/health
    ```
 
+5. **Stop services:**
+   ```bash
+   make down
+   ```
+
 ### Using Node.js
 
 1. **Install dependencies:**
 
    ```bash
-   npm install
+   make install
    ```
 
 2. **Set up environment:**
@@ -72,8 +78,29 @@
 
 3. **Start development server:**
    ```bash
-   npm run dev
+   make dev
    ```
+
+## Makefile Commands
+
+Common tasks:
+
+```bash
+make install     # Install dependencies
+make dev         # Run development server
+make build       # Build for production
+make start       # Run production server
+make test        # Run all tests
+make lint        # Run ESLint
+make fmt         # Format code with Prettier
+make typecheck   # TypeScript type checking
+
+make up          # Start services with Docker Compose
+make down        # Stop services with Docker Compose
+make logs        # Tail Docker Compose logs
+
+make env         # Print key env variables from .env
+```
 
 ## 🛠️ Installation
 
@@ -90,7 +117,7 @@
    ```bash
    git clone <repository-url>
    cd LensCore
-   npm install
+   make install
    ```
 
 2. **Environment configuration:**
@@ -102,7 +129,7 @@
 
 3. **Start development:**
    ```bash
-   npm run dev
+   make dev
    ```
 
 ### Docker Setup
@@ -110,7 +137,7 @@
 1. **Build and run:**
 
    ```bash
-   docker-compose up -d
+   make up
    ```
 
 ## ⚙️ Configuration
@@ -171,21 +198,6 @@ AXE_TIMEOUT=10000
 AXE_CONCURRENCY=5
 ```
 
-### Docker Compose Configuration
-
-The `docker-compose.yml` file automatically reads from your `.env` file and supports environment variable overrides:
-
-```bash
-# Use different port
-PORT=3002 docker-compose up -d
-
-# Use S3 storage
-STORAGE_TYPE=s3 docker-compose up -d
-
-# Debug mode
-LOG_LEVEL=debug docker-compose up -d
-```
-
 ## 📚 API Documentation
 
 ### Base URL
@@ -193,10 +205,6 @@ LOG_LEVEL=debug docker-compose up -d
 ```
 http://localhost:3001/api
 ```
-
-### Authentication
-
-Currently, no authentication is required. All endpoints are publicly accessible.
 
 ### Response Format
 
@@ -559,7 +567,7 @@ npm run typecheck    # Run TypeScript type checking
 **Build and run:**
 
 ```bash
-docker-compose up -d
+make up
 ```
 
 ### Cloud Deployment Examples
@@ -637,16 +645,16 @@ We welcome contributions! Please follow these guidelines:
 
 ```bash
 # Install dependencies
-npm install
+make install
 
 # Set up environment
 cp env.example .env
 
 # Start development server
-npm run dev
+make dev
 
 # Run tests
-npm test
+make test
 ```
 
 ## 📄 License
