@@ -3,7 +3,7 @@ export class CrawlingService {
     // Mock implementation
   }
 
-  async crawlWebsite(request: any) {
+  async crawlWebsite(request: {url: string}) {
     return {
       pages: [
         {
