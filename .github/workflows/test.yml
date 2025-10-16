@@ -1,36 +1,34 @@
-name: Unit Tests
+name: Test Check
 
 on:
-  push:
-    branches: [main]
   pull_request:
-    branches: [main]
+    branches: ['*']
+  push:
+    branches: ['main']
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+env:
+  FORCE_COLOR: 3
 
 jobs:
   test:
-    name: Jest Unit Tests
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
+      - name: Setup
+        uses: ./.github/setup
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run unit tests
+      - name: 🧪 Unit tests
         run: npm run test
 
-      - name: Generate coverage report
+      - name: 📊 Coverage report
         run: npm run test:coverage
 
-      - name: Upload coverage reports
+      - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
           file: ./coverage/lcov.info

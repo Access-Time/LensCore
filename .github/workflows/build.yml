@@ -1,33 +1,31 @@
-name: Build & Type Check
+name: Build Check
 
 on:
-  push:
-    branches: [main]
   pull_request:
-    branches: [main]
+    branches: ['*']
+  push:
+    branches: ['main']
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+env:
+  FORCE_COLOR: 3
 
 jobs:
   build:
-    name: TypeScript Build & Type Check
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
+      - name: Setup
+        uses: ./.github/setup
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Type check
+      - name: 🔎 Type check
         run: npm run typecheck
 
-      - name: Build project
+      - name: 🔨 Build project
         run: npm run build
 
       - name: Upload build artifacts
