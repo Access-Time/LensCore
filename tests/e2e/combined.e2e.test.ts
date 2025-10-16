@@ -2,7 +2,7 @@ import request from 'supertest';
 
 describe('/api/combined integration', () => {
   afterAll(async () => {
-    await new Promise(resolve => setImmediate(resolve));
+    await new Promise((resolve) => setImmediate(resolve));
   });
 
   it('returns combined results', async () => {

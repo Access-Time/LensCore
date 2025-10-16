@@ -4,7 +4,7 @@ import app from '../../src/api';
 describe('API Endpoints', () => {
   afterAll(async () => {
     // Ensure any async operations are completed
-    await new Promise(resolve => setImmediate(resolve));
+    await new Promise((resolve) => setImmediate(resolve));
   });
 
   describe('GET /api/health', () => {

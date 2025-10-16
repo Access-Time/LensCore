@@ -16,7 +16,9 @@ module.exports = {
   clearMocks: true,
   restoreMocks: true,
   moduleNameMapper: {
-    '^../src/services/crawling$': '<rootDir>/tests/__mocks__/services/crawling.ts',
-    '^../src/services/accessibility$': '<rootDir>/tests/__mocks__/services/accessibility.ts',
-  }
+    '^../src/services/crawling$':
+      '<rootDir>/tests/__mocks__/services/crawling.ts',
+    '^../src/services/accessibility$':
+      '<rootDir>/tests/__mocks__/services/accessibility.ts',
+  },
 };
