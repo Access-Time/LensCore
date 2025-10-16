@@ -1,6 +1,5 @@
 # LensCore
 
-
 <img src="https://github.com/user-attachments/assets/a249eb4b-2ce5-4972-90ae-b3d2164e2b5a" alt="AccessLine Logo" width="170" align="right" />
 
 <p>
@@ -38,6 +37,7 @@
 ## ⚡ Quick Start
 
 ### Prerequisites
+
 - **Node.js** 20+ (for local development)
 - **Docker** & **Docker Compose** (for containerized deployment)
 - **Git** (for cloning the repository)
@@ -64,6 +64,7 @@
    ```
 
 4. **Verify installation:**
+
    ```bash
    curl http://localhost:3001/api/health
    ```

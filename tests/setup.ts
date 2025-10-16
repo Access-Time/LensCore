@@ -13,8 +13,20 @@ beforeAll(() => {
   console.error = jest.fn();
 });
 
-afterAll(() => {
+afterAll(async () => {
   // Restore original console methods
   console.log = originalConsoleLog;
   console.error = originalConsoleError;
+
+  // Force cleanup of any remaining async operations
+  await new Promise((resolve) => setTimeout(resolve, 100));
+});
+
+// Global cleanup for each test
+afterEach(async () => {
+  // Clear any timers
+  jest.clearAllTimers();
+
+  // Wait for any pending promises
+  await new Promise((resolve) => setImmediate(resolve));
 });

@@ -1,0 +1,83 @@
+name: Security Check
+
+on:
+  schedule:
+    - cron: '0 2 * * 1' # Run every Monday at 2 AM UTC
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+env:
+  FORCE_COLOR: 3
+
+jobs:
+  security-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup
+        uses: ./.github/setup
+
+      - name: 🔒 Security audit
+        run: npm audit --audit-level=moderate
+
+      - name: Check for outdated packages
+        run: npm outdated || true
+
+      - name: Generate dependency report
+        run: |
+          echo "## Dependency Security Report" > dependency-report.md
+          echo "Generated on: $(date)" >> dependency-report.md
+          echo "" >> dependency-report.md
+          echo "### Security Audit Results:" >> dependency-report.md
+          npm audit --json >> audit-results.json || true
+          echo "### Outdated Packages:" >> dependency-report.md
+          npm outdated --json >> outdated-packages.json || true
+
+      - name: Upload security report
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: |
+            dependency-report.md
+            audit-results.json
+            outdated-packages.json
+          retention-days: 30
+
+  dependency-update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup
+        uses: ./.github/setup
+
+      - name: 🔍 Check for major updates
+        run: |
+          echo "Checking for major dependency updates..."
+          npm outdated --json > major-updates.json || true
+
+      - name: Create update summary
+        run: |
+          echo "## Dependency Update Summary" > update-summary.md
+          echo "Generated on: $(date)" >> update-summary.md
+          echo "" >> update-summary.md
+          echo "### Available Updates:" >> update-summary.md
+          if [ -s major-updates.json ]; then
+            echo "Major updates available:" >> update-summary.md
+            cat major-updates.json >> update-summary.md
+          else
+            echo "No major updates available." >> update-summary.md
+          fi
+
+      - name: Upload update report
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-update-report
+          path: |
+            update-summary.md
+            major-updates.json
+          retention-days: 30

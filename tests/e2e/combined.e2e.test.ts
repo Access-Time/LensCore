@@ -1,6 +1,10 @@
 import request from 'supertest';
 
 describe('/api/combined integration', () => {
+  afterAll(async () => {
+    await new Promise((resolve) => setImmediate(resolve));
+  });
+
   it('returns combined results', async () => {
     const app = (await import('../../src/api')).default;
 
