@@ -2,6 +2,11 @@ import request from 'supertest';
 import app from '../../src/api';
 
 describe('API Endpoints', () => {
+  afterAll(async () => {
+    // Ensure any async operations are completed
+    await new Promise(resolve => setImmediate(resolve));
+  });
+
   describe('GET /api/health', () => {
     it('should return health status', async () => {
       const response = await request(app).get('/api/health').expect(200);
