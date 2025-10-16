@@ -9,26 +9,26 @@ jobs:
   security-audit:
     name: Security Audit
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-          
+
       - name: Install dependencies
         run: npm ci
-        
+
       - name: Run security audit
         run: npm audit --audit-level=moderate
-        
+
       - name: Check for outdated packages
         run: npm outdated || true
-        
+
       - name: Generate dependency report
         run: |
           echo "## Dependency Security Report" > dependency-report.md
@@ -38,7 +38,7 @@ jobs:
           npm audit --json >> audit-results.json || true
           echo "### Outdated Packages:" >> dependency-report.md
           npm outdated --json >> outdated-packages.json || true
-          
+
       - name: Upload security report
         uses: actions/upload-artifact@v4
         with:
@@ -52,25 +52,25 @@ jobs:
   dependency-update:
     name: Dependency Update Check
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-          
+
       - name: Install dependencies
         run: npm ci
-        
+
       - name: Check for major updates
         run: |
           echo "Checking for major dependency updates..."
           npm outdated --json > major-updates.json || true
-          
+
       - name: Create update summary
         run: |
           echo "## Dependency Update Summary" > update-summary.md
@@ -83,7 +83,7 @@ jobs:
           else
             echo "No major updates available." >> update-summary.md
           fi
-          
+
       - name: Upload update report
         uses: actions/upload-artifact@v4
         with:
