@@ -10,7 +10,7 @@ export class CrawlingService {
   async initialize(): Promise<void> {
     try {
       this.browser = await puppeteer.launch({
-        headless: 'new',
+        headless: true,
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
