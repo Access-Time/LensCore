@@ -3,7 +3,7 @@ import { crawlHandler } from './crawl';
 import { testHandler, testMultipleHandler } from './accessibility';
 import { combinedHandler } from './combined';
 import { healthHandler } from './health';
-import aiRouter from './ai';
+import { aiProcessHandler, aiStatusHandler } from './ai';
 
 export const setupRoutes = (app: Express) => {
   app.post('/api/crawl', crawlHandler);
@@ -11,5 +11,8 @@ export const setupRoutes = (app: Express) => {
   app.post('/api/test-multiple', testMultipleHandler);
   app.post('/api/combined', combinedHandler);
   app.get('/api/health', healthHandler);
-  app.use('/api/ai', aiRouter);
+
+  // AI Routes
+  app.post('/api/ai/process', aiProcessHandler);
+  app.get('/api/ai/status', aiStatusHandler);
 };

@@ -1,12 +1,11 @@
-import { Router } from 'express';
+import { Request, Response } from 'express';
 import { z } from 'zod';
 import { processWithAI } from '../ai';
 import logger from '../../utils/logger';
-
-const router = Router();
+import { env } from '../../utils/env';
 
 const aiRequestSchema = z.object({
-  apiKey: z.string().min(1, 'API key is required'),
+  apiKey: z.string().optional(),
   messages: z
     .array(
       z.object({
@@ -17,16 +16,32 @@ const aiRequestSchema = z.object({
     .min(1, 'At least one message is required'),
 });
 
-router.post('/process', async (req, res) => {
+export const aiProcessHandler = async (req: Request, res: Response) => {
   try {
     const validatedData = aiRequestSchema.parse(req.body);
+    const { env } = await import('../../utils/env');
+
+    // Use API key from request or fallback to environment
+    const apiKey = validatedData.apiKey || env.OPENAI_API_KEY;
+
+    if (!apiKey || apiKey.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        error:
+          'API key is required either in request body or environment variables',
+      });
+    }
 
     logger.info('AI processing request received', {
       messageCount: validatedData.messages.length,
-      hasApiKey: !!validatedData.apiKey,
+      hasApiKey: !!apiKey,
+      apiKeySource: validatedData.apiKey ? 'request' : 'environment',
     });
 
-    const result = await processWithAI(validatedData);
+    const result = await processWithAI({
+      apiKey,
+      messages: validatedData.messages,
+    });
 
     if (!result.enabled) {
       return res.status(200).json({
@@ -68,14 +83,14 @@ router.post('/process', async (req, res) => {
       error: 'Internal server error',
     });
   }
-});
+};
 
-router.get('/status', (_req, res) => {
+export const aiStatusHandler = async (_req: Request, res: Response) => {
   res.json({
     success: true,
-    aiEnabled: false,
-    message: 'AI processing is available when API key is provided',
+    aiEnabled: !!(env.OPENAI_API_KEY && env.OPENAI_API_KEY.trim() !== ''),
+    message: env.OPENAI_API_KEY
+      ? 'AI processing is enabled'
+      : 'AI processing is available when API key is provided',
   });
-});
-
-export default router;
+};
