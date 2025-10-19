@@ -57,7 +57,8 @@ export class CrawlingService {
       const visited = new Set<string>();
       const results: CrawlResult[] = [];
       const maxUrls = request.maxUrls || parseInt(env.CRAWL_MAX_URLS);
-      const concurrency = request.concurrency || parseInt(env.CRAWL_CONCURRENCY);
+      const concurrency =
+        request.concurrency || parseInt(env.CRAWL_CONCURRENCY);
       const timeout = request.timeout || parseInt(env.CRAWL_TIMEOUT);
       const maxDepth = request.max_depth || 2;
       const rules = request.rules || {};
@@ -71,7 +72,9 @@ export class CrawlingService {
 
       const queue: CrawlQueueItem[] = [{ url: request.url, depth: 0 }];
 
-      const crawlPage = async (item: CrawlQueueItem): Promise<CrawlQueueItem[]> => {
+      const crawlPage = async (
+        item: CrawlQueueItem
+      ): Promise<CrawlQueueItem[]> => {
         const { url, depth } = item;
 
         if (visited.has(url) || results.length >= maxUrls || depth > maxDepth) {
@@ -132,7 +135,7 @@ export class CrawlingService {
 
           if (depth < maxDepth && results.length < maxUrls) {
             const links = this.extractLinks($, url, baseUrl, rules);
-            
+
             for (const link of links) {
               if (!visited.has(link) && nextItems.length < concurrency) {
                 nextItems.push({ url: link, depth: depth + 1 });
@@ -233,10 +236,16 @@ export class CrawlingService {
     return links;
   }
 
-  private shouldFollowLink(linkUrl: URL, baseUrl: URL, rules: CrawlRules): boolean {
-    if (linkUrl.pathname.includes('#') || 
-        linkUrl.pathname.includes('mailto:') || 
-        linkUrl.pathname.includes('tel:')) {
+  private shouldFollowLink(
+    linkUrl: URL,
+    baseUrl: URL,
+    rules: CrawlRules
+  ): boolean {
+    if (
+      linkUrl.pathname.includes('#') ||
+      linkUrl.pathname.includes('mailto:') ||
+      linkUrl.pathname.includes('tel:')
+    ) {
       return false;
     }
 
@@ -244,9 +253,11 @@ export class CrawlingService {
       return false;
     }
 
-    if (rules.include_subdomains === false && 
-        linkUrl.hostname !== baseUrl.hostname && 
-        !linkUrl.hostname.endsWith('.' + baseUrl.hostname)) {
+    if (
+      rules.include_subdomains === false &&
+      linkUrl.hostname !== baseUrl.hostname &&
+      !linkUrl.hostname.endsWith('.' + baseUrl.hostname)
+    ) {
       return false;
     }
 
@@ -259,7 +270,7 @@ export class CrawlingService {
     }
 
     if (rules.include_paths && rules.include_paths.length > 0) {
-      const hasIncludedPath = rules.include_paths.some(includePath => 
+      const hasIncludedPath = rules.include_paths.some((includePath) =>
         linkUrl.pathname.includes(includePath)
       );
       if (!hasIncludedPath) {
@@ -270,7 +281,11 @@ export class CrawlingService {
     return true;
   }
 
-  private normalizeUrl(linkUrl: URL, baseUrl: URL, rules: CrawlRules): string | null {
+  private normalizeUrl(
+    linkUrl: URL,
+    baseUrl: URL,
+    rules: CrawlRules
+  ): string | null {
     if (rules.follow_external === false && linkUrl.origin !== baseUrl.origin) {
       return null;
     }
@@ -279,7 +294,10 @@ export class CrawlingService {
       return new URL(linkUrl.pathname + linkUrl.search, baseUrl).toString();
     }
 
-    if (rules.include_subdomains && linkUrl.hostname.endsWith('.' + baseUrl.hostname)) {
+    if (
+      rules.include_subdomains &&
+      linkUrl.hostname.endsWith('.' + baseUrl.hostname)
+    ) {
       return linkUrl.toString();
     }
 
