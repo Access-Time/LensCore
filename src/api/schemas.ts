@@ -1,7 +1,16 @@
 import { z } from 'zod';
 
+const crawlRulesSchema = z.object({
+  include_subdomains: z.boolean().optional(),
+  follow_external: z.boolean().optional(),
+  exclude_paths: z.array(z.string()).optional(),
+  include_paths: z.array(z.string()).optional(),
+  respect_robots: z.boolean().optional(),
+});
+
 export const crawlRequestSchema = z.object({
   url: z.string().url(),
+  max_depth: z.number().min(1).max(5).optional(),
   maxUrls: z.number().min(1).max(100).optional(),
   timeout: z.number().min(1000).max(60000).optional(),
   concurrency: z.number().min(1).max(10).optional(),
@@ -9,6 +18,7 @@ export const crawlRequestSchema = z.object({
     .enum(['domcontentloaded', 'networkidle0', 'networkidle2'])
     .optional(),
   headers: z.record(z.string()).optional(),
+  rules: crawlRulesSchema.optional(),
 });
 
 export const accessibilityRequestSchema = z.object({

@@ -1,6 +1,6 @@
 import puppeteer, { Browser } from 'puppeteer';
 import * as cheerio from 'cheerio';
-import { CrawlRequest, CrawlResponse, CrawlResult } from '../types';
+import { CrawlRequest, CrawlResponse, CrawlResult, CrawlRules } from '../types';
 import { env } from '../utils/env';
 import logger from '../utils/logger';
 
@@ -55,21 +55,32 @@ export class CrawlingService {
       }
 
       const visited = new Set<string>();
-      const toVisit = new Set<string>([request.url]);
       const results: CrawlResult[] = [];
       const maxUrls = request.maxUrls || parseInt(env.CRAWL_MAX_URLS);
-      const concurrency =
-        request.concurrency || parseInt(env.CRAWL_CONCURRENCY);
+      const concurrency = request.concurrency || parseInt(env.CRAWL_CONCURRENCY);
       const timeout = request.timeout || parseInt(env.CRAWL_TIMEOUT);
+      const maxDepth = request.max_depth || 2;
+      const rules = request.rules || {};
 
       const baseUrl = new URL(request.url);
 
-      const crawlPage = async (url: string): Promise<void> => {
-        if (visited.has(url) || results.length >= maxUrls) {
-          return;
+      interface CrawlQueueItem {
+        url: string;
+        depth: number;
+      }
+
+      const queue: CrawlQueueItem[] = [{ url: request.url, depth: 0 }];
+
+      const crawlPage = async (item: CrawlQueueItem): Promise<CrawlQueueItem[]> => {
+        const { url, depth } = item;
+
+        if (visited.has(url) || results.length >= maxUrls || depth > maxDepth) {
+          return [];
         }
 
         let page = null;
+        const nextItems: CrawlQueueItem[] = [];
+
         try {
           page = await this.browser!.newPage();
 
@@ -97,7 +108,7 @@ export class CrawlingService {
           if (statusCode >= 400) {
             logger.warn('HTTP error status', { url, statusCode });
             visited.add(url);
-            return;
+            return [];
           }
 
           const title = await page.title();
@@ -119,48 +130,14 @@ export class CrawlingService {
 
           visited.add(url);
 
-          if (results.length < maxUrls) {
-            const links = new Set<string>();
-            $('a[href]').each((_, el) => {
-              const href = $(el).attr('href');
-              if (href && href.trim()) {
-                try {
-                  const absoluteUrl = new URL(href, url).toString();
-                  const linkUrl = new URL(absoluteUrl);
-
-                  if (
-                    linkUrl.origin === baseUrl.origin &&
-                    !linkUrl.pathname.includes('#') &&
-                    !linkUrl.pathname.includes('mailto:') &&
-                    !linkUrl.pathname.includes('tel:')
-                  ) {
-                    const normalizedUrl = new URL(
-                      linkUrl.pathname + linkUrl.search,
-                      baseUrl
-                    ).toString();
-
-                    if (
-                      !visited.has(normalizedUrl) &&
-                      !toVisit.has(normalizedUrl) &&
-                      links.size < concurrency
-                    ) {
-                      toVisit.add(normalizedUrl);
-                      links.add(normalizedUrl);
-                    }
-                  }
-                } catch (error) {
-                  logger.debug('Invalid URL found during crawling', {
-                    href,
-                    error:
-                      error instanceof Error ? error.message : String(error),
-                  });
-                }
+          if (depth < maxDepth && results.length < maxUrls) {
+            const links = this.extractLinks($, url, baseUrl, rules);
+            
+            for (const link of links) {
+              if (!visited.has(link) && nextItems.length < concurrency) {
+                nextItems.push({ url: link, depth: depth + 1 });
               }
-            });
-
-            const linksArray = Array.from(links);
-            const promises = linksArray.map(crawlPage);
-            await Promise.allSettled(promises);
+            }
           }
         } catch (error) {
           logger.error('Failed to crawl page', {
@@ -184,9 +161,21 @@ export class CrawlingService {
             }
           }
         }
+
+        return nextItems;
       };
 
-      await crawlPage(request.url);
+      while (queue.length > 0 && results.length < maxUrls) {
+        const batch = queue.splice(0, concurrency);
+        const promises = batch.map(crawlPage);
+        const batchResults = await Promise.allSettled(promises);
+
+        for (const result of batchResults) {
+          if (result.status === 'fulfilled') {
+            queue.push(...result.value);
+          }
+        }
+      }
 
       const crawlTime = Date.now() - startTime;
 
@@ -196,6 +185,8 @@ export class CrawlingService {
         crawlTime,
         maxUrls,
         concurrency,
+        maxDepth,
+        rules,
       });
 
       return {
@@ -207,6 +198,96 @@ export class CrawlingService {
       logger.error('Crawling service error:', error);
       return this.getMockCrawlResult(request, startTime);
     }
+  }
+
+  private extractLinks(
+    $: cheerio.CheerioAPI,
+    currentUrl: string,
+    baseUrl: URL,
+    rules: CrawlRules
+  ): string[] {
+    const links: string[] = [];
+
+    $('a[href]').each((_, el) => {
+      const href = $(el).attr('href');
+      if (!href || !href.trim()) return;
+
+      try {
+        const absoluteUrl = new URL(href, currentUrl).toString();
+        const linkUrl = new URL(absoluteUrl);
+
+        if (this.shouldFollowLink(linkUrl, baseUrl, rules)) {
+          const normalizedUrl = this.normalizeUrl(linkUrl, baseUrl, rules);
+          if (normalizedUrl && !links.includes(normalizedUrl)) {
+            links.push(normalizedUrl);
+          }
+        }
+      } catch (error) {
+        logger.debug('Invalid URL found during crawling', {
+          href,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    });
+
+    return links;
+  }
+
+  private shouldFollowLink(linkUrl: URL, baseUrl: URL, rules: CrawlRules): boolean {
+    if (linkUrl.pathname.includes('#') || 
+        linkUrl.pathname.includes('mailto:') || 
+        linkUrl.pathname.includes('tel:')) {
+      return false;
+    }
+
+    if (rules.follow_external === false && linkUrl.origin !== baseUrl.origin) {
+      return false;
+    }
+
+    if (rules.include_subdomains === false && 
+        linkUrl.hostname !== baseUrl.hostname && 
+        !linkUrl.hostname.endsWith('.' + baseUrl.hostname)) {
+      return false;
+    }
+
+    if (rules.exclude_paths) {
+      for (const excludePath of rules.exclude_paths) {
+        if (linkUrl.pathname.includes(excludePath)) {
+          return false;
+        }
+      }
+    }
+
+    if (rules.include_paths && rules.include_paths.length > 0) {
+      const hasIncludedPath = rules.include_paths.some(includePath => 
+        linkUrl.pathname.includes(includePath)
+      );
+      if (!hasIncludedPath) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private normalizeUrl(linkUrl: URL, baseUrl: URL, rules: CrawlRules): string | null {
+    if (rules.follow_external === false && linkUrl.origin !== baseUrl.origin) {
+      return null;
+    }
+
+    if (linkUrl.origin === baseUrl.origin) {
+      return new URL(linkUrl.pathname + linkUrl.search, baseUrl).toString();
+    }
+
+    if (rules.include_subdomains && linkUrl.hostname.endsWith('.' + baseUrl.hostname)) {
+      return linkUrl.toString();
+    }
+
+    if (rules.follow_external) {
+      return linkUrl.toString();
+    }
+
+    return null;
   }
 
   private getMockCrawlResult(

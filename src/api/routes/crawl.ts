@@ -19,6 +19,14 @@ export const crawlHandler = async (
     const aiApiKey = req.body.aiApiKey || env.OPENAI_API_KEY;
     const projectContext = req.body.projectContext;
 
+    const baseMetadata = {
+      crawledAt: new Date().toISOString(),
+      maxDepth: request.max_depth || 2,
+      rules: request.rules || {},
+      totalPages: crawlResult.totalPages,
+      crawlTime: crawlResult.crawlTime,
+    };
+
     if (enableAI && aiApiKey) {
       const crawlData = {
         issues: [],
@@ -34,9 +42,20 @@ export const crawlHandler = async (
         projectContext,
       });
 
-      res.json(aiResult);
+      res.json({
+        ...crawlResult,
+        ...aiResult,
+        metadata: {
+          ...baseMetadata,
+          aiEnabled: true,
+          ...(aiResult['metadata'] || {}),
+        },
+      });
     } else {
-      res.json(crawlResult);
+      res.json({
+        ...crawlResult,
+        metadata: baseMetadata,
+      });
     }
   } catch (error) {
     next(error);

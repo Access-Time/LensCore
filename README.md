@@ -276,11 +276,23 @@ Crawl a website and discover all linked pages.
 ```json
 {
   "url": "https://example.com",
+  "max_depth": 2,
   "maxUrls": 10,
   "timeout": 10000,
   "concurrency": 3,
   "waitUntil": "domcontentloaded",
+  "headers": {
+    "Authorization": "Bearer token"
+  },
+  "rules": {
+    "include_subdomains": true,
+    "follow_external": false,
+    "exclude_paths": ["/admin", "/private"],
+    "include_paths": ["/public", "/docs"],
+    "respect_robots": true
+  },
   "enableAI": true,
+  "aiApiKey": "sk-your-openai-key",
   "projectContext": {
     "framework": "React",
     "cssFramework": "Tailwind CSS",
@@ -293,12 +305,23 @@ Crawl a website and discover all linked pages.
 **Parameters:**
 
 - `url` (required): Target website URL
+- `max_depth` (optional): Maximum crawling depth (1-5, default: 2)
 - `maxUrls` (optional): Maximum number of URLs to crawl (default: 25)
 - `timeout` (optional): Request timeout in milliseconds (default: 10000)
 - `concurrency` (optional): Number of concurrent requests (default: 5)
 - `waitUntil` (optional): Page load condition (default: "domcontentloaded")
+- `headers` (optional): Custom HTTP headers for requests
+- `rules` (optional): Crawling rules configuration
 - `enableAI` (optional): Enable AI processing for accessibility issues (default: false)
 - `projectContext` (optional): Structured project context for more precise AI analysis
+
+**Crawling Rules:**
+
+- `include_subdomains` (optional): Include subdomains in crawling (default: false)
+- `follow_external` (optional): Follow external links (default: false)
+- `exclude_paths` (optional): Array of paths to exclude from crawling
+- `include_paths` (optional): Array of paths to include (if specified, only these paths will be crawled)
+- `respect_robots` (optional): Respect robots.txt (default: true)
 
 **Project Context Structure:**
 
@@ -319,9 +342,15 @@ curl -X POST http://localhost:3001/api/crawl \
   -H "Content-Type: application/json" \
   -d '{
     "url": "https://example.com",
+    "max_depth": 2,
     "maxUrls": 10,
     "timeout": 10000,
     "concurrency": 3,
+    "rules": {
+      "include_subdomains": true,
+      "follow_external": false,
+      "exclude_paths": ["/admin", "/private"]
+    },
     "enableAI": true,
     "projectContext": {
       "framework": "React",
@@ -343,24 +372,32 @@ curl -X POST http://localhost:3001/api/crawl \
       "description": "This domain is for use in illustrative examples",
       "statusCode": 200,
       "timestamp": "2024-01-01T00:00:00.000Z"
-    }
-  ],
-  "totalPages": 1,
-  "crawlTime": 1500,
-  "issues": [
+    },
     {
-      "id": "color-contrast",
-      "impact": "serious",
-      "description": "Elements must have sufficient color contrast",
-      "help": "Ensure all text elements have sufficient color contrast",
-      "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast",
-      "nodes": [...],
-      "aiExplanation": "This accessibility issue occurs when text doesn't have enough contrast against its background...",
-      "aiRemediation": "To fix this issue:\n1. Increase color contrast ratio...\n2. Use CSS: color: #000; background: #fff;"
+      "url": "https://example.com/about",
+      "title": "About Us",
+      "description": "Learn more about our company",
+      "statusCode": 200,
+      "timestamp": "2024-01-01T00:00:01.000Z"
     }
   ],
-  "aiEnabled": true,
-  "aiError": null
+  "totalPages": 2,
+  "crawlTime": 2500,
+  "metadata": {
+    "crawledAt": "2024-01-01T00:00:02.000Z",
+    "maxDepth": 2,
+    "rules": {
+      "include_subdomains": true,
+      "follow_external": false,
+      "exclude_paths": ["/admin", "/private"]
+    },
+    "totalPages": 2,
+    "crawlTime": 2500,
+    "aiEnabled": true,
+    "cacheHits": 0,
+    "cacheMisses": 0,
+    "processingTime": 150
+  }
 }
 ```
 
