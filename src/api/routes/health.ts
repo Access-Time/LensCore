@@ -12,7 +12,7 @@ export const healthHandler = async (_req: Request, res: Response) => {
       },
     };
     res.json(health);
-  } catch (error) {
+  } catch {
     res.status(500).json({
       status: 'unhealthy' as const,
       timestamp: new Date(),

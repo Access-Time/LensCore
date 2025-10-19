@@ -44,6 +44,15 @@ const envSchema = z.object({
 
   // Health Check Configuration
   HEALTH_CHECK_INTERVAL: z.string().default('30000'),
+
+  // OpenAI Configuration
+  OPENAI_API_KEY: z.string().optional(),
+  OPENAI_MODEL: z.string().default('gpt-3.5-turbo'),
+  OPENAI_MAX_TOKENS: z.string().default('1000'),
+  OPENAI_TEMPERATURE: z.string().default('0.7'),
+  OPENAI_TIMEOUT: z.string().default('30000'),
+  OPENAI_RETRY_ATTEMPTS: z.string().default('3'),
+  OPENAI_RETRY_DELAY: z.string().default('1000'),
 });
 
 export const env = envSchema.parse(process.env);

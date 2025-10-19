@@ -1,8 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import { CrawlingService } from '../../services/crawling';
 import { AccessibilityService } from '../../services/accessibility';
+import { aiService } from '../../services/ai';
 import { AccessibilityRequest } from '../../types';
 import { combinedRequestSchema } from '../schemas';
+import { env } from '../../utils/env';
 
 const crawlingService = new CrawlingService();
 const accessibilityService = new AccessibilityService();
@@ -34,11 +36,42 @@ export const combinedHandler = async (
 
     const totalTime = Date.now() - startTime;
 
-    res.json({
+    const result = {
+      results: testResult.results.map((test, index) => ({
+        url: crawlResult.pages[index]?.url || test.url,
+        issues: test.violations,
+        screenshot: test.screenshot,
+        timestamp: test.timestamp,
+      })),
+      summary: {
+        totalIssues: testResult.results.reduce(
+          (sum, test) => sum + test.violations.length,
+          0
+        ),
+        totalUrls: crawlResult.pages.length,
+      },
       crawl: crawlResult,
       accessibility: testResult,
       totalTime,
-    });
+    };
+
+    // Check if AI processing is requested
+    const enableAI = req.body.enableAI === true;
+    const aiApiKey = req.body.aiApiKey || env.OPENAI_API_KEY;
+    const projectContext = req.body.projectContext;
+
+    if (enableAI && aiApiKey) {
+      const aiResult = await aiService.processCombinedResults(result, {
+        apiKey: aiApiKey,
+        includeExplanations: true,
+        includeRemediation: true,
+        projectContext,
+      });
+
+      res.json(aiResult);
+    } else {
+      res.json(result);
+    }
   } catch (error) {
     next(error);
   }

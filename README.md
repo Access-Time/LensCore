@@ -19,6 +19,7 @@
 
 - **🌐 Web Crawling**: Intelligent website crawling with configurable depth and rules
 - **♿ Accessibility Testing**: WCAG compliance testing powered by axe-core
+- **🤖 AI-Powered Analysis**: Plain language explanations and tech-stack specific remediation
 - **📸 Screenshot Capture**: Automatic screenshot capture for violations and pages
 - **💾 Flexible Storage**: Support for local, AWS S3, and Google Cloud Storage
 - **🔌 RESTful APIs**: Clean API endpoints for crawl, test, and combined operations
@@ -32,6 +33,7 @@
 - [Makefile Commands](#makefile-commands)
 - [Configuration](#️-configuration)
 - [API Documentation](#-api-documentation)
+- [AI Integration](#-ai-integration)
 - [License](#-license)
 
 ## ⚡ Quick Start
@@ -172,6 +174,18 @@ AXE_TIMEOUT=10000
 AXE_CONCURRENCY=5
 ```
 
+#### AI Processing Configuration (Optional)
+
+```env
+OPENAI_API_KEY=your-openai-api-key
+OPENAI_MODEL=gpt-3.5-turbo
+OPENAI_MAX_TOKENS=1000
+OPENAI_TEMPERATURE=0.7
+OPENAI_TIMEOUT=30000
+OPENAI_RETRY_ATTEMPTS=3
+OPENAI_RETRY_DELAY=1000
+```
+
 ## 📚 API Documentation
 
 ### Base URL
@@ -232,9 +246,12 @@ Crawl a website and discover all linked pages.
   "headers": {
     "User-Agent": "LensCore Bot"
   },
-  "auth": {
-    "username": "user",
-    "password": "pass"
+  "enableAI": true,
+  "projectContext": {
+    "framework": "React",
+    "cssFramework": "Tailwind CSS",
+    "language": "TypeScript",
+    "buildTool": "Vite"
   }
 }
 ```
@@ -247,7 +264,20 @@ Crawl a website and discover all linked pages.
 - `concurrency` (optional): Number of concurrent requests (default: 5)
 - `waitUntil` (optional): Page load condition (default: "domcontentloaded")
 - `headers` (optional): Custom HTTP headers
-- `auth` (optional): Basic authentication credentials
+- `enableAI` (optional): Enable AI processing for accessibility issues (default: false)
+- `projectContext` (optional): Structured project context for more precise AI analysis
+
+**Project Context Structure:**
+
+```json
+{
+  "framework": "React",
+  "cssFramework": "Tailwind CSS",
+  "language": "TypeScript",
+  "buildTool": "Vite",
+  "additionalContext": "Custom context"
+}
+```
 
 **Example:**
 
@@ -258,7 +288,13 @@ curl -X POST http://localhost:3001/api/crawl \
     "url": "https://example.com",
     "maxUrls": 10,
     "timeout": 10000,
-    "concurrency": 3
+    "concurrency": 3,
+    "enableAI": true,
+    "projectContext": {
+      "framework": "React",
+      "cssFramework": "Tailwind CSS",
+      "language": "TypeScript"
+    }
   }'
 ```
 
@@ -276,7 +312,21 @@ curl -X POST http://localhost:3001/api/crawl \
     }
   ],
   "totalPages": 1,
-  "crawlTime": 1500
+  "crawlTime": 1500,
+  "issues": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "description": "Elements must have sufficient color contrast",
+      "help": "Ensure all text elements have sufficient color contrast",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast",
+      "nodes": [...],
+      "aiExplanation": "This accessibility issue occurs when text doesn't have enough contrast against its background...",
+      "aiRemediation": "To fix this issue:\n1. Increase color contrast ratio...\n2. Use CSS: color: #000; background: #fff;"
+    }
+  ],
+  "aiEnabled": true,
+  "aiError": null
 }
 ```
 
@@ -296,7 +346,13 @@ Run accessibility tests on a single page using axe-core.
   "includeScreenshot": true,
   "timeout": 10000,
   "rules": ["color-contrast", "image-alt"],
-  "tags": ["wcag2aa", "wcag143"]
+  "tags": ["wcag2aa", "wcag143"],
+  "enableAI": true,
+  "projectContext": {
+    "framework": "Vue.js",
+    "cssFramework": "Bootstrap",
+    "language": "JavaScript"
+  }
 }
 ```
 
@@ -307,6 +363,20 @@ Run accessibility tests on a single page using axe-core.
 - `timeout` (optional): Test timeout in milliseconds (default: 10000)
 - `rules` (optional): Specific axe-core rules to test
 - `tags` (optional): WCAG tags to include in testing
+- `enableAI` (optional): Enable AI processing for accessibility issues (default: false)
+- `projectContext` (optional): Structured project context for more precise AI analysis
+
+**Project Context Structure:**
+
+```json
+{
+  "framework": "React",
+  "cssFramework": "Tailwind CSS",
+  "language": "TypeScript",
+  "buildTool": "Vite",
+  "additionalContext": "Custom context"
+}
+```
 
 **Example:**
 
@@ -316,7 +386,13 @@ curl -X POST http://localhost:3001/api/test \
   -d '{
     "url": "https://example.com",
     "includeScreenshot": true,
-    "timeout": 10000
+    "timeout": 10000,
+    "enableAI": true,
+    "projectContext": {
+      "framework": "Next.js",
+      "cssFramework": "Tailwind CSS",
+      "language": "TypeScript"
+    }
   }'
 ```
 
@@ -340,14 +416,18 @@ curl -X POST http://localhost:3001/api/test \
           "html": "<h1>Example Domain</h1>",
           "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.52 (foreground color: #000000, background color: #ffffff, font size: 32px, font weight: normal). Expected contrast ratio of at least 3:1"
         }
-      ]
+      ],
+      "aiExplanation": "This accessibility issue occurs when text doesn't have enough contrast against its background...",
+      "aiRemediation": "To fix this issue:\n1. Increase color contrast ratio...\n2. Use CSS: color: #000; background: #fff;"
     }
   ],
   "passes": [],
   "incomplete": [],
   "inapplicable": [],
   "screenshot": "https://storage.example.com/screenshots/uuid.png",
-  "timestamp": "2024-01-01T00:00:00.000Z"
+  "timestamp": "2024-01-01T00:00:00.000Z",
+  "aiEnabled": true,
+  "aiError": null
 }
 ```
 
@@ -446,6 +526,12 @@ Crawl a website and run accessibility tests on all discovered pages.
     "includeScreenshot": true,
     "timeout": 15000,
     "rules": ["color-contrast"]
+  },
+  "enableAI": true,
+  "projectContext": {
+    "framework": "Angular",
+    "cssFramework": "Material UI",
+    "language": "TypeScript"
   }
 }
 ```
@@ -455,6 +541,20 @@ Crawl a website and run accessibility tests on all discovered pages.
 - `url` (required): Target website URL
 - `crawlOptions` (optional): Crawling configuration (see crawl API)
 - `testOptions` (optional): Testing configuration (see test API)
+- `enableAI` (optional): Enable AI processing for accessibility issues (default: false)
+- `projectContext` (optional): Structured project context for more precise AI analysis
+
+**Project Context Structure:**
+
+```json
+{
+  "framework": "React",
+  "cssFramework": "Tailwind CSS",
+  "language": "TypeScript",
+  "buildTool": "Vite",
+  "additionalContext": "Custom context"
+}
+```
 
 **Example:**
 
@@ -470,6 +570,12 @@ curl -X POST http://localhost:3001/api/combined \
     "testOptions": {
       "includeScreenshot": true,
       "timeout": 15000
+    },
+    "enableAI": true,
+    "projectContext": {
+      "framework": "React",
+      "cssFramework": "Tailwind CSS",
+      "language": "TypeScript"
     }
   }'
 ```
@@ -496,12 +602,25 @@ curl -X POST http://localhost:3001/api/combined \
       {
         "url": "https://example.com",
         "score": 85,
-        "violations": [...],
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "description": "Elements must have sufficient color contrast",
+            "help": "Ensure all text elements have sufficient color contrast",
+            "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast",
+            "nodes": [...],
+            "aiExplanation": "This accessibility issue occurs when text doesn't have enough contrast...",
+            "aiRemediation": "To fix this issue:\n1. Increase color contrast ratio...\n2. Use CSS: color: #000; background: #fff;"
+          }
+        ],
         "passes": [],
         "incomplete": [],
         "inapplicable": [],
         "screenshot": "https://storage.example.com/screenshots/uuid.png",
-        "timestamp": "2024-01-01T00:00:00.000Z"
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "aiEnabled": true,
+        "aiError": null
       }
     ],
     "totalPages": 1,
@@ -509,6 +628,140 @@ curl -X POST http://localhost:3001/api/combined \
   },
   "totalTime": 18000
 }
+```
+
+---
+
+## 🤖 AI Integration
+
+LensCore includes optional AI-powered analysis for accessibility issues, providing plain language explanations and tech-stack specific remediation steps.
+
+### Features
+
+- **Plain Language Explanations**: Convert technical accessibility issues into easy-to-understand explanations
+- **Tech-Stack Specific Remediation**: Get specific, actionable steps tailored to your technology stack
+- **Dynamic Prompt Engineering**: Intelligent prompt generation based on project context
+- **Structured Response Parsing**: Consistent JSON response format with fallback handling
+- **Optional Processing**: AI processing is opt-in and doesn't affect existing functionality
+- **Cost Effective**: Only processes AI when explicitly requested
+
+### Usage
+
+**Project Context (Recommended):**
+
+```json
+{
+  "enableAI": true,
+  "projectContext": {
+    "framework": "React",
+    "cssFramework": "Tailwind CSS",
+    "language": "TypeScript",
+    "buildTool": "Vite"
+  }
+}
+```
+
+**Backward Compatibility (Tech Stack String):**
+
+```json
+{
+  "enableAI": true,
+  "projectContext": {
+    "additionalContext": "React, TypeScript, Tailwind CSS"
+  }
+}
+```
+
+### Response Fields
+
+When AI is enabled, responses include additional fields:
+
+- `aiExplanation`: Plain language explanation of the accessibility issue
+- `aiRemediation`: Specific steps to fix the issue with code examples
+- `aiEnabled`: Boolean indicating if AI processing was successful
+- `aiError`: Error message if AI processing failed
+
+### Configuration
+
+Set your OpenAI API key in environment variables:
+
+```env
+OPENAI_API_KEY=your-openai-api-key
+```
+
+### AI Prompt Engineering
+
+LensCore uses advanced prompt engineering to generate context-aware responses:
+
+**Automatic Tech Stack Detection:**
+
+- Framework: React, Vue.js, Angular, Svelte, Next.js, Nuxt.js
+- CSS Framework: Tailwind CSS, Bootstrap, Material UI, Chakra UI
+- Language: TypeScript, JavaScript
+- Build Tools: Webpack, Vite, Rollup, Parcel
+
+**Response Format:**
+
+```json
+{
+  "rule_id": "color-contrast",
+  "plain_explanation": "This text has insufficient contrast for users with visual impairments.",
+  "remediation": "Use Tailwind CSS classes like text-gray-800 or text-gray-900 for better contrast."
+}
+```
+
+**Fallback Handling:**
+
+- Automatic fallback responses if AI fails
+- Graceful degradation without breaking the API
+- Consistent response structure
+
+### Examples
+
+**Test with AI (Project Context):**
+
+```bash
+curl -X POST http://localhost:3001/api/test \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://example.com",
+    "enableAI": true,
+    "projectContext": {
+      "framework": "Vue.js",
+      "cssFramework": "Bootstrap",
+      "language": "JavaScript"
+    }
+  }'
+```
+
+**Test with AI (Backward Compatibility):**
+
+```bash
+curl -X POST http://localhost:3001/api/test \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://example.com",
+    "enableAI": true,
+    "projectContext": {
+      "additionalContext": "Vue.js, JavaScript, Bootstrap"
+    }
+  }'
+```
+
+**Combined with AI:**
+
+```bash
+curl -X POST http://localhost:3001/api/combined \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://example.com",
+    "enableAI": true,
+    "projectContext": {
+      "framework": "Next.js",
+      "cssFramework": "Tailwind CSS",
+      "language": "TypeScript"
+    }
+  }'
 ```
 
 ---
@@ -522,6 +775,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [axe-core](https://github.com/dequelabs/axe-core) for accessibility testing
 - [Puppeteer](https://github.com/puppeteer/puppeteer) for web automation
 - [Express.js](https://expressjs.com/) for the web framework
+- [OpenAI](https://openai.com/) for AI-powered accessibility analysis
 - [Docker](https://www.docker.com/) for containerization
 
 ---
