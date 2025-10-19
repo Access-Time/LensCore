@@ -280,9 +280,6 @@ Crawl a website and discover all linked pages.
   "timeout": 10000,
   "concurrency": 3,
   "waitUntil": "domcontentloaded",
-  "headers": {
-    "User-Agent": "LensCore Bot"
-  },
   "enableAI": true,
   "projectContext": {
     "framework": "React",
@@ -300,7 +297,6 @@ Crawl a website and discover all linked pages.
 - `timeout` (optional): Request timeout in milliseconds (default: 10000)
 - `concurrency` (optional): Number of concurrent requests (default: 5)
 - `waitUntil` (optional): Page load condition (default: "domcontentloaded")
-- `headers` (optional): Custom HTTP headers
 - `enableAI` (optional): Enable AI processing for accessibility issues (default: false)
 - `projectContext` (optional): Structured project context for more precise AI analysis
 
@@ -330,7 +326,8 @@ curl -X POST http://localhost:3001/api/crawl \
     "projectContext": {
       "framework": "React",
       "cssFramework": "Tailwind CSS",
-      "language": "TypeScript"
+      "language": "TypeScript",
+      "additionalContext": "Need to detail explanation"
     }
   }'
 ```
