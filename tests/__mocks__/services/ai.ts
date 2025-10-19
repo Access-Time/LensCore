@@ -1,4 +1,10 @@
-import { AccessibilityIssue, AIProcessingOptions, AIProcessingResult, AICrawlResult, CombinedResult } from '../../../src/types/ai';
+import {
+  AccessibilityIssue,
+  AIProcessingOptions,
+  AIProcessingResult,
+  AICrawlResult,
+  CombinedResult,
+} from '../../../src/types/ai';
 
 export class AIService {
   async initialize() {
@@ -16,16 +22,17 @@ export class AIService {
         metadata: {
           cacheHits: 0,
           cacheMisses: 0,
-          processingTime: 0
-        }
+          processingTime: 0,
+        },
       };
     }
 
-    const processedIssues = issues.map(issue => ({
+    const processedIssues = issues.map((issue) => ({
       ...issue,
       aiExplanation: 'Mock AI explanation for accessibility issue',
       aiRemediation: 'Mock remediation steps',
-      userStory: 'As a user, I want accessible content so that I can use the application effectively'
+      userStory:
+        'As a user, I want accessible content so that I can use the application effectively',
     }));
 
     return {
@@ -34,8 +41,8 @@ export class AIService {
       metadata: {
         cacheHits: 0,
         cacheMisses: 1,
-        processingTime: 100
-      }
+        processingTime: 100,
+      },
     };
   }
 
@@ -46,7 +53,7 @@ export class AIService {
     if (!crawlResults.issues || !Array.isArray(crawlResults.issues)) {
       return {
         ...crawlResults,
-        aiEnabled: false
+        aiEnabled: false,
       };
     }
 
@@ -59,7 +66,7 @@ export class AIService {
       ...crawlResults,
       issues: aiResult.issues,
       aiEnabled: aiResult.enabled,
-      aiError: aiResult.error
+      aiError: aiResult.error,
     };
   }
 
@@ -78,7 +85,7 @@ export class AIService {
             ...result,
             issues: aiResult.issues,
             aiEnabled: aiResult.enabled,
-            aiError: aiResult.error
+            aiError: aiResult.error,
           };
         }
         return result;
@@ -87,7 +94,7 @@ export class AIService {
 
     return {
       ...combinedResults,
-      results: processedResults
+      results: processedResults,
     };
   }
 }

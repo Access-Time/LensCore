@@ -1,5 +1,9 @@
 import { AIService } from '../../src/services/ai';
-import { AccessibilityIssue, AIProcessingOptions, AICrawlResult } from '../../src/types/ai';
+import {
+  AccessibilityIssue,
+  AIProcessingOptions,
+  AICrawlResult,
+} from '../../src/types/ai';
 
 jest.mock('../../src/services/cache', () => ({
   CacheService: {
@@ -9,9 +13,9 @@ jest.mock('../../src/services/cache', () => ({
       delete: jest.fn(),
       clear: jest.fn(),
       getStats: jest.fn(),
-      disconnect: jest.fn()
-    }))
-  }
+      disconnect: jest.fn(),
+    })),
+  },
 }));
 
 jest.mock('../../src/utils/ai-processor', () => ({
@@ -22,8 +26,8 @@ jest.mock('../../src/utils/ai-processor', () => ({
       metadata: {
         cacheHits: 0,
         cacheMisses: 1,
-        processingTime: 100
-      }
+        processingTime: 100,
+      },
     }),
     processAccessibilityIssuesWithoutAI: jest.fn().mockResolvedValue({
       enabled: false,
@@ -31,10 +35,10 @@ jest.mock('../../src/utils/ai-processor', () => ({
       metadata: {
         cacheHits: 0,
         cacheMisses: 0,
-        processingTime: 0
-      }
-    })
-  }))
+        processingTime: 0,
+      },
+    }),
+  })),
 }));
 
 describe('AIService', () => {
@@ -55,10 +59,11 @@ describe('AIService', () => {
         {
           target: ['h1'],
           html: '<h1>Low contrast text</h1>',
-          failureSummary: 'Fix any of the following: Element has insufficient color contrast'
-        }
-      ]
-    }
+          failureSummary:
+            'Fix any of the following: Element has insufficient color contrast',
+        },
+      ],
+    },
   ];
 
   describe('processAccessibilityIssues', () => {
@@ -66,10 +71,13 @@ describe('AIService', () => {
       const options: AIProcessingOptions = {
         apiKey: 'test-api-key',
         includeExplanations: true,
-        includeRemediation: true
+        includeRemediation: true,
       };
 
-      const result = await aiService.processAccessibilityIssues(mockIssues, options);
+      const result = await aiService.processAccessibilityIssues(
+        mockIssues,
+        options
+      );
 
       expect(result).toHaveProperty('enabled');
       expect(result).toHaveProperty('issues');
@@ -81,7 +89,10 @@ describe('AIService', () => {
     it('should process accessibility issues without AI when apiKey is not provided', async () => {
       const options: AIProcessingOptions = {};
 
-      const result = await aiService.processAccessibilityIssues(mockIssues, options);
+      const result = await aiService.processAccessibilityIssues(
+        mockIssues,
+        options
+      );
 
       expect(result).toHaveProperty('enabled');
       expect(result).toHaveProperty('issues');
@@ -104,11 +115,11 @@ describe('AIService', () => {
       const crawlResults = {
         issues: mockIssues,
         url: 'https://example.com',
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       const options: AIProcessingOptions = {
-        apiKey: 'test-api-key'
+        apiKey: 'test-api-key',
       };
 
       const result = await aiService.processCrawlResults(crawlResults, options);
@@ -124,7 +135,7 @@ describe('AIService', () => {
       const crawlResults = {
         issues: [],
         url: 'https://example.com',
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       const result = await aiService.processCrawlResults(crawlResults);
@@ -139,7 +150,7 @@ describe('AIService', () => {
       const crawlResults = {
         issues: 'invalid-issues' as unknown as AccessibilityIssue[],
         url: 'https://example.com',
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       const result = await aiService.processCrawlResults(crawlResults);
@@ -156,25 +167,28 @@ describe('AIService', () => {
           {
             issues: mockIssues,
             url: 'https://example.com/page1',
-            timestamp: new Date()
+            timestamp: new Date(),
           },
           {
             issues: mockIssues,
             url: 'https://example.com/page2',
-            timestamp: new Date()
-          }
+            timestamp: new Date(),
+          },
         ],
         summary: {
           totalIssues: 2,
-          totalUrls: 2
-        }
+          totalUrls: 2,
+        },
       };
 
       const options: AIProcessingOptions = {
-        apiKey: 'test-api-key'
+        apiKey: 'test-api-key',
       };
 
-      const result = await aiService.processCombinedResults(combinedResults, options);
+      const result = await aiService.processCombinedResults(
+        combinedResults,
+        options
+      );
 
       expect(result).toHaveProperty('results');
       expect(result).toHaveProperty('summary');
@@ -187,8 +201,8 @@ describe('AIService', () => {
         results: [],
         summary: {
           totalIssues: 0,
-          totalUrls: 0
-        }
+          totalUrls: 0,
+        },
       };
 
       const result = await aiService.processCombinedResults(combinedResults);
@@ -202,8 +216,8 @@ describe('AIService', () => {
         results: 'invalid-results' as unknown as AICrawlResult[],
         summary: {
           totalIssues: 0,
-          totalUrls: 0
-        }
+          totalUrls: 0,
+        },
       };
 
       const result = await aiService.processCombinedResults(combinedResults);
@@ -218,14 +232,14 @@ describe('AIService', () => {
           {
             issues: mockIssues,
             url: 'https://example.com/page1',
-            timestamp: new Date()
+            timestamp: new Date(),
           },
           {
             issues: [],
             url: 'https://example.com/page2',
-            timestamp: new Date()
-          }
-        ]
+            timestamp: new Date(),
+          },
+        ],
       };
 
       const result = await aiService.processCombinedResults(combinedResults);

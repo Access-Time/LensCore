@@ -1,4 +1,9 @@
-import { CacheConfig, CacheKey, CacheEntry, CacheStats } from '../../../src/types/cache';
+import {
+  CacheConfig,
+  CacheKey,
+  CacheEntry,
+  CacheStats,
+} from '../../../src/types/cache';
 
 export class CacheService {
   private static instance: CacheService | null = null;
@@ -14,7 +19,9 @@ export class CacheService {
       CacheService.instance = new CacheService(config);
     }
     if (!CacheService.instance) {
-      throw new Error('CacheService not initialized. Call getInstance with config first.');
+      throw new Error(
+        'CacheService not initialized. Call getInstance with config first.'
+      );
     }
     return CacheService.instance;
   }
@@ -22,7 +29,7 @@ export class CacheService {
   async get(cacheKey: CacheKey): Promise<CacheEntry | null> {
     const key = this.generateKey(cacheKey);
     const entry = this.mockCache.get(key);
-    
+
     if (!entry) {
       this.mockStats.misses++;
       return null;
@@ -44,7 +51,7 @@ export class CacheService {
       key,
       value,
       timestamp: Date.now(),
-      ttl: 3600
+      ttl: 3600,
     };
     this.mockCache.set(key, entry);
   }
@@ -65,7 +72,7 @@ export class CacheService {
       hits: this.mockStats.hits,
       misses: this.mockStats.misses,
       size: this.mockCache.size,
-      hitRate: total > 0 ? this.mockStats.hits / total : 0
+      hitRate: total > 0 ? this.mockStats.hits / total : 0,
     };
   }
 
@@ -87,7 +94,7 @@ export class CacheService {
       projectContext.cssFramework,
       projectContext.language,
       projectContext.buildTool,
-      projectContext.additionalContext
+      projectContext.additionalContext,
     ].filter(Boolean);
     const contextString = contextParts.join('|');
     return `${ruleId}|${contextString}`;

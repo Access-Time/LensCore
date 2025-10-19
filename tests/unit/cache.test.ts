@@ -1,4 +1,9 @@
-import { CacheService, MemoryCacheBackend, FilesystemCacheBackend, RedisCacheBackend } from '../../src/services/cache';
+import {
+  CacheService,
+  MemoryCacheBackend,
+  FilesystemCacheBackend,
+  RedisCacheBackend,
+} from '../../src/services/cache';
 import { CacheConfig, CacheKey, CacheEntry } from '../../src/types/cache';
 
 jest.mock('fs', () => ({
@@ -7,8 +12,8 @@ jest.mock('fs', () => ({
     writeFile: jest.fn(),
     mkdir: jest.fn(),
     unlink: jest.fn(),
-    readdir: jest.fn()
-  }
+    readdir: jest.fn(),
+  },
 }));
 
 jest.mock('ioredis', () => {
@@ -18,7 +23,7 @@ jest.mock('ioredis', () => {
     setex: jest.fn(),
     del: jest.fn(),
     keys: jest.fn(),
-    disconnect: jest.fn().mockResolvedValue(undefined)
+    disconnect: jest.fn().mockResolvedValue(undefined),
   }));
 });
 
@@ -26,7 +31,7 @@ describe('CacheService', () => {
   let cacheService: CacheService;
   const mockConfig: CacheConfig = {
     type: 'memory',
-    ttl: 3600
+    ttl: 3600,
   };
 
   beforeEach(() => {
@@ -43,14 +48,14 @@ describe('CacheService', () => {
     projectContext: {
       framework: 'react',
       cssFramework: 'tailwind',
-      language: 'typescript'
-    }
+      language: 'typescript',
+    },
   };
 
   const mockCacheValue = {
     rule_id: 'color-contrast',
     plain_explanation: 'Test explanation',
-    remediation: 'Test remediation'
+    remediation: 'Test remediation',
   };
 
   describe('getInstance', () => {
@@ -77,7 +82,7 @@ describe('CacheService', () => {
     it('should return null for non-existent key', async () => {
       const nonExistentKey: CacheKey = {
         ruleId: 'non-existent',
-        projectContext: {}
+        projectContext: {},
       };
 
       const result = await cacheService.get(nonExistentKey);
@@ -103,9 +108,9 @@ describe('CacheService', () => {
     it('should return cache stats', async () => {
       await cacheService.set(mockCacheKey, mockCacheValue);
       await cacheService.get(mockCacheKey);
-      
+
       const stats = await cacheService.getStats();
-      
+
       expect(stats).toHaveProperty('hits');
       expect(stats).toHaveProperty('misses');
       expect(stats).toHaveProperty('size');
@@ -129,12 +134,12 @@ describe('CacheService', () => {
     it('should generate different keys for different contexts', async () => {
       const key1: CacheKey = {
         ruleId: 'color-contrast',
-        projectContext: { framework: 'react' }
+        projectContext: { framework: 'react' },
       };
 
       const key2: CacheKey = {
         ruleId: 'color-contrast',
-        projectContext: { framework: 'vue' }
+        projectContext: { framework: 'vue' },
       };
 
       await cacheService.set(key1, mockCacheValue);
@@ -155,9 +160,13 @@ describe('MemoryCacheBackend', () => {
   it('should handle cache expiration', async () => {
     const entry: CacheEntry = {
       key: 'test-key',
-      value: { rule_id: 'test', plain_explanation: 'test', remediation: 'test' },
+      value: {
+        rule_id: 'test',
+        plain_explanation: 'test',
+        remediation: 'test',
+      },
       timestamp: Date.now() - 4000000,
-      ttl: 1
+      ttl: 1,
     };
 
     await backend.set('test-key', entry, 1);
@@ -169,9 +178,13 @@ describe('MemoryCacheBackend', () => {
   it('should track cache hits and misses', async () => {
     const entry: CacheEntry = {
       key: 'test-key',
-      value: { rule_id: 'test', plain_explanation: 'test', remediation: 'test' },
+      value: {
+        rule_id: 'test',
+        plain_explanation: 'test',
+        remediation: 'test',
+      },
       timestamp: Date.now(),
-      ttl: 3600
+      ttl: 3600,
     };
 
     await backend.set('test-key', entry, 3600);
@@ -194,8 +207,10 @@ describe('FilesystemCacheBackend', () => {
 
   it('should generate file paths correctly', () => {
     const key = 'test-key';
-    const filePath = (backend as unknown as { getFilePath: (key: string) => string }).getFilePath(key);
-    
+    const filePath = (
+      backend as unknown as { getFilePath: (key: string) => string }
+    ).getFilePath(key);
+
     expect(filePath).toMatch(/^\/tmp\/test-cache\/.*\.json$/);
   });
 
@@ -213,9 +228,13 @@ describe('FilesystemCacheBackend', () => {
 
     const entry: CacheEntry = {
       key: 'test-key',
-      value: { rule_id: 'test', plain_explanation: 'test', remediation: 'test' },
+      value: {
+        rule_id: 'test',
+        plain_explanation: 'test',
+        remediation: 'test',
+      },
       timestamp: Date.now(),
-      ttl: 3600
+      ttl: 3600,
     };
 
     await expect(backend.set('test-key', entry, 3600)).resolves.not.toThrow();
@@ -231,7 +250,7 @@ describe('RedisCacheBackend', () => {
     mockRedis = new Redis();
     backend = new RedisCacheBackend({
       host: 'localhost',
-      port: 6379
+      port: 6379,
     });
   });
 
@@ -243,40 +262,54 @@ describe('RedisCacheBackend', () => {
   });
 
   it('should handle Redis connection errors', async () => {
-    (mockRedis as { get: jest.Mock }).get.mockRejectedValueOnce(new Error('Connection failed'));
-    
+    (mockRedis as { get: jest.Mock }).get.mockRejectedValueOnce(
+      new Error('Connection failed')
+    );
+
     const result = await backend.get('test-key');
     expect(result).toBeNull();
   });
 
   it('should handle Redis set errors', async () => {
-    (mockRedis as { setex: jest.Mock }).setex.mockRejectedValueOnce(new Error('Connection failed'));
-    
+    (mockRedis as { setex: jest.Mock }).setex.mockRejectedValueOnce(
+      new Error('Connection failed')
+    );
+
     const entry: CacheEntry = {
       key: 'test-key',
-      value: { rule_id: 'test', plain_explanation: 'test', remediation: 'test' },
+      value: {
+        rule_id: 'test',
+        plain_explanation: 'test',
+        remediation: 'test',
+      },
       timestamp: Date.now(),
-      ttl: 3600
+      ttl: 3600,
     };
 
     await expect(backend.set('test-key', entry, 3600)).resolves.not.toThrow();
   });
 
   it('should handle Redis delete errors', async () => {
-    (mockRedis as { del: jest.Mock }).del.mockRejectedValueOnce(new Error('Connection failed'));
-    
+    (mockRedis as { del: jest.Mock }).del.mockRejectedValueOnce(
+      new Error('Connection failed')
+    );
+
     await expect(backend.delete('test-key')).resolves.not.toThrow();
   });
 
   it('should handle Redis clear errors', async () => {
-    (mockRedis as { keys: jest.Mock }).keys.mockRejectedValueOnce(new Error('Connection failed'));
-    
+    (mockRedis as { keys: jest.Mock }).keys.mockRejectedValueOnce(
+      new Error('Connection failed')
+    );
+
     await expect(backend.clear()).resolves.not.toThrow();
   });
 
   it('should handle Redis stats errors', async () => {
-    (mockRedis as { keys: jest.Mock }).keys.mockRejectedValueOnce(new Error('Connection failed'));
-    
+    (mockRedis as { keys: jest.Mock }).keys.mockRejectedValueOnce(
+      new Error('Connection failed')
+    );
+
     const stats = await backend.getStats();
     expect(stats).toEqual({ hits: 0, misses: 0, size: 0, hitRate: 0 });
   });
