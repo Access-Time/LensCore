@@ -226,6 +226,9 @@ REDIS_DB=0                # Redis database
 
 ## 📚 API Documentation
 
+<details>
+<summary><strong>Base URL & Response Format</strong></summary>
+
 ### Base URL
 
 ```
@@ -236,9 +239,12 @@ http://localhost:3001/api
 
 All API responses follow a consistent JSON format with appropriate HTTP status codes.
 
+</details>
+
 ---
 
-### 🏥 Health Check
+<details>
+<summary><strong>🏥 Health Check</strong></summary>
 
 Check the health status of all services.
 
@@ -264,9 +270,12 @@ curl http://localhost:3001/api/health
 }
 ```
 
+</details>
+
 ---
 
-### 🕷️ Crawl Website
+<details>
+<summary><strong>🕷️ Crawl Website</strong></summary>
 
 Crawl a website and discover all linked pages.
 
@@ -397,9 +406,12 @@ curl -X POST http://localhost:3001/api/crawl \
 }
 ```
 
+</details>
+
 ---
 
-### ♿ Test Accessibility
+<details>
+<summary><strong>♿ Test Accessibility</strong></summary>
 
 Run accessibility tests on a single page using axe-core.
 
@@ -499,9 +511,12 @@ curl -X POST http://localhost:3001/api/test \
 }
 ```
 
+</details>
+
 ---
 
-### 🔄 Test Multiple Pages
+<details>
+<summary><strong>🔄 Test Multiple Pages</strong></summary>
 
 Run accessibility tests on multiple pages simultaneously.
 
@@ -572,9 +587,12 @@ curl -X POST http://localhost:3001/api/test-multiple \
 }
 ```
 
+</details>
+
 ---
 
-### 🚀 Combined Crawl and Test
+<details>
+<summary><strong>🚀 Combined Crawl and Test</strong></summary>
 
 Crawl a website and run accessibility tests on all discovered pages.
 
@@ -698,13 +716,17 @@ curl -X POST http://localhost:3001/api/combined \
 }
 ```
 
+</details>
+
 ---
 
-### 🗄️ Cache Management
+<details>
+<summary><strong>🗄️ Cache Management</strong></summary>
 
 Manage the intelligent caching system for AI responses.
 
-#### Get Cache Statistics
+<details>
+<summary><strong>Get Cache Statistics</strong></summary>
 
 **Endpoint:** `GET /api/cache/stats`
 
@@ -728,7 +750,10 @@ curl http://localhost:3001/api/cache/stats
 }
 ```
 
-#### Clear Cache
+</details>
+
+<details>
+<summary><strong>Clear Cache</strong></summary>
 
 **Endpoint:** `DELETE /api/cache/clear`
 
@@ -746,6 +771,10 @@ curl -X DELETE http://localhost:3001/api/cache/clear
   "message": "Cache cleared successfully"
 }
 ```
+
+</details>
+
+</details>
 
 ---
 
