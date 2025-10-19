@@ -281,9 +281,6 @@ Crawl a website and discover all linked pages.
   "timeout": 10000,
   "concurrency": 3,
   "waitUntil": "domcontentloaded",
-  "headers": {
-    "Authorization": "Bearer token"
-  },
   "rules": {
     "include_subdomains": true,
     "follow_external": false,
@@ -292,7 +289,6 @@ Crawl a website and discover all linked pages.
     "respect_robots": true
   },
   "enableAI": true,
-  "aiApiKey": "sk-your-openai-key",
   "projectContext": {
     "framework": "React",
     "cssFramework": "Tailwind CSS",
@@ -310,7 +306,6 @@ Crawl a website and discover all linked pages.
 - `timeout` (optional): Request timeout in milliseconds (default: 10000)
 - `concurrency` (optional): Number of concurrent requests (default: 5)
 - `waitUntil` (optional): Page load condition (default: "domcontentloaded")
-- `headers` (optional): Custom HTTP headers for requests
 - `rules` (optional): Crawling rules configuration
 - `enableAI` (optional): Enable AI processing for accessibility issues (default: false)
 - `projectContext` (optional): Structured project context for more precise AI analysis
