@@ -1,6 +1,6 @@
 export interface CacheConfig {
   type: 'memory' | 'redis' | 'filesystem';
-  ttl: number; 
+  ttl: number;
   maxSize?: number;
   redis?: {
     host: string;

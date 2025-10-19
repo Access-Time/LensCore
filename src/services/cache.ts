@@ -9,6 +9,7 @@ export abstract class CacheBackend {
   abstract delete(key: string): Promise<void>;
   abstract clear(): Promise<void>;
   abstract getStats(): Promise<CacheStats>;
+  abstract disconnect?(): Promise<void>;
 }
 
 export class MemoryCacheBackend extends CacheBackend {
@@ -54,6 +55,10 @@ export class MemoryCacheBackend extends CacheBackend {
       size: this.cache.size,
       hitRate: total > 0 ? this.stats.hits / total : 0,
     };
+  }
+
+  async disconnect(): Promise<void> {
+    // No-op for memory cache
   }
 }
 
@@ -134,6 +139,10 @@ export class FilesystemCacheBackend extends CacheBackend {
       logger.error('Failed to get stats', { error });
       return { hits: 0, misses: 0, size: 0, hitRate: 0 };
     }
+  }
+
+  async disconnect(): Promise<void> {
+    // No-op for filesystem cache
   }
 }
 
@@ -242,6 +251,18 @@ export class RedisCacheBackend extends CacheBackend {
       return { hits: 0, misses: 0, size: 0, hitRate: 0 };
     }
   }
+
+  async disconnect(): Promise<void> {
+    if (this.redis && this.connected) {
+      try {
+        await this.redis.disconnect();
+        this.connected = false;
+        logger.info('Redis cache disconnected');
+      } catch (error) {
+        logger.error('Failed to disconnect Redis', { error });
+      }
+    }
+  }
 }
 
 export class CacheService {
@@ -259,7 +280,9 @@ export class CacheService {
       CacheService.instance = new CacheService(config);
     }
     if (!CacheService.instance) {
-      throw new Error('CacheService not initialized. Call getInstance with config first.');
+      throw new Error(
+        'CacheService not initialized. Call getInstance with config first.'
+      );
     }
     return CacheService.instance;
   }
@@ -324,5 +347,18 @@ export class CacheService {
 
   async getStats(): Promise<CacheStats> {
     return await this.backend.getStats();
+  }
+
+  async disconnect(): Promise<void> {
+    if (this.backend.disconnect) {
+      await this.backend.disconnect();
+    }
+  }
+
+  static async cleanup(): Promise<void> {
+    if (CacheService.instance) {
+      await CacheService.instance.disconnect();
+      CacheService.instance = null;
+    }
   }
 }

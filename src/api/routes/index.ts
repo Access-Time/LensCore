@@ -3,10 +3,7 @@ import { crawlHandler } from './crawl';
 import { testHandler, testMultipleHandler } from './accessibility';
 import { combinedHandler } from './combined';
 import { healthHandler } from './health';
-import {
-  cacheStatsHandler,
-  cacheClearHandler
-} from './cache';
+import { cacheStatsHandler, cacheClearHandler } from './cache';
 
 export const setupRoutes = (app: Express) => {
   app.post('/api/crawl', crawlHandler);
