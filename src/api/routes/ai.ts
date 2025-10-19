@@ -7,16 +7,20 @@ const router = Router();
 
 const aiRequestSchema = z.object({
   apiKey: z.string().min(1, 'API key is required'),
-  messages: z.array(z.object({
-    role: z.enum(['system', 'user', 'assistant']),
-    content: z.string().min(1, 'Message content is required'),
-  })).min(1, 'At least one message is required'),
+  messages: z
+    .array(
+      z.object({
+        role: z.enum(['system', 'user', 'assistant']),
+        content: z.string().min(1, 'Message content is required'),
+      })
+    )
+    .min(1, 'At least one message is required'),
 });
 
 router.post('/process', async (req, res) => {
   try {
     const validatedData = aiRequestSchema.parse(req.body);
-    
+
     logger.info('AI processing request received', {
       messageCount: validatedData.messages.length,
       hasApiKey: !!validatedData.apiKey,

@@ -27,7 +27,7 @@ export class OpenAIService {
 
   constructor(options: OpenAIOptions) {
     this.config = { ...defaultOpenAIConfig, ...options.config };
-    
+
     this.client = new OpenAI({
       apiKey: options.apiKey,
       timeout: this.config.timeout,
@@ -39,13 +39,16 @@ export class OpenAIService {
     options?: Partial<OpenAIConfig>
   ): Promise<OpenAIResponse> {
     const config = { ...this.config, ...options };
-    
+
     for (let attempt = 1; attempt <= config.retryAttempts; attempt++) {
       try {
-        logger.info(`OpenAI request attempt ${attempt}/${config.retryAttempts}`, {
-          model: config.model,
-          messageCount: messages.length,
-        });
+        logger.info(
+          `OpenAI request attempt ${attempt}/${config.retryAttempts}`,
+          {
+            model: config.model,
+            messageCount: messages.length,
+          }
+        );
 
         const response = await this.client.chat.completions.create({
           model: config.model,
@@ -66,22 +69,24 @@ export class OpenAIService {
 
         return {
           content,
-          usage: response.usage ? {
-            promptTokens: response.usage.prompt_tokens,
-            completionTokens: response.usage.completion_tokens,
-            totalTokens: response.usage.total_tokens,
-          } : undefined,
+          usage: response.usage
+            ? {
+                promptTokens: response.usage.prompt_tokens,
+                completionTokens: response.usage.completion_tokens,
+                totalTokens: response.usage.total_tokens,
+              }
+            : undefined,
         };
       } catch (error) {
         const isLastAttempt = attempt === config.retryAttempts;
-        
+
         if (this.isRetryableError(error) && !isLastAttempt) {
           const delay = config.retryDelay * Math.pow(2, attempt - 1);
           logger.warn(`OpenAI request failed, retrying in ${delay}ms`, {
             attempt,
             error: error instanceof Error ? error.message : 'Unknown error',
           });
-          
+
           await this.sleep(delay);
           continue;
         }
@@ -101,7 +106,7 @@ export class OpenAIService {
 
   private isRetryableError(error: unknown): boolean {
     if (!(error instanceof Error)) return false;
-    
+
     const retryableErrors = [
       'rate_limit_exceeded',
       'server_error',
@@ -111,7 +116,7 @@ export class OpenAIService {
       'ETIMEDOUT',
     ];
 
-    return retryableErrors.some(retryableError => 
+    return retryableErrors.some((retryableError) =>
       error.message.toLowerCase().includes(retryableError)
     );
   }
@@ -121,27 +126,27 @@ export class OpenAIService {
       if (error.message.includes('rate_limit_exceeded')) {
         return new Error('OpenAI rate limit exceeded. Please try again later.');
       }
-      
+
       if (error.message.includes('invalid_api_key')) {
         return new Error('Invalid OpenAI API key provided.');
       }
-      
+
       if (error.message.includes('insufficient_quota')) {
         return new Error('OpenAI API quota exceeded.');
       }
-      
+
       if (error.message.includes('timeout')) {
         return new Error('OpenAI request timed out.');
       }
-      
+
       return new Error(`OpenAI API error: ${error.message}`);
     }
-    
+
     return new Error('Unknown OpenAI API error');
   }
 
   private sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   isEnabled(): boolean {

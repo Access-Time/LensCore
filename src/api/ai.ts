@@ -17,7 +17,9 @@ export interface AIProcessingResponse {
   error?: string;
 }
 
-async function processWithAI(request: AIProcessingRequest): Promise<AIProcessingResponse> {
+async function processWithAI(
+  request: AIProcessingRequest
+): Promise<AIProcessingResponse> {
   const { apiKey, messages } = request;
 
   if (!isAIEnabled(apiKey)) {
@@ -28,7 +30,7 @@ async function processWithAI(request: AIProcessingRequest): Promise<AIProcessing
 
   try {
     const openaiService = createOpenAIService(apiKey);
-    
+
     if (!openaiService) {
       return {
         enabled: false,
