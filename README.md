@@ -124,20 +124,21 @@ For production deployments with Redis caching:
 Common tasks:
 
 ```bash
-make install     # Install dependencies
-make dev         # Run development server
-make build       # Build for production
-make start       # Run production server
-make test        # Run all tests
-make lint        # Run ESLint
-make fmt         # Format code with Prettier
-make typecheck   # TypeScript type checking
+make install      # Install dependencies
+make dev          # Run development server
+make build        # Build for production
+make start        # Run production server
+make test         # Run all tests
+make lint         # Run ESLint
+make fmt          # Format code with Prettier
+make typecheck    # TypeScript type checking
 
-make up          # Start services with Docker Compose
-make down        # Stop services with Docker Compose
-make logs        # Tail Docker Compose logs
+make build-docker # Build Docker image
+make up           # Start services with Docker Compose
+make down         # Stop services with Docker Compose
+make logs         # Tail Docker Compose logs
 
-make env         # Print key env variables from .env
+make env          # Print key env variables from .env
 ```
 
 ## ⚙️ Configuration

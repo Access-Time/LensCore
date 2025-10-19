@@ -1,6 +1,6 @@
 # LensCore - Minimal Makefile
 
-.PHONY: help install dev build start test lint fmt typecheck clean up down logs env
+.PHONY: help install dev build start test lint fmt typecheck clean build-docker up down logs env env-all cache-status
 
 help: ## Show available commands
 	@echo "LensCore - Available commands"
@@ -33,6 +33,9 @@ typecheck: ## Run TypeScript type checking
 clean: ## Remove build and coverage outputs
 	rm -rf dist/ coverage/
 
+build-docker: ## Build Docker image
+	docker-compose up -d --build
+
 up: ## Start services with Docker Compose
 	docker-compose up -d
 
@@ -46,4 +49,12 @@ env: ## Print important env variables from .env (if present)
 	@/bin/sh -c 'set -a; [ -f .env ] && . ./.env; set +a; \
 	echo "NODE_ENV: $$NODE_ENV"; \
 	echo "PORT: $$PORT"; \
-	echo "STORAGE_TYPE: $$STORAGE_TYPE";'}
+	echo "STORAGE_TYPE: $$STORAGE_TYPE";'
+
+env-all: ## Print all environment variables from .env file
+	@if [ -f .env ]; then \
+		echo "=== Environment Variables from .env ==="; \
+		cat .env | grep -v '^#' | grep -v '^$$' | sort; \
+	else \
+		echo "No .env file found"; \
+	fi
