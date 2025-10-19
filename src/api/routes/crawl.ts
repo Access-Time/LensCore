@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { CrawlingService } from '../../services/crawling';
+import { aiService } from '../../services/ai';
 import { crawlRequestSchema } from '../schemas';
+import { env } from '../../utils/env';
 
 const crawlingService = new CrawlingService();
 
@@ -11,8 +13,32 @@ export const crawlHandler = async (
 ) => {
   try {
     const request = crawlRequestSchema.parse(req.body);
-    const result = await crawlingService.crawlWebsite(request);
-    res.json(result);
+    const crawlResult = await crawlingService.crawlWebsite(request);
+    
+    // Check if AI processing is requested
+    const enableAI = req.body.enableAI === true;
+    const aiApiKey = req.body.aiApiKey || env.OPENAI_API_KEY;
+    const techStack = req.body.techStack;
+    
+    if (enableAI && aiApiKey) {
+      const crawlData = {
+        issues: [],
+        url: request.url,
+        timestamp: new Date(),
+        ...crawlResult,
+      };
+      
+      const aiResult = await aiService.processCrawlResults(crawlData, {
+        apiKey: aiApiKey,
+        includeExplanations: true,
+        includeRemediation: true,
+        techStack,
+      });
+      
+      res.json(aiResult);
+    } else {
+      res.json(crawlResult);
+    }
   } catch (error) {
     next(error);
   }
