@@ -4,34 +4,26 @@ services:
   lenscore:
     build: .
     ports:
-      - '${PORT:-3001}:${PORT:-3001}'
-    env_file:
-      - .env
+      - '3001:3001'
     environment:
-      - NODE_ENV=${NODE_ENV:-production}
-      - PORT=${PORT:-3001}
-      - STORAGE_TYPE=${STORAGE_TYPE:-local}
-      - STORAGE_PATH=${STORAGE_PATH:-/app/storage}
-      - CRAWL_TIMEOUT=${CRAWL_TIMEOUT:-10000}
-      - CRAWL_CONCURRENCY=${CRAWL_CONCURRENCY:-5}
-      - CRAWL_MAX_URLS=${CRAWL_MAX_URLS:-25}
-      - AXE_TIMEOUT=${AXE_TIMEOUT:-10000}
-      - AXE_CONCURRENCY=${AXE_CONCURRENCY:-5}
-      - LOG_LEVEL=${LOG_LEVEL:-info}
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - AWS_REGION=${AWS_REGION:-us-east-1}
-      - AWS_S3_BUCKET=${AWS_S3_BUCKET}
-      - GCS_PROJECT_ID=${GCS_PROJECT_ID}
-      - GCS_KEY_FILE_PATH=${GCS_KEY_FILE_PATH}
-      - GCS_BUCKET_NAME=${GCS_BUCKET_NAME}
+      - NODE_ENV=production
+      - PORT=3001
+      - CACHE_TYPE=redis
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - redis
     volumes:
-      - ./storage:/app/storage
       - ./logs:/app/logs
-    restart: unless-stopped
-    healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:${PORT:-3001}/api/health']
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+      - ./cache:/app/cache
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
+volumes:
+  redis_data:

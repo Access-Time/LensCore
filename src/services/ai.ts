@@ -1,4 +1,6 @@
 import { AIProcessor } from '../utils/ai-processor';
+import { CacheService } from './cache';
+import { createCacheConfig } from '../config/cache';
 import {
   AccessibilityIssue,
   AIProcessingOptions,
@@ -10,7 +12,9 @@ export class AIService {
   private processor: AIProcessor;
 
   constructor() {
-    this.processor = new AIProcessor();
+    const cacheConfig = createCacheConfig();
+    const cacheService = CacheService.getInstance(cacheConfig);
+    this.processor = new AIProcessor(cacheService);
   }
 
   async processAccessibilityIssues(

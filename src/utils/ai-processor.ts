@@ -1,6 +1,8 @@
 import { createOpenAIService, isAIEnabled } from './openai';
 import { OpenAIMessage } from '../services/openai';
 import { AIPromptEngine, AIResponse } from './ai-prompts';
+import { CacheService } from '../services/cache';
+import { CacheKey } from '../types/cache';
 import {
   AccessibilityIssue,
   AIProcessingOptions,
@@ -10,6 +12,12 @@ import {
 import logger from './logger';
 
 export class AIProcessor {
+  private cacheService: CacheService;
+
+  constructor(cacheService: CacheService) {
+    this.cacheService = cacheService;
+  }
+
   async processAccessibilityIssues(
     issues: AccessibilityIssue[],
     options: AIProcessingOptions = {}
@@ -45,7 +53,7 @@ export class AIProcessor {
         const processedIssue: AIProcessedIssue = { ...issue };
 
         try {
-          const aiResponse = await this.processIssueWithAI(
+          const aiResponse = await this.processIssueWithCache(
             openaiService,
             issue,
             projectContext
@@ -97,7 +105,7 @@ export class AIProcessor {
     }
   }
 
-  private async processIssueWithAI(
+  private async processIssueWithCache(
     openaiService: {
       generateResponse: (
         messages: OpenAIMessage[]
@@ -112,6 +120,21 @@ export class AIProcessor {
       additionalContext?: string;
     }
   ): Promise<AIResponse> {
+    // Create cache key
+    const cacheKey: CacheKey = {
+      ruleId: issue.id,
+      projectContext: projectContext || {},
+    };
+
+    // Try to get from cache first
+    const cachedEntry = await this.cacheService.get(cacheKey);
+    if (cachedEntry) {
+      logger.info('Cache hit for AI response', { ruleId: issue.id });
+      return cachedEntry.value;
+    }
+
+    logger.info('Cache miss for AI response', { ruleId: issue.id });
+
     // Generate prompt using project context
     const messages = AIPromptEngine.generatePrompt(issue, projectContext);
 
@@ -119,6 +142,19 @@ export class AIProcessor {
     const response = await openaiService.generateResponse(messages);
 
     // Parse and validate response
-    return AIPromptEngine.parseResponse(response.content, issue.id);
+    const aiResponse = AIPromptEngine.parseResponse(response.content, issue.id);
+
+    // Cache the response
+    try {
+      await this.cacheService.set(cacheKey, aiResponse);
+      logger.info('Cached AI response', { ruleId: issue.id });
+    } catch (error) {
+      logger.warn('Failed to cache AI response', {
+        ruleId: issue.id,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+
+    return aiResponse;
   }
 }
