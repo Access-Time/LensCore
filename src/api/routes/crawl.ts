@@ -14,12 +14,11 @@ export const crawlHandler = async (
   try {
     const request = crawlRequestSchema.parse(req.body);
     const crawlResult = await crawlingService.crawlWebsite(request);
-    
-    // Check if AI processing is requested
+
     const enableAI = req.body.enableAI === true;
     const aiApiKey = req.body.aiApiKey || env.OPENAI_API_KEY;
     const techStack = req.body.techStack;
-    
+
     if (enableAI && aiApiKey) {
       const crawlData = {
         issues: [],
@@ -27,14 +26,14 @@ export const crawlHandler = async (
         timestamp: new Date(),
         ...crawlResult,
       };
-      
+
       const aiResult = await aiService.processCrawlResults(crawlData, {
         apiKey: aiApiKey,
         includeExplanations: true,
         includeRemediation: true,
         techStack,
       });
-      
+
       res.json(aiResult);
     } else {
       res.json(crawlResult);

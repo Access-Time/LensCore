@@ -15,19 +15,22 @@ export const testHandler = async (
   try {
     const request = accessibilityRequestSchema.parse(req.body);
     const testResult = await accessibilityService.testAccessibility(request);
-    
+
     const enableAI = req.body.enableAI === true;
     const aiApiKey = req.body.aiApiKey || env.OPENAI_API_KEY;
     const techStack = req.body.techStack;
-    
+
     if (enableAI && aiApiKey && testResult.violations) {
-      const aiResult = await aiService.processAccessibilityIssues(testResult.violations, {
-        apiKey: aiApiKey,
-        includeExplanations: true,
-        includeRemediation: true,
-        techStack,
-      });
-      
+      const aiResult = await aiService.processAccessibilityIssues(
+        testResult.violations,
+        {
+          apiKey: aiApiKey,
+          includeExplanations: true,
+          includeRemediation: true,
+          techStack,
+        }
+      );
+
       res.json({
         ...testResult,
         violations: aiResult.issues,
@@ -50,23 +53,25 @@ export const testMultipleHandler = async (
   try {
     const requests = z.array(accessibilityRequestSchema).parse(req.body);
     const testResult = await accessibilityService.testMultiplePages(requests);
-    
-    // Check if AI processing is requested
+
     const enableAI = req.body.enableAI === true;
     const aiApiKey = req.body.aiApiKey || env.OPENAI_API_KEY;
     const techStack = req.body.techStack;
-    
+
     if (enableAI && aiApiKey) {
       const processedResults = await Promise.all(
         testResult.results.map(async (result) => {
           if (result.violations && Array.isArray(result.violations)) {
-            const aiResult = await aiService.processAccessibilityIssues(result.violations, {
-              apiKey: aiApiKey,
-              includeExplanations: true,
-              includeRemediation: true,
-              techStack,
-            });
-            
+            const aiResult = await aiService.processAccessibilityIssues(
+              result.violations,
+              {
+                apiKey: aiApiKey,
+                includeExplanations: true,
+                includeRemediation: true,
+                techStack,
+              }
+            );
+
             return {
               ...result,
               violations: aiResult.issues,
@@ -77,7 +82,7 @@ export const testMultipleHandler = async (
           return result;
         })
       );
-      
+
       res.json({
         ...testResult,
         results: processedResults,

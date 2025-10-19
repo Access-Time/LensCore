@@ -54,7 +54,12 @@ export class AIService {
     issues: AccessibilityIssue[],
     options: AIProcessingOptions = {}
   ): Promise<AIProcessingResult> {
-    const { apiKey, includeExplanations = true, includeRemediation = true, techStack } = options;
+    const {
+      apiKey,
+      includeExplanations = true,
+      includeRemediation = true,
+      techStack,
+    } = options;
 
     if (!isAIEnabled(apiKey)) {
       return {
@@ -65,7 +70,7 @@ export class AIService {
 
     try {
       const openaiService = createOpenAIService(apiKey || '');
-      
+
       if (!openaiService) {
         return {
           enabled: false,
@@ -110,13 +115,18 @@ export class AIService {
       return {
         enabled: true,
         issues,
-        error: error instanceof Error ? error.message : 'Unknown error occurred',
+        error:
+          error instanceof Error ? error.message : 'Unknown error occurred',
       };
     }
   }
 
   private async generateExplanation(
-    openaiService: { generateResponse: (messages: OpenAIMessage[]) => Promise<{ content: string }> },
+    openaiService: {
+      generateResponse: (
+        messages: OpenAIMessage[]
+      ) => Promise<{ content: string }>;
+    },
     issue: AccessibilityIssue,
     techStack?: string
   ): Promise<string> {
@@ -144,7 +154,11 @@ Please provide a clear, concise explanation that helps developers understand why
   }
 
   private async generateRemediation(
-    openaiService: { generateResponse: (messages: OpenAIMessage[]) => Promise<{ content: string }> },
+    openaiService: {
+      generateResponse: (
+        messages: OpenAIMessage[]
+      ) => Promise<{ content: string }>;
+    },
     issue: AccessibilityIssue,
     techStack?: string
   ): Promise<string> {
@@ -183,7 +197,10 @@ Please provide specific, actionable steps to fix this issue. Include code exampl
       };
     }
 
-    const aiResult = await this.processAccessibilityIssues(crawlResults.issues, options);
+    const aiResult = await this.processAccessibilityIssues(
+      crawlResults.issues,
+      options
+    );
 
     return {
       ...crawlResults,
@@ -204,7 +221,10 @@ Please provide specific, actionable steps to fix this issue. Include code exampl
     const processedResults = await Promise.all(
       combinedResults.results.map(async (result: AICrawlResult) => {
         if (result.issues && Array.isArray(result.issues)) {
-          const aiResult = await this.processAccessibilityIssues(result.issues, options);
+          const aiResult = await this.processAccessibilityIssues(
+            result.issues,
+            options
+          );
           return {
             ...result,
             issues: aiResult.issues,

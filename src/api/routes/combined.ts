@@ -44,7 +44,10 @@ export const combinedHandler = async (
         timestamp: test.timestamp,
       })),
       summary: {
-        totalIssues: testResult.results.reduce((sum, test) => sum + test.violations.length, 0),
+        totalIssues: testResult.results.reduce(
+          (sum, test) => sum + test.violations.length,
+          0
+        ),
         totalUrls: crawlResult.pages.length,
       },
       crawl: crawlResult,
@@ -56,7 +59,7 @@ export const combinedHandler = async (
     const enableAI = req.body.enableAI === true;
     const aiApiKey = req.body.aiApiKey || env.OPENAI_API_KEY;
     const techStack = req.body.techStack;
-    
+
     if (enableAI && aiApiKey) {
       const aiResult = await aiService.processCombinedResults(result, {
         apiKey: aiApiKey,
@@ -64,7 +67,7 @@ export const combinedHandler = async (
         includeRemediation: true,
         techStack,
       });
-      
+
       res.json(aiResult);
     } else {
       res.json(result);
