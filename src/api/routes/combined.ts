@@ -36,38 +36,58 @@ export const combinedHandler = async (
 
     const totalTime = Date.now() - startTime;
 
-    const result = {
-      results: testResult.results.map((test, index) => ({
-        url: crawlResult.pages[index]?.url || test.url,
-        issues: test.violations,
-        screenshot: test.screenshot,
-        timestamp: test.timestamp,
-      })),
-      summary: {
-        totalIssues: testResult.results.reduce(
-          (sum, test) => sum + test.violations.length,
-          0
-        ),
-        totalUrls: crawlResult.pages.length,
-      },
-      crawl: crawlResult,
-      accessibility: testResult,
-      totalTime,
-    };
-
-    // Always process issues to add user stories (with or without AI)
     const enableAI = req.body.enableAI === true;
     const aiApiKey = req.body.aiApiKey || env.OPENAI_API_KEY;
     const projectContext = req.body.projectContext;
 
-    const aiResult = await aiService.processCombinedResults(result, {
-      apiKey: enableAI ? aiApiKey : undefined,
-      includeExplanations: enableAI,
-      includeRemediation: enableAI,
-      projectContext,
-    });
+    if (enableAI && !aiApiKey) {
+      res.status(400).json({
+        error: 'AI API key is required when enableAI is true',
+        message: 'Please provide aiApiKey in request body or set OPENAI_API_KEY environment variable'
+      });
+      return;
+    }
 
-    res.json(aiResult);
+    const processedResults = await Promise.all(
+      testResult.results.map(async (result) => {
+        if (result.violations && Array.isArray(result.violations)) {
+          const aiResult = await aiService.processAccessibilityIssues(
+            result.violations,
+            {
+              apiKey: enableAI ? aiApiKey : undefined,
+              includeExplanations: enableAI,
+              includeRemediation: enableAI,
+              projectContext,
+            }
+          );
+
+          return {
+            ...result,
+            violations: aiResult.issues,
+            aiEnabled: aiResult.enabled,
+            aiError: aiResult.error,
+            metadata: aiResult.metadata,
+          };
+        }
+        return result;
+      })
+    );
+
+    const result = {
+      crawl: {
+        pages: crawlResult.pages,
+        totalPages: crawlResult.totalPages,
+        crawlTime: crawlResult.crawlTime,
+      },
+      accessibility: {
+        results: processedResults,
+        totalPages: processedResults.length,
+        testTime: totalTime,
+      },
+      totalTime,
+    };
+
+    res.json(result);
   } catch (error) {
     next(error);
   }
