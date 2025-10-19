@@ -4,6 +4,7 @@ import { createCacheConfig } from '../config/cache';
 import {
   AccessibilityIssue,
   AIProcessingOptions,
+  AIProcessingResult,
   AICrawlResult,
   CombinedResult,
 } from '../types/ai';
@@ -20,7 +21,13 @@ export class AIService {
   async processAccessibilityIssues(
     issues: AccessibilityIssue[],
     options: AIProcessingOptions = {}
-  ) {
+  ): Promise<AIProcessingResult> {
+    const { apiKey } = options;
+
+    if (!apiKey) {
+      return this.processor.processAccessibilityIssuesWithoutAI(issues);
+    }
+
     return this.processor.processAccessibilityIssues(issues, options);
   }
 

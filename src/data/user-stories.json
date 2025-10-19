@@ -1,0 +1,95 @@
+{
+  "color-contrast": [
+    "Users with low vision may not be able to read this text, making it difficult for them to understand important information. Low color contrast can cause headaches or eye strain for users with visual sensitivity. Users who use screen readers with voice synthesis may have difficulty distinguishing elements with low contrast."
+  ],
+  "image-alt": [
+    "Blind users who use screen readers will not receive information about this image. When the image fails to load, users won't know what should be displayed. Users with slow internet connections who disable images will lose important context."
+  ],
+  "landmark-one-main": [
+    "Users with screen readers have difficulty navigating because there is no clear main landmark. Users who use keyboard navigation cannot jump to the main content quickly. Users with cognitive disabilities may be confused by unclear page structure."
+  ],
+  "region": [
+    "Users with screen readers cannot understand the page structure because content is not well organized. Users who use keyboard navigation have difficulty understanding the boundaries of content areas. Users with cognitive disabilities may have difficulty understanding the hierarchy of information on the page."
+  ],
+  "button-name": [
+    "Users with screen readers will not know the function of this button because there is no clear name. Users who use voice control cannot activate buttons without names that can be spoken. Users with cognitive disabilities may be confused about what will happen when the button is clicked."
+  ],
+  "link-name": [
+    "Users with screen readers will only hear 'link' without knowing where the link goes. Users who use keyboard navigation cannot understand the purpose of the link from context. Users with cognitive disabilities may have difficulty understanding the relationship between links and content."
+  ],
+  "heading-order": [
+    "Users with screen readers will experience confusing navigation because the heading order is not logical. Users who use heading navigation cannot understand the content structure correctly. Users with cognitive disabilities may have difficulty understanding information hierarchy because of incorrect heading order."
+  ],
+  "form-field-multiple-labels": [
+    "Users with screen readers will hear confusing duplicate labels for the same field. Users who use voice control may experience conflicts when filling out forms. Users with cognitive disabilities may be confused by conflicting instructions."
+  ],
+  "duplicate-id": [
+    "Users with screen readers may experience inconsistent navigation due to duplicate IDs. Users who use assistive technology may experience unexpected behavior. Users with cognitive disabilities may be confused by inconsistent references."
+  ],
+  "aria-hidden-focus": [
+    "Users who use keyboard navigation will be trapped on elements hidden from screen readers. Users with screen readers will not know that there are focusable elements. Users with cognitive disabilities may be confused by inaccessible elements."
+  ],
+  "bypass": [
+    "Users with screen readers must go through all navigation content before reaching the main content. Users who use keyboard navigation cannot jump directly to the main content. Users with cognitive disabilities may be frustrated by long and repetitive navigation."
+  ],
+  "focus-order-semantics": [
+    "Users who use keyboard navigation will experience illogical focus order. Users with screen readers may be confused by element order that doesn't match the visual structure. Users with cognitive disabilities may have difficulty understanding inconsistent interaction flow."
+  ],
+  "keyboard": [
+    "Users who can only use keyboards cannot access this interactive element. Users with motor disabilities who use switch control cannot interact with the element. Users with cognitive disabilities may be frustrated because they cannot use the navigation method they master."
+  ],
+  "no-keyboard-traps": [
+    "Users who use keyboard navigation will be trapped and cannot exit from certain areas. Users with motor disabilities who use switch control will be trapped in navigation loops. Users with cognitive disabilities may panic because they cannot continue navigation."
+  ],
+  "focus-visible": [
+    "Users who use keyboard navigation cannot see which element is currently focused. Users with visual impairments may have difficulty understanding their position on the page. Users with cognitive disabilities may be confused about which element is active."
+  ],
+  "html-has-lang": [
+    "Users with screen readers will not know the page language, causing incorrect pronunciation. Users who use voice control may experience difficulty in interaction because the language is not detected. Users with cognitive disabilities may have difficulty understanding content because the language is unclear."
+  ],
+  "html-lang-valid": [
+    "Users with screen readers will experience incorrect pronunciation because the language code is invalid. Users who use voice control may experience problems in interaction because the language is not recognized. Users with cognitive disabilities may have difficulty understanding content because the language is not properly identified."
+  ],
+  "meta-refresh": [
+    "Users with screen readers will lose their position when the page refreshes automatically. Users who use keyboard navigation will lose their focus. Users with cognitive disabilities may be confused and frustrated by unexpected changes."
+  ],
+  "meta-viewport": [
+    "Users with visual impairments who use zoom may experience broken layouts. Users with motor disabilities who use touch screens may have difficulty interacting with small elements. Users with cognitive disabilities may have difficulty understanding content due to unresponsive layouts."
+  ],
+  "object-alt": [
+    "Blind users who use screen readers will not receive information about this multimedia object. When the object fails to load, users won't know what should be displayed. Users with slow internet connections who disable multimedia will lose important context."
+  ],
+  "role-img-alt": [
+    "Users with screen readers will not receive information about images displayed as role img. Users who use voice control cannot understand important visual content. Users with cognitive disabilities may lose important information that is only available in visual form."
+  ],
+  "scrollable-region-focusable": [
+    "Users who use keyboard navigation cannot access content in scrollable areas. Users with motor disabilities who use switch control cannot interact with scrollable content. Users with cognitive disabilities may be frustrated because they cannot access all available content."
+  ],
+  "select-name": [
+    "Users with screen readers will not know the function of this dropdown because there is no clear name. Users who use voice control cannot access dropdowns without names that can be spoken. Users with cognitive disabilities may be confused about what will happen when the dropdown is selected."
+  ],
+  "svg-img-alt": [
+    "Blind users who use screen readers will not receive information about this SVG. Users who use voice control cannot understand important SVG visual content. Users with cognitive disabilities may lose important information that is only available in SVG form."
+  ],
+  "tabindex": [
+    "Users who use keyboard navigation will experience illogical tab order. Users with screen readers may be confused by element order that doesn't match the visual structure. Users with cognitive disabilities may have difficulty understanding inconsistent navigation flow."
+  ],
+  "table-duplicate-name": [
+    "Users with screen readers will experience confusion due to duplicate column names. Users who use voice control may experience conflicts in table navigation. Users with cognitive disabilities may be confused by inconsistent references in tables."
+  ],
+  "td-headers-attr": [
+    "Users with screen readers cannot understand the relationship between cells and table headers. Users who use voice control cannot understand table data structure correctly. Users with cognitive disabilities may have difficulty understanding data context in tables."
+  ],
+  "th-has-data-cells": [
+    "Users with screen readers cannot understand table structure because headers don't have corresponding data. Users who use voice control cannot understand the relationship between headers and data. Users with cognitive disabilities may be confused by inconsistent table structure."
+  ],
+  "valid-lang": [
+    "Users with screen readers will experience incorrect pronunciation because the lang attribute is invalid. Users who use voice control may experience problems in interaction because the language is not recognized. Users with cognitive disabilities may have difficulty understanding content because the language is not properly identified."
+  ],
+  "video-caption": [
+    "Deaf users cannot understand audio content in this video. Users in noisy environments cannot follow video content without subtitles. Users with cognitive disabilities may have difficulty understanding video content without supporting text."
+  ],
+  "video-description": [
+    "Blind users cannot understand visual content in this video. Users who use screen readers will not receive information about important visual scenes. Users with cognitive disabilities may lose important context that is only available in visual form."
+  ]
+}

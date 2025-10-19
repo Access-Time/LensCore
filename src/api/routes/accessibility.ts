@@ -22,13 +22,14 @@ export const testHandler = async (
     const aiApiKey = req.body.aiApiKey || env.OPENAI_API_KEY;
     const projectContext = req.body.projectContext;
 
-    if (enableAI && aiApiKey && testResult.violations) {
+    // Always process issues to add user stories (with or without AI)
+    if (testResult.violations) {
       const aiResult = await aiService.processAccessibilityIssues(
         testResult.violations,
         {
-          apiKey: aiApiKey,
-          includeExplanations: true,
-          includeRemediation: true,
+          apiKey: enableAI ? aiApiKey : undefined,
+          includeExplanations: enableAI,
+          includeRemediation: enableAI,
           projectContext,
         }
       );
@@ -38,6 +39,7 @@ export const testHandler = async (
         violations: aiResult.issues,
         aiEnabled: aiResult.enabled,
         aiError: aiResult.error,
+        metadata: aiResult.metadata,
       });
     } else {
       res.json(testResult);
@@ -88,38 +90,36 @@ export const testMultipleHandler = async (
 
     const testResult = await accessibilityService.testMultiplePages(requests);
 
-    if (enableAI && aiApiKey) {
-      const processedResults = await Promise.all(
-        testResult.results.map(async (result) => {
-          if (result.violations && Array.isArray(result.violations)) {
-            const aiResult = await aiService.processAccessibilityIssues(
-              result.violations,
-              {
-                apiKey: aiApiKey,
-                includeExplanations: true,
-                includeRemediation: true,
-                projectContext,
-              }
-            );
+    // Always process issues to add user stories (with or without AI)
+    const processedResults = await Promise.all(
+      testResult.results.map(async (result) => {
+        if (result.violations && Array.isArray(result.violations)) {
+          const aiResult = await aiService.processAccessibilityIssues(
+            result.violations,
+            {
+              apiKey: enableAI ? aiApiKey : undefined,
+              includeExplanations: enableAI,
+              includeRemediation: enableAI,
+              projectContext,
+            }
+          );
 
-            return {
-              ...result,
-              violations: aiResult.issues,
-              aiEnabled: aiResult.enabled,
-              aiError: aiResult.error,
-            };
-          }
-          return result;
-        })
-      );
+          return {
+            ...result,
+            violations: aiResult.issues,
+            aiEnabled: aiResult.enabled,
+            aiError: aiResult.error,
+            metadata: aiResult.metadata,
+          };
+        }
+        return result;
+      })
+    );
 
-      res.json({
-        ...testResult,
-        results: processedResults,
-      });
-    } else {
-      res.json(testResult);
-    }
+    res.json({
+      ...testResult,
+      results: processedResults,
+    });
   } catch (error) {
     next(error);
   }

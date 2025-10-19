@@ -455,7 +455,8 @@ curl -X POST http://localhost:3001/api/test \
         }
       ],
       "aiExplanation": "This accessibility issue occurs when text doesn't have enough contrast against its background...",
-      "aiRemediation": "To fix this issue:\n1. Increase color contrast ratio...\n2. Use CSS: color: #000; background: #fff;"
+      "aiRemediation": "To fix this issue:\n1. Increase color contrast ratio...\n2. Use CSS: color: #000; background: #fff;",
+      "userStory": "Users with screen readers have difficulty navigating because there is no clear main landmark. Users who use keyboard navigation cannot jump to the main content quickly. Users with cognitive disabilities may be confused by unclear page structure."
     }
   ],
   "passes": [],
@@ -764,6 +765,7 @@ When AI is enabled, responses include additional fields:
 
 - `aiExplanation`: Plain language explanation of the accessibility issue
 - `aiRemediation`: Specific steps to fix the issue with code examples
+- `userStory`: Human-readable impact explanation for the accessibility issue
 - `aiEnabled`: Boolean indicating if AI processing was successful
 - `aiError`: Error message if AI processing failed
 
