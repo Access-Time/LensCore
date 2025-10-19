@@ -33,14 +33,14 @@ export class AccessibilityService {
     request: AccessibilityRequest
   ): Promise<AccessibilityResult> {
     const timeout = request.timeout || parseInt(env.AXE_TIMEOUT);
-    
+
     try {
       if (!this.browser) {
         await this.initialize();
       }
 
       const page = await this.browser!.newPage();
-      
+
       page.setDefaultTimeout(timeout);
 
       try {

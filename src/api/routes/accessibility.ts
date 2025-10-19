@@ -16,7 +16,7 @@ export const testHandler = async (
 ): Promise<void> => {
   try {
     const request = accessibilityRequestSchema.parse(req.body);
-    
+
     const enableAI = req.body.enableAI === true;
     const aiApiKey = req.body.aiApiKey || env.OPENAI_API_KEY;
     const projectContext = req.body.projectContext;
@@ -24,7 +24,8 @@ export const testHandler = async (
     if (enableAI && !aiApiKey) {
       res.status(400).json({
         error: 'AI API key is required when enableAI is true',
-        message: 'Please provide aiApiKey in request body or set OPENAI_API_KEY environment variable'
+        message:
+          'Please provide aiApiKey in request body or set OPENAI_API_KEY environment variable',
       });
       return;
     }

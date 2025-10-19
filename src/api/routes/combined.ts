@@ -43,7 +43,8 @@ export const combinedHandler = async (
     if (enableAI && !aiApiKey) {
       res.status(400).json({
         error: 'AI API key is required when enableAI is true',
-        message: 'Please provide aiApiKey in request body or set OPENAI_API_KEY environment variable'
+        message:
+          'Please provide aiApiKey in request body or set OPENAI_API_KEY environment variable',
       });
       return;
     }
