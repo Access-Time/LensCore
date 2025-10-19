@@ -13,16 +13,24 @@ export const testHandler = async (
   req: Request,
   res: Response,
   next: NextFunction
-) => {
+): Promise<void> => {
   try {
     const request = accessibilityRequestSchema.parse(req.body);
-    const testResult = await accessibilityService.testAccessibility(request);
-
+    
     const enableAI = req.body.enableAI === true;
     const aiApiKey = req.body.aiApiKey || env.OPENAI_API_KEY;
     const projectContext = req.body.projectContext;
 
-    // Always process issues to add user stories (with or without AI)
+    if (enableAI && !aiApiKey) {
+      res.status(400).json({
+        error: 'AI API key is required when enableAI is true',
+        message: 'Please provide aiApiKey in request body or set OPENAI_API_KEY environment variable'
+      });
+      return;
+    }
+
+    const testResult = await accessibilityService.testAccessibility(request);
+
     if (testResult.violations) {
       const aiResult = await aiService.processAccessibilityIssues(
         testResult.violations,
@@ -55,17 +63,14 @@ export const testMultipleHandler = async (
   next: NextFunction
 ) => {
   try {
-    // Parse request body - could be array or object with requests array
     let requests: AccessibilityRequest[];
     let enableAI = false;
     let aiApiKey: string | undefined;
     let projectContext: ProjectContext;
 
     if (Array.isArray(req.body)) {
-      // Direct array format
       requests = z.array(accessibilityRequestSchema).parse(req.body);
     } else {
-      // Object format with AI options
       const bodySchema = z.object({
         requests: z.array(accessibilityRequestSchema),
         enableAI: z.boolean().optional(),
@@ -90,7 +95,6 @@ export const testMultipleHandler = async (
 
     const testResult = await accessibilityService.testMultiplePages(requests);
 
-    // Always process issues to add user stories (with or without AI)
     const processedResults = await Promise.all(
       testResult.results.map(async (result) => {
         if (result.violations && Array.isArray(result.violations)) {

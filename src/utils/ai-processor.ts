@@ -37,6 +37,7 @@ export class AIProcessor {
     let cacheMisses = 0;
 
     if (!isAIEnabled(apiKey)) {
+      logger.info('AI processing disabled - no API key provided');
       return {
         enabled: false,
         issues,
@@ -52,6 +53,7 @@ export class AIProcessor {
       const openaiService = createOpenAIService(apiKey || '');
 
       if (!openaiService) {
+        logger.error('Failed to initialize OpenAI service');
         return {
           enabled: false,
           issues,

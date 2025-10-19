@@ -32,17 +32,21 @@ export class AccessibilityService {
   async testAccessibility(
     request: AccessibilityRequest
   ): Promise<AccessibilityResult> {
+    const timeout = request.timeout || parseInt(env.AXE_TIMEOUT);
+    
     try {
       if (!this.browser) {
         await this.initialize();
       }
 
       const page = await this.browser!.newPage();
+      
+      page.setDefaultTimeout(timeout);
 
       try {
         await page.goto(request.url, {
           waitUntil: 'domcontentloaded',
-          timeout: request.timeout || parseInt(env.AXE_TIMEOUT),
+          timeout: timeout,
         });
 
         const axeResults = await page.evaluate(
