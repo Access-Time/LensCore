@@ -58,14 +58,14 @@ export const combinedHandler = async (
     // Check if AI processing is requested
     const enableAI = req.body.enableAI === true;
     const aiApiKey = req.body.aiApiKey || env.OPENAI_API_KEY;
-    const techStack = req.body.techStack;
+    const projectContext = req.body.projectContext;
 
     if (enableAI && aiApiKey) {
       const aiResult = await aiService.processCombinedResults(result, {
         apiKey: aiApiKey,
         includeExplanations: true,
         includeRemediation: true,
-        techStack,
+        projectContext,
       });
 
       res.json(aiResult);

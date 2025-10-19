@@ -82,13 +82,6 @@ export class CrawlingService {
             await page.setExtraHTTPHeaders(request.headers);
           }
 
-          if (request.auth) {
-            await page.authenticate({
-              username: request.auth.username,
-              password: request.auth.password,
-            });
-          }
-
           const response = await page.goto(url, {
             waitUntil:
               request.waitUntil ||

@@ -1,6 +1,6 @@
 import { createOpenAIService, isAIEnabled } from './openai';
 import { OpenAIMessage } from '../services/openai';
-import { AI_PROMPTS } from './ai-prompts';
+import { AIPromptEngine, AIResponse } from './ai-prompts';
 import {
   AccessibilityIssue,
   AIProcessingOptions,
@@ -18,7 +18,7 @@ export class AIProcessor {
       apiKey,
       includeExplanations = true,
       includeRemediation = true,
-      techStack,
+      projectContext,
     } = options;
 
     if (!isAIEnabled(apiKey)) {
@@ -44,20 +44,36 @@ export class AIProcessor {
       for (const issue of issues) {
         const processedIssue: AIProcessedIssue = { ...issue };
 
-        if (includeExplanations) {
-          processedIssue.aiExplanation = await this.generateExplanation(
+        try {
+          const aiResponse = await this.processIssueWithAI(
             openaiService,
             issue,
-            techStack
+            projectContext
           );
-        }
 
-        if (includeRemediation) {
-          processedIssue.aiRemediation = await this.generateRemediation(
-            openaiService,
-            issue,
-            techStack
-          );
+          if (includeExplanations) {
+            processedIssue.aiExplanation = aiResponse.plain_explanation;
+          }
+
+          if (includeRemediation) {
+            processedIssue.aiRemediation = aiResponse.remediation;
+          }
+        } catch (error) {
+          logger.warn('AI processing failed for issue', {
+            issueId: issue.id,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          });
+
+          // Use fallback response
+          const fallbackResponse = AIPromptEngine.createFallbackResponse(issue);
+
+          if (includeExplanations) {
+            processedIssue.aiExplanation = fallbackResponse.plain_explanation;
+          }
+
+          if (includeRemediation) {
+            processedIssue.aiRemediation = fallbackResponse.remediation;
+          }
         }
 
         processedIssues.push(processedIssue);
@@ -81,51 +97,28 @@ export class AIProcessor {
     }
   }
 
-  private async generateExplanation(
+  private async processIssueWithAI(
     openaiService: {
       generateResponse: (
         messages: OpenAIMessage[]
       ) => Promise<{ content: string }>;
     },
     issue: AccessibilityIssue,
-    techStack?: string
-  ): Promise<string> {
-    const messages: OpenAIMessage[] = [
-      {
-        role: 'system',
-        content: AI_PROMPTS.EXPLANATION_SYSTEM,
-      },
-      {
-        role: 'user',
-        content: AI_PROMPTS.EXPLANATION_USER(issue, techStack),
-      },
-    ];
+    projectContext?: {
+      framework?: string;
+      cssFramework?: string;
+      language?: string;
+      buildTool?: string;
+      additionalContext?: string;
+    }
+  ): Promise<AIResponse> {
+    // Generate prompt using project context
+    const messages = AIPromptEngine.generatePrompt(issue, projectContext);
 
+    // Get response from OpenAI
     const response = await openaiService.generateResponse(messages);
-    return response.content;
-  }
 
-  private async generateRemediation(
-    openaiService: {
-      generateResponse: (
-        messages: OpenAIMessage[]
-      ) => Promise<{ content: string }>;
-    },
-    issue: AccessibilityIssue,
-    techStack?: string
-  ): Promise<string> {
-    const messages: OpenAIMessage[] = [
-      {
-        role: 'system',
-        content: AI_PROMPTS.REMEDIATION_SYSTEM,
-      },
-      {
-        role: 'user',
-        content: AI_PROMPTS.REMEDIATION_USER(issue, techStack),
-      },
-    ];
-
-    const response = await openaiService.generateResponse(messages);
-    return response.content;
+    // Parse and validate response
+    return AIPromptEngine.parseResponse(response.content, issue.id);
   }
 }

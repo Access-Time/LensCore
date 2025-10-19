@@ -13,10 +13,6 @@ export interface CrawlRequest {
   concurrency?: number;
   waitUntil?: 'domcontentloaded' | 'networkidle0' | 'networkidle2';
   headers?: Record<string, string>;
-  auth?: {
-    username: string;
-    password: string;
-  };
 }
 
 export interface CrawlResponse {

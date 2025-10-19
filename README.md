@@ -246,12 +246,13 @@ Crawl a website and discover all linked pages.
   "headers": {
     "User-Agent": "LensCore Bot"
   },
-  "auth": {
-    "username": "user",
-    "password": "pass"
-  },
   "enableAI": true,
-  "techStack": "React, TypeScript, Tailwind CSS"
+  "projectContext": {
+    "framework": "React",
+    "cssFramework": "Tailwind CSS",
+    "language": "TypeScript",
+    "buildTool": "Vite"
+  }
 }
 ```
 
@@ -263,9 +264,20 @@ Crawl a website and discover all linked pages.
 - `concurrency` (optional): Number of concurrent requests (default: 5)
 - `waitUntil` (optional): Page load condition (default: "domcontentloaded")
 - `headers` (optional): Custom HTTP headers
-- `auth` (optional): Basic authentication credentials
 - `enableAI` (optional): Enable AI processing for accessibility issues (default: false)
-- `techStack` (optional): Tech stack for better AI remediation suggestions
+- `projectContext` (optional): Structured project context for more precise AI analysis
+
+**Project Context Structure:**
+
+```json
+{
+  "framework": "React",
+  "cssFramework": "Tailwind CSS",
+  "language": "TypeScript",
+  "buildTool": "Vite",
+  "additionalContext": "Custom context"
+}
+```
 
 **Example:**
 
@@ -278,7 +290,11 @@ curl -X POST http://localhost:3001/api/crawl \
     "timeout": 10000,
     "concurrency": 3,
     "enableAI": true,
-    "techStack": "React, TypeScript"
+    "projectContext": {
+      "framework": "React",
+      "cssFramework": "Tailwind CSS",
+      "language": "TypeScript"
+    }
   }'
 ```
 
@@ -332,7 +348,11 @@ Run accessibility tests on a single page using axe-core.
   "rules": ["color-contrast", "image-alt"],
   "tags": ["wcag2aa", "wcag143"],
   "enableAI": true,
-  "techStack": "Vue.js, JavaScript, Bootstrap"
+  "projectContext": {
+    "framework": "Vue.js",
+    "cssFramework": "Bootstrap",
+    "language": "JavaScript"
+  }
 }
 ```
 
@@ -344,7 +364,19 @@ Run accessibility tests on a single page using axe-core.
 - `rules` (optional): Specific axe-core rules to test
 - `tags` (optional): WCAG tags to include in testing
 - `enableAI` (optional): Enable AI processing for accessibility issues (default: false)
-- `techStack` (optional): Tech stack for better AI remediation suggestions
+- `projectContext` (optional): Structured project context for more precise AI analysis
+
+**Project Context Structure:**
+
+```json
+{
+  "framework": "React",
+  "cssFramework": "Tailwind CSS",
+  "language": "TypeScript",
+  "buildTool": "Vite",
+  "additionalContext": "Custom context"
+}
+```
 
 **Example:**
 
@@ -356,7 +388,11 @@ curl -X POST http://localhost:3001/api/test \
     "includeScreenshot": true,
     "timeout": 10000,
     "enableAI": true,
-    "techStack": "Next.js, TypeScript"
+    "projectContext": {
+      "framework": "Next.js",
+      "cssFramework": "Tailwind CSS",
+      "language": "TypeScript"
+    }
   }'
 ```
 
@@ -492,7 +528,11 @@ Crawl a website and run accessibility tests on all discovered pages.
     "rules": ["color-contrast"]
   },
   "enableAI": true,
-  "techStack": "Angular, TypeScript, Material UI"
+  "projectContext": {
+    "framework": "Angular",
+    "cssFramework": "Material UI",
+    "language": "TypeScript"
+  }
 }
 ```
 
@@ -502,7 +542,19 @@ Crawl a website and run accessibility tests on all discovered pages.
 - `crawlOptions` (optional): Crawling configuration (see crawl API)
 - `testOptions` (optional): Testing configuration (see test API)
 - `enableAI` (optional): Enable AI processing for accessibility issues (default: false)
-- `techStack` (optional): Tech stack for better AI remediation suggestions
+- `projectContext` (optional): Structured project context for more precise AI analysis
+
+**Project Context Structure:**
+
+```json
+{
+  "framework": "React",
+  "cssFramework": "Tailwind CSS",
+  "language": "TypeScript",
+  "buildTool": "Vite",
+  "additionalContext": "Custom context"
+}
+```
 
 **Example:**
 
@@ -520,7 +572,11 @@ curl -X POST http://localhost:3001/api/combined \
       "timeout": 15000
     },
     "enableAI": true,
-    "techStack": "React, TypeScript, Tailwind CSS"
+    "projectContext": {
+      "framework": "React",
+      "cssFramework": "Tailwind CSS",
+      "language": "TypeScript"
+    }
   }'
 ```
 
@@ -584,17 +640,35 @@ LensCore includes optional AI-powered analysis for accessibility issues, providi
 
 - **Plain Language Explanations**: Convert technical accessibility issues into easy-to-understand explanations
 - **Tech-Stack Specific Remediation**: Get specific, actionable steps tailored to your technology stack
+- **Dynamic Prompt Engineering**: Intelligent prompt generation based on project context
+- **Structured Response Parsing**: Consistent JSON response format with fallback handling
 - **Optional Processing**: AI processing is opt-in and doesn't affect existing functionality
 - **Cost Effective**: Only processes AI when explicitly requested
 
 ### Usage
 
-Add these parameters to any endpoint request:
+**Project Context (Recommended):**
 
 ```json
 {
   "enableAI": true,
-  "techStack": "React, TypeScript, Tailwind CSS"
+  "projectContext": {
+    "framework": "React",
+    "cssFramework": "Tailwind CSS",
+    "language": "TypeScript",
+    "buildTool": "Vite"
+  }
+}
+```
+
+**Backward Compatibility (Tech Stack String):**
+
+```json
+{
+  "enableAI": true,
+  "projectContext": {
+    "additionalContext": "React, TypeScript, Tailwind CSS"
+  }
 }
 ```
 
@@ -615,27 +689,78 @@ Set your OpenAI API key in environment variables:
 OPENAI_API_KEY=your-openai-api-key
 ```
 
+### AI Prompt Engineering
+
+LensCore uses advanced prompt engineering to generate context-aware responses:
+
+**Automatic Tech Stack Detection:**
+
+- Framework: React, Vue.js, Angular, Svelte, Next.js, Nuxt.js
+- CSS Framework: Tailwind CSS, Bootstrap, Material UI, Chakra UI
+- Language: TypeScript, JavaScript
+- Build Tools: Webpack, Vite, Rollup, Parcel
+
+**Response Format:**
+
+```json
+{
+  "rule_id": "color-contrast",
+  "plain_explanation": "This text has insufficient contrast for users with visual impairments.",
+  "remediation": "Use Tailwind CSS classes like text-gray-800 or text-gray-900 for better contrast."
+}
+```
+
+**Fallback Handling:**
+
+- Automatic fallback responses if AI fails
+- Graceful degradation without breaking the API
+- Consistent response structure
+
 ### Examples
 
-**Test with AI:**
+**Test with AI (Project Context):**
+
 ```bash
 curl -X POST http://localhost:3001/api/test \
   -H "Content-Type: application/json" \
   -d '{
     "url": "https://example.com",
     "enableAI": true,
-    "techStack": "Vue.js, JavaScript"
+    "projectContext": {
+      "framework": "Vue.js",
+      "cssFramework": "Bootstrap",
+      "language": "JavaScript"
+    }
+  }'
+```
+
+**Test with AI (Backward Compatibility):**
+
+```bash
+curl -X POST http://localhost:3001/api/test \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://example.com",
+    "enableAI": true,
+    "projectContext": {
+      "additionalContext": "Vue.js, JavaScript, Bootstrap"
+    }
   }'
 ```
 
 **Combined with AI:**
+
 ```bash
 curl -X POST http://localhost:3001/api/combined \
   -H "Content-Type: application/json" \
   -d '{
     "url": "https://example.com",
     "enableAI": true,
-    "techStack": "Next.js, TypeScript, CSS Modules"
+    "projectContext": {
+      "framework": "Next.js",
+      "cssFramework": "Tailwind CSS",
+      "language": "TypeScript"
+    }
   }'
 ```
 

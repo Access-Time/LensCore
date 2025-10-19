@@ -17,7 +17,7 @@ export const crawlHandler = async (
 
     const enableAI = req.body.enableAI === true;
     const aiApiKey = req.body.aiApiKey || env.OPENAI_API_KEY;
-    const techStack = req.body.techStack;
+    const projectContext = req.body.projectContext;
 
     if (enableAI && aiApiKey) {
       const crawlData = {
@@ -31,7 +31,7 @@ export const crawlHandler = async (
         apiKey: aiApiKey,
         includeExplanations: true,
         includeRemediation: true,
-        techStack,
+        projectContext,
       });
 
       res.json(aiResult);

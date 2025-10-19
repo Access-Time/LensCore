@@ -9,12 +9,6 @@ export const crawlRequestSchema = z.object({
     .enum(['domcontentloaded', 'networkidle0', 'networkidle2'])
     .optional(),
   headers: z.record(z.string()).optional(),
-  auth: z
-    .object({
-      username: z.string(),
-      password: z.string(),
-    })
-    .optional(),
 });
 
 export const accessibilityRequestSchema = z.object({

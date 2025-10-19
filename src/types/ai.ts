@@ -20,7 +20,13 @@ export interface AIProcessingOptions {
   apiKey?: string;
   includeExplanations?: boolean;
   includeRemediation?: boolean;
-  techStack?: string;
+  projectContext?: {
+    framework?: string;
+    cssFramework?: string;
+    language?: string;
+    buildTool?: string;
+    additionalContext?: string;
+  };
 }
 
 export interface AIProcessingResult {
