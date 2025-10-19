@@ -20,6 +20,7 @@
 - **🌐 Web Crawling**: Intelligent website crawling with configurable depth and rules
 - **♿ Accessibility Testing**: WCAG compliance testing powered by axe-core
 - **🤖 AI-Powered Analysis**: Plain language explanations and tech-stack specific remediation
+- **🧠 Intelligent Caching**: Smart caching system to minimize AI API costs and improve performance
 - **📸 Screenshot Capture**: Automatic screenshot capture for violations and pages
 - **💾 Flexible Storage**: Support for local, AWS S3, and Google Cloud Storage
 - **🔌 RESTful APIs**: Clean API endpoints for crawl, test, and combined operations
@@ -74,6 +75,29 @@
 5. **Stop services:**
    ```bash
    make down
+   ```
+
+### Docker with Redis (Production)
+
+For production deployments with Redis caching:
+
+1. **Set up environment:**
+
+   ```bash
+   cp env.example .env
+   # Edit .env and set CACHE_TYPE=redis
+   ```
+
+2. **Start with Redis:**
+
+   ```bash
+   docker-compose up -d
+   ```
+
+3. **Verify Redis connection:**
+
+   ```bash
+   curl http://localhost:3001/api/cache/stats
    ```
 
 ### Using Node.js
@@ -184,6 +208,19 @@ OPENAI_TEMPERATURE=0.7
 OPENAI_TIMEOUT=30000
 OPENAI_RETRY_ATTEMPTS=3
 OPENAI_RETRY_DELAY=1000
+```
+
+#### Cache Configuration (Optional)
+
+```env
+CACHE_TYPE=memory          # memory, filesystem, redis
+CACHE_TTL=3600            # 1 hour in seconds
+CACHE_MAX_SIZE=1000       # For memory cache
+CACHE_PATH=./cache         # For filesystem cache
+REDIS_HOST=localhost       # Redis host
+REDIS_PORT=6379           # Redis port
+REDIS_PASSWORD=            # Redis password (optional)
+REDIS_DB=0                # Redis database
 ```
 
 ## 📚 API Documentation
@@ -418,7 +455,8 @@ curl -X POST http://localhost:3001/api/test \
         }
       ],
       "aiExplanation": "This accessibility issue occurs when text doesn't have enough contrast against its background...",
-      "aiRemediation": "To fix this issue:\n1. Increase color contrast ratio...\n2. Use CSS: color: #000; background: #fff;"
+      "aiRemediation": "To fix this issue:\n1. Increase color contrast ratio...\n2. Use CSS: color: #000; background: #fff;",
+      "userStory": "Users with screen readers have difficulty navigating because there is no clear main landmark. Users who use keyboard navigation cannot jump to the main content quickly. Users with cognitive disabilities may be confused by unclear page structure."
     }
   ],
   "passes": [],
@@ -632,6 +670,55 @@ curl -X POST http://localhost:3001/api/combined \
 
 ---
 
+### 🗄️ Cache Management
+
+Manage the intelligent caching system for AI responses.
+
+#### Get Cache Statistics
+
+**Endpoint:** `GET /api/cache/stats`
+
+**Example:**
+
+```bash
+curl http://localhost:3001/api/cache/stats
+```
+
+**Response:**
+
+```json
+{
+  "status": "success",
+  "data": {
+    "hits": 15,
+    "misses": 8,
+    "size": 12,
+    "hitRate": 0.65
+  }
+}
+```
+
+#### Clear Cache
+
+**Endpoint:** `DELETE /api/cache/clear`
+
+**Example:**
+
+```bash
+curl -X DELETE http://localhost:3001/api/cache/clear
+```
+
+**Response:**
+
+```json
+{
+  "status": "success",
+  "message": "Cache cleared successfully"
+}
+```
+
+---
+
 ## 🤖 AI Integration
 
 LensCore includes optional AI-powered analysis for accessibility issues, providing plain language explanations and tech-stack specific remediation steps.
@@ -678,6 +765,7 @@ When AI is enabled, responses include additional fields:
 
 - `aiExplanation`: Plain language explanation of the accessibility issue
 - `aiRemediation`: Specific steps to fix the issue with code examples
+- `userStory`: Human-readable impact explanation for the accessibility issue
 - `aiEnabled`: Boolean indicating if AI processing was successful
 - `aiError`: Error message if AI processing failed
 

@@ -53,6 +53,16 @@ const envSchema = z.object({
   OPENAI_TIMEOUT: z.string().default('30000'),
   OPENAI_RETRY_ATTEMPTS: z.string().default('3'),
   OPENAI_RETRY_DELAY: z.string().default('1000'),
+
+  // Cache Configuration
+  CACHE_TYPE: z.enum(['memory', 'redis', 'filesystem']).default('memory'),
+  CACHE_TTL: z.string().default('3600'),
+  CACHE_MAX_SIZE: z.string().default('1000'),
+  CACHE_PATH: z.string().default('./cache'),
+  REDIS_HOST: z.string().default('localhost'),
+  REDIS_PORT: z.string().default('6379'),
+  REDIS_PASSWORD: z.string().optional(),
+  REDIS_DB: z.string().default('0'),
 });
 
 export const env = envSchema.parse(process.env);

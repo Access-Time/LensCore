@@ -55,23 +55,19 @@ export const combinedHandler = async (
       totalTime,
     };
 
-    // Check if AI processing is requested
+    // Always process issues to add user stories (with or without AI)
     const enableAI = req.body.enableAI === true;
     const aiApiKey = req.body.aiApiKey || env.OPENAI_API_KEY;
     const projectContext = req.body.projectContext;
 
-    if (enableAI && aiApiKey) {
-      const aiResult = await aiService.processCombinedResults(result, {
-        apiKey: aiApiKey,
-        includeExplanations: true,
-        includeRemediation: true,
-        projectContext,
-      });
+    const aiResult = await aiService.processCombinedResults(result, {
+      apiKey: enableAI ? aiApiKey : undefined,
+      includeExplanations: enableAI,
+      includeRemediation: enableAI,
+      projectContext,
+    });
 
-      res.json(aiResult);
-    } else {
-      res.json(result);
-    }
+    res.json(aiResult);
   } catch (error) {
     next(error);
   }

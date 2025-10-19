@@ -1,7 +1,10 @@
 import { AIProcessor } from '../utils/ai-processor';
+import { CacheService } from './cache';
+import { createCacheConfig } from '../config/cache';
 import {
   AccessibilityIssue,
   AIProcessingOptions,
+  AIProcessingResult,
   AICrawlResult,
   CombinedResult,
 } from '../types/ai';
@@ -10,13 +13,21 @@ export class AIService {
   private processor: AIProcessor;
 
   constructor() {
-    this.processor = new AIProcessor();
+    const cacheConfig = createCacheConfig();
+    const cacheService = CacheService.getInstance(cacheConfig);
+    this.processor = new AIProcessor(cacheService);
   }
 
   async processAccessibilityIssues(
     issues: AccessibilityIssue[],
     options: AIProcessingOptions = {}
-  ) {
+  ): Promise<AIProcessingResult> {
+    const { apiKey } = options;
+
+    if (!apiKey) {
+      return this.processor.processAccessibilityIssuesWithoutAI(issues);
+    }
+
     return this.processor.processAccessibilityIssues(issues, options);
   }
 

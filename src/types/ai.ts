@@ -14,6 +14,7 @@ export interface AccessibilityIssue {
 export interface AIProcessedIssue extends AccessibilityIssue {
   aiExplanation?: string;
   aiRemediation?: string;
+  userStory?: string;
 }
 
 export interface AIProcessingOptions {
@@ -33,6 +34,11 @@ export interface AIProcessingResult {
   enabled: boolean;
   issues: AIProcessedIssue[];
   error?: string;
+  metadata?: {
+    cacheHits: number;
+    cacheMisses: number;
+    processingTime: number;
+  };
 }
 
 export interface AICrawlResult {

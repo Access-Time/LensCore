@@ -1,5 +1,6 @@
 /* eslint-disable no-console */
 import { jest } from '@jest/globals';
+import { CacheService } from '../src/services/cache';
 
 jest.setTimeout(30000);
 
@@ -14,6 +15,13 @@ beforeAll(() => {
 });
 
 afterAll(async () => {
+  // Cleanup cache service connections
+  try {
+    await CacheService.cleanup();
+  } catch (error) {
+    console.error('Failed to cleanup cache service', { error });
+  }
+
   // Restore original console methods
   console.log = originalConsoleLog;
   console.error = originalConsoleError;
