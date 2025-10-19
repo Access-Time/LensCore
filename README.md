@@ -19,6 +19,7 @@
 
 - **🌐 Web Crawling**: Intelligent website crawling with configurable depth and rules
 - **♿ Accessibility Testing**: WCAG compliance testing powered by axe-core
+- **🤖 AI-Powered Analysis**: Plain language explanations and tech-stack specific remediation
 - **📸 Screenshot Capture**: Automatic screenshot capture for violations and pages
 - **💾 Flexible Storage**: Support for local, AWS S3, and Google Cloud Storage
 - **🔌 RESTful APIs**: Clean API endpoints for crawl, test, and combined operations
@@ -32,6 +33,7 @@
 - [Makefile Commands](#makefile-commands)
 - [Configuration](#️-configuration)
 - [API Documentation](#-api-documentation)
+- [AI Integration](#-ai-integration)
 - [License](#-license)
 
 ## ⚡ Quick Start
@@ -172,6 +174,18 @@ AXE_TIMEOUT=10000
 AXE_CONCURRENCY=5
 ```
 
+#### AI Processing Configuration (Optional)
+
+```env
+OPENAI_API_KEY=your-openai-api-key
+OPENAI_MODEL=gpt-3.5-turbo
+OPENAI_MAX_TOKENS=1000
+OPENAI_TEMPERATURE=0.7
+OPENAI_TIMEOUT=30000
+OPENAI_RETRY_ATTEMPTS=3
+OPENAI_RETRY_DELAY=1000
+```
+
 ## 📚 API Documentation
 
 ### Base URL
@@ -235,7 +249,9 @@ Crawl a website and discover all linked pages.
   "auth": {
     "username": "user",
     "password": "pass"
-  }
+  },
+  "enableAI": true,
+  "techStack": "React, TypeScript, Tailwind CSS"
 }
 ```
 
@@ -248,6 +264,8 @@ Crawl a website and discover all linked pages.
 - `waitUntil` (optional): Page load condition (default: "domcontentloaded")
 - `headers` (optional): Custom HTTP headers
 - `auth` (optional): Basic authentication credentials
+- `enableAI` (optional): Enable AI processing for accessibility issues (default: false)
+- `techStack` (optional): Tech stack for better AI remediation suggestions
 
 **Example:**
 
@@ -258,7 +276,9 @@ curl -X POST http://localhost:3001/api/crawl \
     "url": "https://example.com",
     "maxUrls": 10,
     "timeout": 10000,
-    "concurrency": 3
+    "concurrency": 3,
+    "enableAI": true,
+    "techStack": "React, TypeScript"
   }'
 ```
 
@@ -276,7 +296,21 @@ curl -X POST http://localhost:3001/api/crawl \
     }
   ],
   "totalPages": 1,
-  "crawlTime": 1500
+  "crawlTime": 1500,
+  "issues": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "description": "Elements must have sufficient color contrast",
+      "help": "Ensure all text elements have sufficient color contrast",
+      "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast",
+      "nodes": [...],
+      "aiExplanation": "This accessibility issue occurs when text doesn't have enough contrast against its background...",
+      "aiRemediation": "To fix this issue:\n1. Increase color contrast ratio...\n2. Use CSS: color: #000; background: #fff;"
+    }
+  ],
+  "aiEnabled": true,
+  "aiError": null
 }
 ```
 
@@ -296,7 +330,9 @@ Run accessibility tests on a single page using axe-core.
   "includeScreenshot": true,
   "timeout": 10000,
   "rules": ["color-contrast", "image-alt"],
-  "tags": ["wcag2aa", "wcag143"]
+  "tags": ["wcag2aa", "wcag143"],
+  "enableAI": true,
+  "techStack": "Vue.js, JavaScript, Bootstrap"
 }
 ```
 
@@ -307,6 +343,8 @@ Run accessibility tests on a single page using axe-core.
 - `timeout` (optional): Test timeout in milliseconds (default: 10000)
 - `rules` (optional): Specific axe-core rules to test
 - `tags` (optional): WCAG tags to include in testing
+- `enableAI` (optional): Enable AI processing for accessibility issues (default: false)
+- `techStack` (optional): Tech stack for better AI remediation suggestions
 
 **Example:**
 
@@ -316,7 +354,9 @@ curl -X POST http://localhost:3001/api/test \
   -d '{
     "url": "https://example.com",
     "includeScreenshot": true,
-    "timeout": 10000
+    "timeout": 10000,
+    "enableAI": true,
+    "techStack": "Next.js, TypeScript"
   }'
 ```
 
@@ -340,14 +380,18 @@ curl -X POST http://localhost:3001/api/test \
           "html": "<h1>Example Domain</h1>",
           "failureSummary": "Fix any of the following:\n  Element has insufficient color contrast of 2.52 (foreground color: #000000, background color: #ffffff, font size: 32px, font weight: normal). Expected contrast ratio of at least 3:1"
         }
-      ]
+      ],
+      "aiExplanation": "This accessibility issue occurs when text doesn't have enough contrast against its background...",
+      "aiRemediation": "To fix this issue:\n1. Increase color contrast ratio...\n2. Use CSS: color: #000; background: #fff;"
     }
   ],
   "passes": [],
   "incomplete": [],
   "inapplicable": [],
   "screenshot": "https://storage.example.com/screenshots/uuid.png",
-  "timestamp": "2024-01-01T00:00:00.000Z"
+  "timestamp": "2024-01-01T00:00:00.000Z",
+  "aiEnabled": true,
+  "aiError": null
 }
 ```
 
@@ -446,7 +490,9 @@ Crawl a website and run accessibility tests on all discovered pages.
     "includeScreenshot": true,
     "timeout": 15000,
     "rules": ["color-contrast"]
-  }
+  },
+  "enableAI": true,
+  "techStack": "Angular, TypeScript, Material UI"
 }
 ```
 
@@ -455,6 +501,8 @@ Crawl a website and run accessibility tests on all discovered pages.
 - `url` (required): Target website URL
 - `crawlOptions` (optional): Crawling configuration (see crawl API)
 - `testOptions` (optional): Testing configuration (see test API)
+- `enableAI` (optional): Enable AI processing for accessibility issues (default: false)
+- `techStack` (optional): Tech stack for better AI remediation suggestions
 
 **Example:**
 
@@ -470,7 +518,9 @@ curl -X POST http://localhost:3001/api/combined \
     "testOptions": {
       "includeScreenshot": true,
       "timeout": 15000
-    }
+    },
+    "enableAI": true,
+    "techStack": "React, TypeScript, Tailwind CSS"
   }'
 ```
 
@@ -496,12 +546,25 @@ curl -X POST http://localhost:3001/api/combined \
       {
         "url": "https://example.com",
         "score": 85,
-        "violations": [...],
+        "violations": [
+          {
+            "id": "color-contrast",
+            "impact": "serious",
+            "description": "Elements must have sufficient color contrast",
+            "help": "Ensure all text elements have sufficient color contrast",
+            "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/color-contrast",
+            "nodes": [...],
+            "aiExplanation": "This accessibility issue occurs when text doesn't have enough contrast...",
+            "aiRemediation": "To fix this issue:\n1. Increase color contrast ratio...\n2. Use CSS: color: #000; background: #fff;"
+          }
+        ],
         "passes": [],
         "incomplete": [],
         "inapplicable": [],
         "screenshot": "https://storage.example.com/screenshots/uuid.png",
-        "timestamp": "2024-01-01T00:00:00.000Z"
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "aiEnabled": true,
+        "aiError": null
       }
     ],
     "totalPages": 1,
@@ -509,6 +572,71 @@ curl -X POST http://localhost:3001/api/combined \
   },
   "totalTime": 18000
 }
+```
+
+---
+
+## 🤖 AI Integration
+
+LensCore includes optional AI-powered analysis for accessibility issues, providing plain language explanations and tech-stack specific remediation steps.
+
+### Features
+
+- **Plain Language Explanations**: Convert technical accessibility issues into easy-to-understand explanations
+- **Tech-Stack Specific Remediation**: Get specific, actionable steps tailored to your technology stack
+- **Optional Processing**: AI processing is opt-in and doesn't affect existing functionality
+- **Cost Effective**: Only processes AI when explicitly requested
+
+### Usage
+
+Add these parameters to any endpoint request:
+
+```json
+{
+  "enableAI": true,
+  "techStack": "React, TypeScript, Tailwind CSS"
+}
+```
+
+### Response Fields
+
+When AI is enabled, responses include additional fields:
+
+- `aiExplanation`: Plain language explanation of the accessibility issue
+- `aiRemediation`: Specific steps to fix the issue with code examples
+- `aiEnabled`: Boolean indicating if AI processing was successful
+- `aiError`: Error message if AI processing failed
+
+### Configuration
+
+Set your OpenAI API key in environment variables:
+
+```env
+OPENAI_API_KEY=your-openai-api-key
+```
+
+### Examples
+
+**Test with AI:**
+```bash
+curl -X POST http://localhost:3001/api/test \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://example.com",
+    "enableAI": true,
+    "techStack": "Vue.js, JavaScript"
+  }'
+```
+
+**Combined with AI:**
+```bash
+curl -X POST http://localhost:3001/api/combined \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://example.com",
+    "enableAI": true,
+    "techStack": "Next.js, TypeScript, CSS Modules"
+  }'
 ```
 
 ---
@@ -522,6 +650,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [axe-core](https://github.com/dequelabs/axe-core) for accessibility testing
 - [Puppeteer](https://github.com/puppeteer/puppeteer) for web automation
 - [Express.js](https://expressjs.com/) for the web framework
+- [OpenAI](https://openai.com/) for AI-powered accessibility analysis
 - [Docker](https://www.docker.com/) for containerization
 
 ---
