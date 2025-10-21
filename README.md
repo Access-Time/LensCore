@@ -63,7 +63,7 @@
 3. **Start the service (with Makefile):**
 
    ```bash
-   make up
+   make build-docker
    ```
 
 4. **Verify installation:**
@@ -91,7 +91,7 @@ For production deployments with Redis caching:
 2. **Start with Redis:**
 
    ```bash
-   docker-compose up -d
+   docker-compose up -d --build
    ```
 
 3. **Verify Redis connection:**
