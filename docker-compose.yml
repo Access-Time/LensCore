@@ -1,29 +1,42 @@
-version: '3.8'
+version: "3.9"
 
 services:
+  lenscore-init:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - node_modules_data:/app/node_modules
+    profiles: ["init"]
+
   lenscore:
-    build: .
+    container_name: lenscore-app
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
-      - '3001:3001'
+      - "3001:3001"
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
       - PORT=3001
       - CACHE_TYPE=redis
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-    depends_on:
-      - redis
     volumes:
       - ./logs:/app/logs
       - ./cache:/app/cache
+      - node_modules_data:/app/node_modules
+    depends_on:
+      - redis
 
   redis:
     image: redis:7-alpine
     ports:
-      - '6379:6379'
+      - "6379:6379"
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
 
 volumes:
   redis_data:
+  node_modules_data:

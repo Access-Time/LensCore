@@ -1,6 +1,6 @@
 # LensCore - Minimal Makefile
 
-.PHONY: help install dev build start test lint fmt typecheck clean build-docker up down logs env env-all cache-status
+.PHONY: help install dev build start test lint fmt typecheck clean build-docker up down logs env env-all
 
 help: ## Show available commands
 	@echo "LensCore - Available commands"
@@ -33,8 +33,12 @@ typecheck: ## Run TypeScript type checking
 clean: ## Remove build and coverage outputs
 	rm -rf dist/ coverage/
 
-build-docker: ## Build Docker image
+build-docker: ## Build Docker image and setup node_modules
+	docker-compose --profile init run --rm lenscore-init
 	docker-compose up -d --build
+	@echo "Copying node_modules for IDE support..."; \
+	docker cp lenscore-app:/app/node_modules ./; \
+	echo "✅ node_modules copied for IDE support!"
 
 up: ## Start services with Docker Compose
 	docker-compose up -d
