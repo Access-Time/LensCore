@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Command } from 'commander';
 import { setupCommand } from './cli/commands/setup.js';
 import { scanCommand } from './cli/commands/scan.js';
@@ -36,6 +37,15 @@ program
   .option('-g, --get <key>', 'Get configuration value')
   .option('-l, --list', 'List all configuration')
   .action(configCommand);
+
+program
+  .command('build')
+  .description('Build and start LensCore local instance')
+  .action(async () => {
+    const { DockerService } = await import('./cli/services/docker.js');
+    const docker = new DockerService();
+    await docker.build();
+  });
 
 program
   .command('up')

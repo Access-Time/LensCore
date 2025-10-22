@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import ora from 'ora';
 
 export class LensCoreClient {

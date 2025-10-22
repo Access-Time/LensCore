@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-console */
 import chalk from 'chalk';
 import { exec } from 'child_process';
@@ -36,6 +37,24 @@ export class DockerService {
     }
   }
 
+  async build(): Promise<void> {
+    const spinner = ora('Building LensCore services...').start();
+
+    try {
+      spinner.text = 'Building with docker-compose...';
+      await execAsync('docker-compose up -d --build');
+
+      spinner.succeed('LensCore services built and started');
+      console.log(
+        chalk.blue(`🌐 LensCore running at: http://localhost:${this.port}`)
+      );
+      console.log(chalk.gray('📊 Redis cache available at: localhost:6379'));
+    } catch (error) {
+      spinner.fail('Failed to build LensCore services');
+      throw error;
+    }
+  }
+
   async start(): Promise<void> {
     const spinner = ora('Starting LensCore services...').start();
 
@@ -48,7 +67,7 @@ export class DockerService {
       }
 
       spinner.text = 'Starting with docker-compose...';
-      await execAsync('docker-compose up -d --build');
+      await execAsync('docker-compose up -d');
 
       spinner.succeed('LensCore services started');
       console.log(
