@@ -12,7 +12,9 @@ export async function scanCommand(url: string, options: any) {
 
     await CommandUtils.ensureLensCoreReady();
 
-    const projectContext = CommandUtils.parseProjectContext(options.projectContext);
+    const projectContext = CommandUtils.parseProjectContext(
+      options.projectContext
+    );
     const numericOptions = CommandUtils.parseNumericOptions(options, {
       maxUrls: 10,
       concurrency: 3,
@@ -25,7 +27,9 @@ export async function scanCommand(url: string, options: any) {
     if (options.enableAi) {
       aiConfig = await CommandUtils.getOpenAIConfig();
       if (!aiConfig) {
-        throw new Error('AI is enabled but no API key found in config. Run "lens-core setup" to configure AI.');
+        throw new Error(
+          'AI is enabled but no API key found in config. Run "lens-core setup" to configure AI.'
+        );
       }
     } else if (options.openaiKey) {
       aiConfig = {
@@ -52,7 +56,6 @@ export async function scanCommand(url: string, options: any) {
     CommandUtils.displayScanResults(result);
     CommandUtils.displayAIStatus(options, result);
     await CommandUtils.displayFooter(options);
-
   } catch (error: any) {
     CommandUtils.handleError(error, spinner, 'Scan');
   }

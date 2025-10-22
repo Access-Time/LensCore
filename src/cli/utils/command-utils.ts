@@ -274,14 +274,14 @@ export class CommandUtils {
   static async getClient(): Promise<LensCoreClient> {
     if (!this.client) {
       const config = await this.loadConfig();
-      let baseUrl = 'http://localhost:3001'; 
-      
+      let baseUrl = 'http://localhost:3001';
+
       if (config?.mode === 'remote') {
         baseUrl = 'https://api.accesstime.com';
       } else if (config?.mode === 'local' && config?.remote?.baseUrl) {
         baseUrl = config.remote.baseUrl;
       }
-      
+
       this.client = new LensCoreClient(baseUrl);
     }
     return this.client;
@@ -311,7 +311,10 @@ export class CommandUtils {
   /**
    * Get OpenAI config from file
    */
-  static async getOpenAIConfig(): Promise<{ apiKey: string; model: string } | null> {
+  static async getOpenAIConfig(): Promise<{
+    apiKey: string;
+    model: string;
+  } | null> {
     const config = await this.loadConfig();
     if (config?.openai?.enabled && config?.openai?.apiKey) {
       return {

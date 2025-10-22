@@ -67,7 +67,10 @@ export async function setupCommand() {
         message: 'Choose LensCore mode:',
         choices: [
           { name: 'Local mode (run LensCore in Docker)', value: 'local' },
-          { name: 'Remote mode (connect to existing LensCore instance)', value: 'remote' },
+          {
+            name: 'Remote mode (connect to existing LensCore instance)',
+            value: 'remote',
+          },
         ],
         default: 'local',
       },
@@ -128,7 +131,10 @@ export async function setupCommand() {
         port: 3001,
       },
       remote: {
-        baseUrl: answers.mode === 'remote' ? 'https://api.accesstime.com' : (answers.localUrl || 'http://localhost:3001'),
+        baseUrl:
+          answers.mode === 'remote'
+            ? 'https://api.accesstime.com'
+            : answers.localUrl || 'http://localhost:3001',
       },
       openai: {
         apiKey: answers.openaiKey || '',
@@ -151,7 +157,7 @@ export async function setupCommand() {
 
     console.log(chalk.green('\n✅ Setup completed successfully!'));
     console.log(chalk.gray(`Configuration saved to: ${configPath}`));
-    
+
     if (answers.enableAI) {
       console.log(chalk.blue(`🤖 AI Analysis: ${answers.gptModel}`));
     } else {
@@ -162,9 +168,12 @@ export async function setupCommand() {
     console.log(chalk.gray('• Run: lens-core up (to start local instance)'));
     console.log(chalk.gray('• Run: lens-core scan <url> (to scan a website)'));
     if (answers.enableAI) {
-      console.log(chalk.gray('• Run: lens-core scan <url> --enable-ai (to use AI analysis)'));
+      console.log(
+        chalk.gray(
+          '• Run: lens-core scan <url> --enable-ai (to use AI analysis)'
+        )
+      );
     }
-
   } catch (error: any) {
     spinner.fail('Setup failed');
     console.error(chalk.red('Error:'), error.message);
