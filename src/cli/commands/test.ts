@@ -12,19 +12,31 @@ export async function testCommand(url: string, options: any) {
 
     await CommandUtils.ensureLensCoreReady();
 
-    const projectContext = CommandUtils.parseProjectContext(
-      options.projectContext
-    );
+    const projectContext = CommandUtils.parseProjectContext(options.projectContext);
     const numericOptions = CommandUtils.parseNumericOptions(options, {
       timeout: 10000,
     });
+
+    // Handle AI options
+    let aiConfig = null;
+    if (options.enableAi) {
+      aiConfig = await CommandUtils.getOpenAIConfig();
+      if (!aiConfig) {
+        throw new Error('AI is enabled but no API key found in config. Run "lens-core setup" to configure AI.');
+      }
+    } else if (options.openaiKey) {
+      aiConfig = {
+        apiKey: options.openaiKey,
+        model: 'gpt-3.5-turbo',
+      };
+    }
 
     spinner.text = 'Starting accessibility test...';
 
     const testOptions = {
       url,
-      enableAI: !!options.openaiKey,
-      openaiKey: options.openaiKey,
+      enableAI: !!aiConfig,
+      openaiKey: aiConfig?.apiKey,
       projectContext,
       includeScreenshot: options.screenshot !== false,
       rules: CommandUtils.parseCommaSeparated(options.rules),
@@ -32,7 +44,7 @@ export async function testCommand(url: string, options: any) {
       ...numericOptions,
     };
 
-    const client = CommandUtils.getClient();
+    const client = await CommandUtils.getClient();
     const result = await client.test(testOptions);
 
     spinner.succeed('Test completed');
@@ -40,6 +52,7 @@ export async function testCommand(url: string, options: any) {
     CommandUtils.displayTestResults(result);
     CommandUtils.displayAIStatus(options, result);
     await CommandUtils.displayFooter(options);
+
   } catch (error: any) {
     CommandUtils.handleError(error, spinner, 'Test');
   }

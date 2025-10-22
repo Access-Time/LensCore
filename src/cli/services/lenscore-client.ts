@@ -4,6 +4,12 @@ import ora from 'ora';
 export class LensCoreClient {
   private baseUrl = 'http://localhost:3001';
 
+  constructor(baseUrl?: string) {
+    if (baseUrl) {
+      this.baseUrl = baseUrl;
+    }
+  }
+
   async checkHealth(): Promise<boolean> {
     try {
       const response = await this.fetchWithRetry(`${this.baseUrl}/api/health`, {
@@ -194,6 +200,9 @@ export class LensCoreClient {
               timeout: options.timeout || 10000,
               rules: options.rules || [],
               tags: options.tags || [],
+              enableAI: options.enableAI,
+              aiApiKey: options.openaiKey,
+              projectContext: options.projectContext,
             }))
           ),
         }

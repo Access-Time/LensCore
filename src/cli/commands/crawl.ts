@@ -12,9 +12,6 @@ export async function crawlCommand(url: string, options: any) {
 
     await CommandUtils.ensureLensCoreReady();
 
-    const projectContext = CommandUtils.parseProjectContext(
-      options.projectContext
-    );
     const numericOptions = CommandUtils.parseNumericOptions(options, {
       maxUrls: 10,
       concurrency: 3,
@@ -26,15 +23,12 @@ export async function crawlCommand(url: string, options: any) {
 
     const crawlOptions = {
       url,
-      enableAI: !!options.openaiKey,
-      openaiKey: options.openaiKey,
-      projectContext,
       waitUntil: options.waitUntil || 'domcontentloaded',
       rules: options.rules || {},
       ...numericOptions,
     };
 
-    const client = CommandUtils.getClient();
+    const client = await CommandUtils.getClient();
     const result = await client.crawl(crawlOptions);
 
     spinner.succeed('Crawl completed');

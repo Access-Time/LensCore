@@ -2,12 +2,15 @@
 /* eslint-disable no-console */
 import chalk from 'chalk';
 import ora from 'ora';
+import { promises as fs } from 'fs';
+import path from 'path';
+import os from 'os';
 import { LensCoreClient } from '../services/lenscore-client.js';
 import { DockerService } from '../services/docker.js';
 
 export class CommandUtils {
   private static dockerService = new DockerService();
-  private static client = new LensCoreClient();
+  private static client: LensCoreClient | null = null;
 
   /**
    * Ensure LensCore is ready (auto-start if needed)
@@ -16,14 +19,15 @@ export class CommandUtils {
     const spinner = ora('Ensuring LensCore is ready...').start();
 
     try {
-      const isRunning = await this.client.checkHealth();
+      const client = await this.getClient();
+      const isRunning = await client.checkHealth();
 
       if (!isRunning) {
         spinner.text = 'Starting LensCore services...';
         await this.dockerService.ensureServicesReady();
 
         spinner.text = 'Waiting for LensCore to be ready...';
-        await this.client.waitForReady();
+        await client.waitForReady();
       }
 
       spinner.succeed('LensCore ready');
@@ -267,8 +271,55 @@ export class CommandUtils {
   /**
    * Get LensCore client instance
    */
-  static getClient(): LensCoreClient {
+  static async getClient(): Promise<LensCoreClient> {
+    if (!this.client) {
+      const config = await this.loadConfig();
+      let baseUrl = 'http://localhost:3001'; 
+      
+      if (config?.mode === 'remote') {
+        baseUrl = 'https://api.accesstime.com';
+      } else if (config?.mode === 'local' && config?.remote?.baseUrl) {
+        baseUrl = config.remote.baseUrl;
+      }
+      
+      this.client = new LensCoreClient(baseUrl);
+    }
     return this.client;
+  }
+
+  /**
+   * Load configuration from file
+   */
+  static async loadConfig(): Promise<any> {
+    try {
+      const configPath = path.join(os.homedir(), '.lenscore', 'config.json');
+      const configData = await fs.readFile(configPath, 'utf8');
+      return JSON.parse(configData);
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Check if AI is enabled in config
+   */
+  static async isAIEnabled(): Promise<boolean> {
+    const config = await this.loadConfig();
+    return config?.openai?.enabled === true && !!config?.openai?.apiKey;
+  }
+
+  /**
+   * Get OpenAI config from file
+   */
+  static async getOpenAIConfig(): Promise<{ apiKey: string; model: string } | null> {
+    const config = await this.loadConfig();
+    if (config?.openai?.enabled && config?.openai?.apiKey) {
+      return {
+        apiKey: config.openai.apiKey,
+        model: config.openai.model || 'gpt-3.5-turbo',
+      };
+    }
+    return null;
   }
 
   /**
