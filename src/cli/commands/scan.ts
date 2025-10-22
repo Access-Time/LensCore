@@ -54,9 +54,9 @@ export async function scanCommand(url: string, options: any) {
     spinner.succeed('Scan completed');
 
     const webMode = options.web || false;
-    CommandUtils.displayScanResults(result, webMode);
+    const reportFilename = CommandUtils.displayScanResults(result, webMode);
     CommandUtils.displayAIStatus(options, result);
-    await CommandUtils.displayFooter(options);
+    await CommandUtils.displayFooter(options, reportFilename || undefined);
   } catch (error: any) {
     CommandUtils.handleError(error, spinner, 'Scan');
   }

@@ -25,6 +25,8 @@ services:
     volumes:
       - ./logs:/app/logs
       - ./cache:/app/cache
+      - ./web:/app/web
+      - ./storage:/app/storage
       - node_modules_data:/app/node_modules
     depends_on:
       - redis

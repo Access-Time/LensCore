@@ -58,8 +58,11 @@ export async function testMultipleCommand(urls: string[], options: any) {
     spinner.succeed('Multiple test completed');
 
     const webMode = options.web || false;
-    CommandUtils.displayMultipleTestResults(result, webMode);
-    await CommandUtils.displayFooter(options);
+    const reportFilename = CommandUtils.displayMultipleTestResults(
+      result,
+      webMode
+    );
+    await CommandUtils.displayFooter(options, reportFilename || undefined);
   } catch (error: any) {
     CommandUtils.handleError(error, spinner, 'Multiple Test');
   }

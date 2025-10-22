@@ -34,9 +34,9 @@ export async function crawlCommand(url: string, options: any) {
     spinner.succeed('Crawl completed');
 
     const webMode = options.web || false;
-    CommandUtils.displayCrawlResults(result, webMode);
+    const reportFilename = CommandUtils.displayCrawlResults(result, webMode);
     CommandUtils.displayAIStatus(options, result);
-    await CommandUtils.displayFooter(options);
+    await CommandUtils.displayFooter(options, reportFilename || undefined);
   } catch (error: any) {
     CommandUtils.handleError(error, spinner, 'Crawl');
   }
