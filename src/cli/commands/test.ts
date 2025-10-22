@@ -53,7 +53,8 @@ export async function testCommand(url: string, options: any) {
 
     spinner.succeed('Test completed');
 
-    CommandUtils.displayTestResults(result);
+    const webMode = options.web || false;
+    CommandUtils.displayTestResults(result, webMode);
     CommandUtils.displayAIStatus(options, result);
     await CommandUtils.displayFooter(options);
   } catch (error: any) {

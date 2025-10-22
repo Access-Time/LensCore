@@ -53,7 +53,8 @@ export async function scanCommand(url: string, options: any) {
 
     spinner.succeed('Scan completed');
 
-    CommandUtils.displayScanResults(result);
+    const webMode = options.web || false;
+    CommandUtils.displayScanResults(result, webMode);
     CommandUtils.displayAIStatus(options, result);
     await CommandUtils.displayFooter(options);
   } catch (error: any) {

@@ -78,156 +78,179 @@ export class CommandUtils {
   /**
    * Display scan results
    */
-  static displayScanResults(result: any): void {
-    console.log(chalk.green.bold('\n✅ Scan Results:'));
-    console.log(chalk.gray(`Total pages: ${result.crawl.totalPages}`));
-    console.log(chalk.gray(`Scan time: ${result.totalTime}ms`));
+  static displayScanResults(result: any, webMode: boolean = false): void {
+    if (webMode) {
+      console.log(chalk.green.bold('\n✅ Scan Results:'));
+      console.log(chalk.gray(`Total pages: ${result.crawl.totalPages}`));
+      console.log(chalk.gray(`Scan time: ${result.totalTime}ms`));
 
-    if (result.accessibility.results.length > 0) {
-      const violations = result.accessibility.results.reduce(
-        (acc: number, r: any) => acc + (r.violations?.length || 0),
-        0
-      );
-      const passes = result.accessibility.results.reduce(
-        (acc: number, r: any) => acc + (r.passes?.length || 0),
-        0
-      );
-
-      console.log(chalk.green(`✅ Passed checks: ${passes}`));
-      if (violations > 0) {
-        console.log(
-          chalk.yellow(`⚠️  Accessibility violations: ${violations}`)
+      if (result.accessibility.results.length > 0) {
+        const violations = result.accessibility.results.reduce(
+          (acc: number, r: any) => acc + (r.violations?.length || 0),
+          0
         );
-      } else {
-        console.log(chalk.green('🎉 No accessibility violations found!'));
+        const passes = result.accessibility.results.reduce(
+          (acc: number, r: any) => acc + (r.passes?.length || 0),
+          0
+        );
+
+        console.log(chalk.green(`✅ Passed checks: ${passes}`));
+        if (violations > 0) {
+          console.log(
+            chalk.yellow(`⚠️  Accessibility violations: ${violations}`)
+          );
+        } else {
+          console.log(chalk.green('🎉 No accessibility violations found!'));
+        }
       }
+    } else {
+      // JSON output mode
+      console.log(JSON.stringify(result, null, 2));
     }
   }
 
   /**
    * Display crawl results
    */
-  static displayCrawlResults(result: any): void {
-    console.log(chalk.green.bold('\n✅ Crawl Results:'));
-    console.log(chalk.gray(`Total pages: ${result.totalPages}`));
-    console.log(chalk.gray(`Crawl time: ${result.crawlTime}ms`));
+  static displayCrawlResults(result: any, webMode: boolean = false): void {
+    if (webMode) {
+      console.log(chalk.green.bold('\n✅ Crawl Results:'));
+      console.log(chalk.gray(`Total pages: ${result.totalPages}`));
+      console.log(chalk.gray(`Crawl time: ${result.crawlTime}ms`));
 
-    if (result.pages && result.pages.length > 0) {
-      console.log(chalk.blue('\n📄 Discovered Pages:'));
-      result.pages.forEach((page: any, index: number) => {
-        console.log(chalk.gray(`${index + 1}. ${page.url}`));
-        if (page.title) {
-          console.log(chalk.gray(`   Title: ${page.title}`));
-        }
-        if (page.statusCode) {
-          console.log(chalk.gray(`   Status: ${page.statusCode}`));
-        }
-      });
+      if (result.pages && result.pages.length > 0) {
+        console.log(chalk.blue('\n📄 Discovered Pages:'));
+        result.pages.forEach((page: any, index: number) => {
+          console.log(chalk.gray(`${index + 1}. ${page.url}`));
+          if (page.title) {
+            console.log(chalk.gray(`   Title: ${page.title}`));
+          }
+          if (page.statusCode) {
+            console.log(chalk.gray(`   Status: ${page.statusCode}`));
+          }
+        });
+      }
+    } else {
+      // JSON output mode
+      console.log(JSON.stringify(result, null, 2));
     }
   }
 
   /**
    * Display test results
    */
-  static displayTestResults(result: any): void {
-    console.log(chalk.green.bold('\n✅ Test Results:'));
-    console.log(chalk.gray(`URL: ${result.url}`));
-    console.log(chalk.gray(`Score: ${result.score || 'N/A'}`));
+  static displayTestResults(result: any, webMode: boolean = false): void {
+    if (webMode) {
+      console.log(chalk.green.bold('\n✅ Test Results:'));
+      console.log(chalk.gray(`URL: ${result.url}`));
+      console.log(chalk.gray(`Score: ${result.score || 'N/A'}`));
 
-    if (result.violations && result.violations.length > 0) {
-      console.log(
-        chalk.yellow(
-          `⚠️  Accessibility violations: ${result.violations.length}`
-        )
-      );
-
-      const maxViolations = 3;
-      result.violations
-        .slice(0, maxViolations)
-        .forEach((violation: any, index: number) => {
-          console.log(chalk.red(`\n${index + 1}. ${violation.id}`));
-          console.log(chalk.gray(`   Impact: ${violation.impact}`));
-          console.log(chalk.gray(`   Description: ${violation.description}`));
-
-          if (violation.aiExplanation) {
-            console.log(
-              chalk.blue(`   AI Explanation: ${violation.aiExplanation}`)
-            );
-          }
-          if (violation.aiRemediation) {
-            console.log(
-              chalk.green(`   AI Remediation: ${violation.aiRemediation}`)
-            );
-          }
-        });
-
-      if (result.violations.length > maxViolations) {
+      if (result.violations && result.violations.length > 0) {
         console.log(
-          chalk.gray(
-            `\n... and ${result.violations.length - maxViolations} more violations`
+          chalk.yellow(
+            `⚠️  Accessibility violations: ${result.violations.length}`
           )
         );
+
+        const maxViolations = 3;
+        result.violations
+          .slice(0, maxViolations)
+          .forEach((violation: any, index: number) => {
+            console.log(chalk.red(`\n${index + 1}. ${violation.id}`));
+            console.log(chalk.gray(`   Impact: ${violation.impact}`));
+            console.log(chalk.gray(`   Description: ${violation.description}`));
+
+            if (violation.aiExplanation) {
+              console.log(
+                chalk.blue(`   AI Explanation: ${violation.aiExplanation}`)
+              );
+            }
+            if (violation.aiRemediation) {
+              console.log(
+                chalk.green(`   AI Remediation: ${violation.aiRemediation}`)
+              );
+            }
+          });
+
+        if (result.violations.length > maxViolations) {
+          console.log(
+            chalk.gray(
+              `\n... and ${result.violations.length - maxViolations} more violations`
+            )
+          );
+        }
+      } else {
+        console.log(chalk.green('🎉 No accessibility violations found!'));
+      }
+
+      if (result.passes && result.passes.length > 0) {
+        console.log(chalk.green(`✅ Passed checks: ${result.passes.length}`));
       }
     } else {
-      console.log(chalk.green('🎉 No accessibility violations found!'));
-    }
-
-    if (result.passes && result.passes.length > 0) {
-      console.log(chalk.green(`✅ Passed checks: ${result.passes.length}`));
+      // JSON output mode
+      console.log(JSON.stringify(result, null, 2));
     }
   }
 
   /**
    * Display multiple test results
    */
-  static displayMultipleTestResults(result: any): void {
-    console.log(chalk.green.bold('\n✅ Multiple Test Results:'));
-    console.log(chalk.gray(`Total pages: ${result.totalPages}`));
-    console.log(chalk.gray(`Test time: ${result.testTime}ms`));
+  static displayMultipleTestResults(
+    result: any,
+    webMode: boolean = false
+  ): void {
+    if (webMode) {
+      console.log(chalk.green.bold('\n✅ Multiple Test Results:'));
+      console.log(chalk.gray(`Total pages: ${result.totalPages}`));
+      console.log(chalk.gray(`Test time: ${result.testTime}ms`));
 
-    if (result.results && result.results.length > 0) {
-      let totalViolations = 0;
-      let totalPasses = 0;
+      if (result.results && result.results.length > 0) {
+        let totalViolations = 0;
+        let totalPasses = 0;
 
-      result.results.forEach((pageResult: any, index: number) => {
-        console.log(chalk.blue(`\n📄 Page ${index + 1}: ${pageResult.url}`));
-        console.log(chalk.gray(`Score: ${pageResult.score || 'N/A'}`));
+        result.results.forEach((pageResult: any, index: number) => {
+          console.log(chalk.blue(`\n📄 Page ${index + 1}: ${pageResult.url}`));
+          console.log(chalk.gray(`Score: ${pageResult.score || 'N/A'}`));
 
-        if (pageResult.violations && pageResult.violations.length > 0) {
-          console.log(
-            chalk.yellow(`⚠️  Violations: ${pageResult.violations.length}`)
-          );
-          totalViolations += pageResult.violations.length;
+          if (pageResult.violations && pageResult.violations.length > 0) {
+            console.log(
+              chalk.yellow(`⚠️  Violations: ${pageResult.violations.length}`)
+            );
+            totalViolations += pageResult.violations.length;
 
-          const firstViolation = pageResult.violations[0];
-          console.log(
-            chalk.red(
-              `   • ${firstViolation.id}: ${firstViolation.description}`
-            )
-          );
+            const firstViolation = pageResult.violations[0];
+            console.log(
+              chalk.red(
+                `   • ${firstViolation.id}: ${firstViolation.description}`
+              )
+            );
+          } else {
+            console.log(chalk.green('✅ No violations found'));
+          }
+
+          if (pageResult.passes && pageResult.passes.length > 0) {
+            console.log(
+              chalk.green(`✅ Passed checks: ${pageResult.passes.length}`)
+            );
+            totalPasses += pageResult.passes.length;
+          }
+
+          if (pageResult.screenshot) {
+            console.log(chalk.blue(`📸 Screenshot: ${pageResult.screenshot}`));
+          }
+        });
+
+        console.log(chalk.green.bold('\n📊 Summary:'));
+        console.log(chalk.green(`✅ Total passed checks: ${totalPasses}`));
+        if (totalViolations > 0) {
+          console.log(chalk.yellow(`⚠️  Total violations: ${totalViolations}`));
         } else {
-          console.log(chalk.green('✅ No violations found'));
+          console.log(chalk.green('🎉 No violations found across all pages!'));
         }
-
-        if (pageResult.passes && pageResult.passes.length > 0) {
-          console.log(
-            chalk.green(`✅ Passed checks: ${pageResult.passes.length}`)
-          );
-          totalPasses += pageResult.passes.length;
-        }
-
-        if (pageResult.screenshot) {
-          console.log(chalk.blue(`📸 Screenshot: ${pageResult.screenshot}`));
-        }
-      });
-
-      console.log(chalk.green.bold('\n📊 Summary:'));
-      console.log(chalk.green(`✅ Total passed checks: ${totalPasses}`));
-      if (totalViolations > 0) {
-        console.log(chalk.yellow(`⚠️  Total violations: ${totalViolations}`));
-      } else {
-        console.log(chalk.green('🎉 No violations found across all pages!'));
       }
+    } else {
+      // JSON output mode
+      console.log(JSON.stringify(result, null, 2));
     }
   }
 
@@ -251,13 +274,17 @@ export class CommandUtils {
    * Display footer with results URL and optional browser open
    */
   static async displayFooter(options: any): Promise<void> {
-    const config = await this.loadConfig();
-    const port = config?.docker?.port || 3001;
-    console.log(chalk.blue(`\n🌐 Open results: http://localhost:${port}`));
+    const webMode = options.web || false;
 
-    if (options.open) {
-      const { exec } = await import('child_process');
-      exec(`open http://localhost:${port}`);
+    if (webMode) {
+      const config = await this.loadConfig();
+      const port = config?.docker?.port || 3001;
+      console.log(chalk.blue(`\n🌐 Open results: http://localhost:${port}`));
+
+      if (options.open) {
+        const { exec } = await import('child_process');
+        exec(`open http://localhost:${port}`);
+      }
     }
   }
 

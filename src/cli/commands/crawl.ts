@@ -33,7 +33,8 @@ export async function crawlCommand(url: string, options: any) {
 
     spinner.succeed('Crawl completed');
 
-    CommandUtils.displayCrawlResults(result);
+    const webMode = options.web || false;
+    CommandUtils.displayCrawlResults(result, webMode);
     CommandUtils.displayAIStatus(options, result);
     await CommandUtils.displayFooter(options);
   } catch (error: any) {

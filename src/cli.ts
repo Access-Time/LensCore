@@ -26,7 +26,10 @@ program
   .command('setup')
   .description('Setup LensCore configuration and Docker environment')
   .option('-p, --port <port>', 'Set custom port for LensCore (default: 3001)')
-  .option('-u, --url <url>', 'Set custom URL for LensCore (e.g., http://localhost:3003)')
+  .option(
+    '-u, --url <url>',
+    'Set custom URL for LensCore (e.g., http://localhost:3003)'
+  )
   .option('--ai', 'Enable AI analysis during setup')
   .option('-k, --openai-key <key>', 'Set OpenAI API key')
   .action(setupCommand);
@@ -34,7 +37,10 @@ program
 program
   .command('config')
   .description('Manage LensCore configuration settings')
-  .option('-s, --set <key=value>', 'Set configuration value (e.g., docker.port=3003)')
+  .option(
+    '-s, --set <key=value>',
+    'Set configuration value (e.g., docker.port=3003)'
+  )
   .option('-g, --get <key>', 'Get configuration value (e.g., docker.port)')
   .option('-l, --list', 'List all configuration settings')
   .action(configCommand);
@@ -46,13 +52,13 @@ program
 program
   .command('crawl <url>')
   .description('Crawl website and discover pages')
-  .option('-o, --open', 'Open results in browser')
+  .option('-w, --web', 'Open results in browser (default: JSON output)')
   .option('-u, --max-urls=<number>', 'Maximum URLs to crawl', '10')
   .option('-d, --max-depth=<number>', 'Maximum crawl depth', '2')
   .option('-t, --timeout=<number>', 'Request timeout in milliseconds', '10000')
   .option('-j, --concurrency=<number>', 'Number of concurrent requests', '3')
   .option(
-    '-w, --wait-until=<condition>',
+    '-l, --wait-until=<condition>',
     'Page load condition',
     'domcontentloaded'
   )
@@ -67,7 +73,7 @@ program
     '-c, --project-context=<context>',
     'Project context (e.g., react,tailwind,typescript)'
   )
-  .option('-o, --open', 'Open results in browser')
+  .option('-w, --web', 'Open results in browser (default: JSON output)')
   .option('-t, --timeout=<number>', 'Request timeout in milliseconds', '10000')
   .option('-r, --rules=<rules>', 'Specific axe-core rules (comma-separated)')
   .option('-g, --tags=<tags>', 'WCAG tags (comma-separated)')
@@ -83,7 +89,7 @@ program
     '-c, --project-context=<context>',
     'Project context (e.g., react,tailwind,typescript)'
   )
-  .option('-o, --open', 'Open results in browser')
+  .option('-w, --web', 'Open results in browser (default: JSON output)')
   .option('-t, --timeout=<number>', 'Request timeout in milliseconds', '10000')
   .option('-r, --rules=<rules>', 'Specific axe-core rules (comma-separated)')
   .option('-g, --tags=<tags>', 'WCAG tags (comma-separated)')
@@ -99,7 +105,7 @@ program
     '-c, --project-context <context>',
     'Project context (e.g., react,tailwind,typescript)'
   )
-  .option('-o, --open', 'Open results in browser')
+  .option('-w, --web', 'Open results in browser (default: JSON output)')
   .option('-u, --max-urls <number>', 'Maximum URLs to crawl', '10')
   .option('-d, --max-depth <number>', 'Maximum crawl depth', '2')
   .option('-t, --timeout <number>', 'Request timeout in milliseconds', '15000')

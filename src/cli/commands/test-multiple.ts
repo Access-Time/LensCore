@@ -57,7 +57,8 @@ export async function testMultipleCommand(urls: string[], options: any) {
 
     spinner.succeed('Multiple test completed');
 
-    CommandUtils.displayMultipleTestResults(result);
+    const webMode = options.web || false;
+    CommandUtils.displayMultipleTestResults(result, webMode);
     await CommandUtils.displayFooter(options);
   } catch (error: any) {
     CommandUtils.handleError(error, spinner, 'Multiple Test');
