@@ -10,6 +10,12 @@ const execAsync = promisify(exec);
 export class DockerService {
   private port = 3001;
 
+  constructor(port?: number) {
+    if (port) {
+      this.port = port;
+    }
+  }
+
   async checkDocker(): Promise<boolean> {
     try {
       await execAsync('docker --version');
@@ -42,7 +48,9 @@ export class DockerService {
 
     try {
       spinner.text = 'Building with docker-compose...';
-      await execAsync('docker-compose up -d --build');
+      await execAsync(
+        `LENSCORE_PORT=${this.port} docker-compose up -d --build`
+      );
 
       spinner.succeed('LensCore services built and started');
       console.log(
@@ -67,7 +75,7 @@ export class DockerService {
       }
 
       spinner.text = 'Starting with docker-compose...';
-      await execAsync('docker-compose up -d');
+      await execAsync(`LENSCORE_PORT=${this.port} docker-compose up -d`);
 
       spinner.succeed('LensCore services started');
       console.log(
@@ -84,7 +92,7 @@ export class DockerService {
     const spinner = ora('Stopping LensCore services...').start();
 
     try {
-      await execAsync('docker-compose down');
+      await execAsync(`LENSCORE_PORT=${this.port} docker-compose down`);
       spinner.succeed('LensCore services stopped');
     } catch (error) {
       spinner.fail('Failed to stop LensCore services');
@@ -163,7 +171,7 @@ export class DockerService {
   private async isServiceRunning(): Promise<boolean> {
     try {
       const { stdout } = await execAsync(
-        'docker-compose ps --services --filter "status=running"'
+        `LENSCORE_PORT=${this.port} docker-compose ps --services --filter "status=running"`
       );
       return stdout.includes('lenscore') && stdout.includes('redis');
     } catch {

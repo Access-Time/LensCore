@@ -123,12 +123,23 @@ export async function setupCommand() {
       },
     ]);
 
+    // Extract port from local URL for Docker configuration
+    let dockerPort = 3001;
+    if (answers.mode === 'local' && answers.localUrl) {
+      try {
+        const url = new URL(answers.localUrl);
+        dockerPort = parseInt(url.port) || 3001;
+      } catch {
+        // Keep default port if URL parsing fails
+      }
+    }
+
     // Create configuration
     const config = {
       mode: answers.mode,
       docker: {
         image: 'lenscore:latest',
-        port: 3001,
+        port: dockerPort,
       },
       remote: {
         baseUrl:

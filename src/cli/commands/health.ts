@@ -15,7 +15,9 @@ export async function healthCommand() {
       spinner.succeed('LensCore is healthy');
 
       try {
-        const response = await fetch('http://localhost:3001/api/health');
+        const config = await CommandUtils.loadConfig();
+        const port = config?.docker?.port || 3001;
+        const response = await fetch(`http://localhost:${port}/api/health`);
         const healthData = await response.json();
 
         console.log(chalk.green.bold('\n✅ Health Status:'));
@@ -28,7 +30,9 @@ export async function healthCommand() {
             chalk.gray(`  ${service}: ${healthData.services[service]}`)
           );
         }
-        console.log(chalk.blue('\n🌐 API available at: http://localhost:3001'));
+        console.log(
+          chalk.blue(`\n🌐 API available at: http://localhost:${port}`)
+        );
         console.log(chalk.gray('📊 Redis cache: localhost:6379'));
       } catch {
         console.log(chalk.green('✅ LensCore is running'));

@@ -9,7 +9,6 @@ import { LensCoreClient } from '../services/lenscore-client.js';
 import { DockerService } from '../services/docker.js';
 
 export class CommandUtils {
-  private static dockerService = new DockerService();
   private static client: LensCoreClient | null = null;
 
   /**
@@ -24,7 +23,8 @@ export class CommandUtils {
 
       if (!isRunning) {
         spinner.text = 'Starting LensCore services...';
-        await this.dockerService.ensureServicesReady();
+        const dockerService = await this.getDockerService();
+        await dockerService.ensureServicesReady();
 
         spinner.text = 'Waiting for LensCore to be ready...';
         await client.waitForReady();
@@ -251,11 +251,13 @@ export class CommandUtils {
    * Display footer with results URL and optional browser open
    */
   static async displayFooter(options: any): Promise<void> {
-    console.log(chalk.blue('\n🌐 Open results: http://localhost:3000'));
+    const config = await this.loadConfig();
+    const port = config?.docker?.port || 3001;
+    console.log(chalk.blue(`\n🌐 Open results: http://localhost:${port}`));
 
     if (options.open) {
       const { exec } = await import('child_process');
-      exec('open http://localhost:3000');
+      exec(`open http://localhost:${port}`);
     }
   }
 
@@ -328,7 +330,9 @@ export class CommandUtils {
   /**
    * Get Docker service instance
    */
-  static getDockerService(): DockerService {
-    return this.dockerService;
+  static async getDockerService(): Promise<DockerService> {
+    const config = await this.loadConfig();
+    const port = config?.docker?.port || 3001;
+    return new DockerService(port);
   }
 }
