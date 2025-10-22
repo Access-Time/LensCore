@@ -32,22 +32,26 @@ export class LensCoreClient {
     throw new Error('LensCore startup timeout');
   }
 
-  private async fetchWithRetry(url: string, options: RequestInit, retries = 3): Promise<Response> {
+  private async fetchWithRetry(
+    url: string,
+    options: RequestInit,
+    retries = 3
+  ): Promise<Response> {
     for (let i = 0; i < retries; i++) {
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-        
+
         const response = await fetch(url, {
           ...options,
           signal: controller.signal,
         });
-        
+
         clearTimeout(timeoutId);
         return response;
       } catch (error) {
         if (i === retries - 1) throw error;
-        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1))); // Exponential backoff
+        await new Promise((resolve) => setTimeout(resolve, 1000 * (i + 1))); // Exponential backoff
       }
     }
     throw new Error('Max retries exceeded');
@@ -131,28 +135,31 @@ export class LensCoreClient {
     const spinner = ora('Running accessibility scan...').start();
 
     try {
-      const response = await this.fetchWithRetry(`${this.baseUrl}/api/combined`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          url: options.url,
-          enableAI: options.enableAI,
-          aiApiKey: options.openaiKey,
-          projectContext: options.projectContext,
-          crawlOptions: {
-            maxUrls: options.maxUrls || 10,
-            concurrency: options.concurrency || 3,
-            timeout: options.timeout || 15000,
-            max_depth: options.maxDepth || 2,
+      const response = await this.fetchWithRetry(
+        `${this.baseUrl}/api/combined`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
           },
-          testOptions: {
-            includeScreenshot: true,
-            timeout: options.timeout || 15000,
-          },
-        }),
-      });
+          body: JSON.stringify({
+            url: options.url,
+            enableAI: options.enableAI,
+            aiApiKey: options.openaiKey,
+            projectContext: options.projectContext,
+            crawlOptions: {
+              maxUrls: options.maxUrls || 10,
+              concurrency: options.concurrency || 3,
+              timeout: options.timeout || 15000,
+              max_depth: options.maxDepth || 2,
+            },
+            testOptions: {
+              includeScreenshot: true,
+              timeout: options.timeout || 15000,
+            },
+          }),
+        }
+      );
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -173,19 +180,24 @@ export class LensCoreClient {
     const spinner = ora('Testing multiple pages...').start();
 
     try {
-      const response = await this.fetchWithRetry(`${this.baseUrl}/api/test-multiple`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(options.urls.map((url: string) => ({
-          url,
-          includeScreenshot: options.includeScreenshot !== false,
-          timeout: options.timeout || 10000,
-          rules: options.rules || [],
-          tags: options.tags || [],
-        }))),
-      });
+      const response = await this.fetchWithRetry(
+        `${this.baseUrl}/api/test-multiple`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(
+            options.urls.map((url: string) => ({
+              url,
+              includeScreenshot: options.includeScreenshot !== false,
+              timeout: options.timeout || 10000,
+              rules: options.rules || [],
+              tags: options.tags || [],
+            }))
+          ),
+        }
+      );
 
       if (!response.ok) {
         const errorText = await response.text();

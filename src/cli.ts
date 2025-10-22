@@ -36,7 +36,11 @@ program
   .option('-d, --max-depth <number>', 'Maximum crawl depth', '2')
   .option('-t, --timeout <number>', 'Request timeout in milliseconds', '10000')
   .option('-j, --concurrency <number>', 'Number of concurrent requests', '3')
-  .option('-w, --wait-until <condition>', 'Page load condition', 'domcontentloaded')
+  .option(
+    '-w, --wait-until <condition>',
+    'Page load condition',
+    'domcontentloaded'
+  )
   .action(crawlCommand);
 
 program

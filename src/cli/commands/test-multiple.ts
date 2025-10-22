@@ -37,7 +37,6 @@ export async function testMultipleCommand(urls: string[], options: any) {
 
     CommandUtils.displayMultipleTestResults(result);
     await CommandUtils.displayFooter(options);
-
   } catch (error: any) {
     CommandUtils.handleError(error, spinner, 'Multiple test');
   }

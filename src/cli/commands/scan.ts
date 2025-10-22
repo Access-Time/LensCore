@@ -12,7 +12,9 @@ export async function scanCommand(url: string, options: any) {
 
     await CommandUtils.ensureLensCoreReady();
 
-    const projectContext = CommandUtils.parseProjectContext(options.projectContext);
+    const projectContext = CommandUtils.parseProjectContext(
+      options.projectContext
+    );
     const numericOptions = CommandUtils.parseNumericOptions(options, {
       maxUrls: 10,
       concurrency: 3,
@@ -38,7 +40,6 @@ export async function scanCommand(url: string, options: any) {
     CommandUtils.displayScanResults(result);
     CommandUtils.displayAIStatus(options, result);
     await CommandUtils.displayFooter(options);
-
   } catch (error: any) {
     CommandUtils.handleError(error, spinner, 'Scan');
   }

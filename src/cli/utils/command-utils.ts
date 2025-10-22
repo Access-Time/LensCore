@@ -14,14 +14,14 @@ export class CommandUtils {
    */
   static async ensureLensCoreReady(): Promise<void> {
     const spinner = ora('Ensuring LensCore is ready...').start();
-    
+
     try {
       const isRunning = await this.client.checkHealth();
 
       if (!isRunning) {
         spinner.text = 'Starting LensCore services...';
         await this.dockerService.ensureServicesReady();
-        
+
         spinner.text = 'Waiting for LensCore to be ready...';
         await this.client.waitForReady();
       }
@@ -52,19 +52,22 @@ export class CommandUtils {
    * Parse comma-separated string to array
    */
   static parseCommaSeparated(value?: string): string[] {
-    return value ? value.split(',').map(item => item.trim()) : [];
+    return value ? value.split(',').map((item) => item.trim()) : [];
   }
 
   /**
    * Parse numeric options with defaults
    */
-  static parseNumericOptions(options: any, defaults: Record<string, number>): Record<string, number> {
+  static parseNumericOptions(
+    options: any,
+    defaults: Record<string, number>
+  ): Record<string, number> {
     const result: Record<string, number> = {};
-    
+
     for (const [key, defaultValue] of Object.entries(defaults)) {
       result[key] = parseInt(options[key]) || defaultValue;
     }
-    
+
     return result;
   }
 
@@ -85,10 +88,12 @@ export class CommandUtils {
         (acc: number, r: any) => acc + (r.passes?.length || 0),
         0
       );
-      
+
       console.log(chalk.green(`✅ Passed checks: ${passes}`));
       if (violations > 0) {
-        console.log(chalk.yellow(`⚠️  Accessibility violations: ${violations}`));
+        console.log(
+          chalk.yellow(`⚠️  Accessibility violations: ${violations}`)
+        );
       } else {
         console.log(chalk.green('🎉 No accessibility violations found!'));
       }
@@ -126,24 +131,38 @@ export class CommandUtils {
     console.log(chalk.gray(`Score: ${result.score || 'N/A'}`));
 
     if (result.violations && result.violations.length > 0) {
-      console.log(chalk.yellow(`⚠️  Accessibility violations: ${result.violations.length}`));
-      
+      console.log(
+        chalk.yellow(
+          `⚠️  Accessibility violations: ${result.violations.length}`
+        )
+      );
+
       const maxViolations = 3;
-      result.violations.slice(0, maxViolations).forEach((violation: any, index: number) => {
-        console.log(chalk.red(`\n${index + 1}. ${violation.id}`));
-        console.log(chalk.gray(`   Impact: ${violation.impact}`));
-        console.log(chalk.gray(`   Description: ${violation.description}`));
-        
-        if (violation.aiExplanation) {
-          console.log(chalk.blue(`   AI Explanation: ${violation.aiExplanation}`));
-        }
-        if (violation.aiRemediation) {
-          console.log(chalk.green(`   AI Remediation: ${violation.aiRemediation}`));
-        }
-      });
+      result.violations
+        .slice(0, maxViolations)
+        .forEach((violation: any, index: number) => {
+          console.log(chalk.red(`\n${index + 1}. ${violation.id}`));
+          console.log(chalk.gray(`   Impact: ${violation.impact}`));
+          console.log(chalk.gray(`   Description: ${violation.description}`));
+
+          if (violation.aiExplanation) {
+            console.log(
+              chalk.blue(`   AI Explanation: ${violation.aiExplanation}`)
+            );
+          }
+          if (violation.aiRemediation) {
+            console.log(
+              chalk.green(`   AI Remediation: ${violation.aiRemediation}`)
+            );
+          }
+        });
 
       if (result.violations.length > maxViolations) {
-        console.log(chalk.gray(`\n... and ${result.violations.length - maxViolations} more violations`));
+        console.log(
+          chalk.gray(
+            `\n... and ${result.violations.length - maxViolations} more violations`
+          )
+        );
       }
     } else {
       console.log(chalk.green('🎉 No accessibility violations found!'));
@@ -171,17 +190,25 @@ export class CommandUtils {
         console.log(chalk.gray(`Score: ${pageResult.score || 'N/A'}`));
 
         if (pageResult.violations && pageResult.violations.length > 0) {
-          console.log(chalk.yellow(`⚠️  Violations: ${pageResult.violations.length}`));
+          console.log(
+            chalk.yellow(`⚠️  Violations: ${pageResult.violations.length}`)
+          );
           totalViolations += pageResult.violations.length;
 
           const firstViolation = pageResult.violations[0];
-          console.log(chalk.red(`   • ${firstViolation.id}: ${firstViolation.description}`));
+          console.log(
+            chalk.red(
+              `   • ${firstViolation.id}: ${firstViolation.description}`
+            )
+          );
         } else {
           console.log(chalk.green('✅ No violations found'));
         }
 
         if (pageResult.passes && pageResult.passes.length > 0) {
-          console.log(chalk.green(`✅ Passed checks: ${pageResult.passes.length}`));
+          console.log(
+            chalk.green(`✅ Passed checks: ${pageResult.passes.length}`)
+          );
           totalPasses += pageResult.passes.length;
         }
 
@@ -205,10 +232,11 @@ export class CommandUtils {
    */
   static displayAIStatus(options: any, result: any): void {
     if (options.openaiKey) {
-      const aiEnabled = result.aiEnabled || 
-        (result.accessibility?.results?.some((r: any) => r.aiEnabled)) ||
-        (result.metadata?.aiEnabled);
-      
+      const aiEnabled =
+        result.aiEnabled ||
+        result.accessibility?.results?.some((r: any) => r.aiEnabled) ||
+        result.metadata?.aiEnabled;
+
       if (aiEnabled) {
         console.log(chalk.blue('🤖 AI analysis enabled'));
       }

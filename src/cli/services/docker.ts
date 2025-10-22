@@ -122,7 +122,9 @@ export class DockerService {
 
   async validateImage(): Promise<boolean> {
     try {
-      const { stdout } = await execAsync('docker images --format "{{.Repository}}:{{.Tag}}"');
+      const { stdout } = await execAsync(
+        'docker images --format "{{.Repository}}:{{.Tag}}"'
+      );
       return stdout.includes('lenscore-lenscore:latest');
     } catch {
       return false;
@@ -131,7 +133,7 @@ export class DockerService {
 
   async ensureServicesReady(): Promise<void> {
     const spinner = ora('Ensuring services are ready...').start();
-    
+
     try {
       const portInUse = await this.validatePort();
       if (portInUse) {
@@ -150,7 +152,7 @@ export class DockerService {
       // Start services
       spinner.text = 'Starting services...';
       await this.start();
-      
+
       spinner.succeed('Services are ready');
     } catch (error) {
       spinner.fail('Failed to ensure services are ready');
