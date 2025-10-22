@@ -13,9 +13,11 @@ module.exports = {
   testTimeout: 30000,
   forceExit: true,
   detectOpenHandles: true,
+  maxWorkers: 1,
   clearMocks: true,
   restoreMocks: true,
   moduleNameMapper: {
+    '^ioredis$': '<rootDir>/tests/__mocks__/ioredis.ts',
     '^../src/services/crawling$':
       '<rootDir>/tests/__mocks__/services/crawling.ts',
     '^../src/services/accessibility$':
