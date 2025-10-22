@@ -4,6 +4,10 @@
 import { Command } from 'commander';
 import { setupCommand } from './cli/commands/setup.js';
 import { scanCommand } from './cli/commands/scan.js';
+import { crawlCommand } from './cli/commands/crawl.js';
+import { testCommand } from './cli/commands/test.js';
+import { testMultipleCommand } from './cli/commands/test-multiple.js';
+import { healthCommand } from './cli/commands/health.js';
 import { configCommand } from './cli/commands/config.js';
 import { GlobalErrorHandler } from './cli/services/error-handler.js';
 
@@ -20,15 +24,65 @@ program
   .action(setupCommand);
 
 program
-  .command('scan <url>')
-  .description('Scan website for accessibility issues')
+  .command('crawl <url>')
+  .description('Crawl website and discover pages')
   .option('-k, --openai-key <key>', 'OpenAI API key')
   .option(
     '-c, --project-context <context>',
-    'Project context (e.g., react,tailwind)'
+    'Project context (e.g., react,tailwind,typescript)'
   )
   .option('-o, --open', 'Open results in browser')
+  .option('-u, --max-urls <number>', 'Maximum URLs to crawl', '10')
+  .option('-d, --max-depth <number>', 'Maximum crawl depth', '2')
+  .option('-t, --timeout <number>', 'Request timeout in milliseconds', '10000')
+  .option('-j, --concurrency <number>', 'Number of concurrent requests', '3')
+  .option('-w, --wait-until <condition>', 'Page load condition', 'domcontentloaded')
+  .action(crawlCommand);
+
+program
+  .command('test <url>')
+  .description('Test accessibility of a single page')
+  .option('-k, --openai-key <key>', 'OpenAI API key')
+  .option(
+    '-c, --project-context <context>',
+    'Project context (e.g., react,tailwind,typescript)'
+  )
+  .option('-o, --open', 'Open results in browser')
+  .option('-t, --timeout <number>', 'Request timeout in milliseconds', '10000')
+  .option('-r, --rules <rules>', 'Specific axe-core rules (comma-separated)')
+  .option('-g, --tags <tags>', 'WCAG tags (comma-separated)')
+  .option('--no-screenshot', 'Disable screenshot capture')
+  .action(testCommand);
+
+program
+  .command('test-multiple <urls...>')
+  .description('Test accessibility of multiple pages simultaneously')
+  .option('-o, --open', 'Open results in browser')
+  .option('-t, --timeout <number>', 'Request timeout in milliseconds', '10000')
+  .option('-r, --rules <rules>', 'Specific axe-core rules (comma-separated)')
+  .option('-g, --tags <tags>', 'WCAG tags (comma-separated)')
+  .option('--no-screenshot', 'Disable screenshot capture')
+  .action(testMultipleCommand);
+
+program
+  .command('scan <url>')
+  .description('Crawl website and test accessibility (combined)')
+  .option('-k, --openai-key <key>', 'OpenAI API key')
+  .option(
+    '-c, --project-context <context>',
+    'Project context (e.g., react,tailwind,typescript)'
+  )
+  .option('-o, --open', 'Open results in browser')
+  .option('-u, --max-urls <number>', 'Maximum URLs to crawl', '10')
+  .option('-d, --max-depth <number>', 'Maximum crawl depth', '2')
+  .option('-t, --timeout <number>', 'Request timeout in milliseconds', '15000')
+  .option('-j, --concurrency <number>', 'Number of concurrent requests', '3')
   .action(scanCommand);
+
+program
+  .command('health')
+  .description('Check LensCore health status')
+  .action(healthCommand);
 
 program
   .command('config')

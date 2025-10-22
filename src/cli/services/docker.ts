@@ -111,6 +111,53 @@ export class DockerService {
     }
   }
 
+  async validatePort(): Promise<boolean> {
+    try {
+      const { stdout } = await execAsync(`lsof -i :${this.port}`);
+      return stdout.includes('LISTEN');
+    } catch {
+      return false;
+    }
+  }
+
+  async validateImage(): Promise<boolean> {
+    try {
+      const { stdout } = await execAsync('docker images --format "{{.Repository}}:{{.Tag}}"');
+      return stdout.includes('lenscore-lenscore:latest');
+    } catch {
+      return false;
+    }
+  }
+
+  async ensureServicesReady(): Promise<void> {
+    const spinner = ora('Ensuring services are ready...').start();
+    
+    try {
+      const portInUse = await this.validatePort();
+      if (portInUse) {
+        spinner.succeed('Port already in use - services likely running');
+        return;
+      }
+
+      // Check if image exists
+      const imageExists = await this.validateImage();
+      if (!imageExists) {
+        spinner.text = 'Image not found, building...';
+        await this.build();
+        return;
+      }
+
+      // Start services
+      spinner.text = 'Starting services...';
+      await this.start();
+      
+      spinner.succeed('Services are ready');
+    } catch (error) {
+      spinner.fail('Failed to ensure services are ready');
+      throw error;
+    }
+  }
+
   private async isServiceRunning(): Promise<boolean> {
     try {
       const { stdout } = await execAsync(

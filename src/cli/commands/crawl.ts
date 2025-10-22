@@ -4,11 +4,11 @@ import chalk from 'chalk';
 import ora from 'ora';
 import { CommandUtils } from '../utils/command-utils.js';
 
-export async function scanCommand(url: string, options: any) {
-  const spinner = ora('Starting scan...').start();
+export async function crawlCommand(url: string, options: any) {
+  const spinner = ora('Starting crawl...').start();
 
   try {
-    console.log(chalk.blue.bold(`\n🔍 Scanning: ${url}\n`));
+    console.log(chalk.blue.bold(`\n🕷️ Crawling: ${url}\n`));
 
     await CommandUtils.ensureLensCoreReady();
 
@@ -16,30 +16,32 @@ export async function scanCommand(url: string, options: any) {
     const numericOptions = CommandUtils.parseNumericOptions(options, {
       maxUrls: 10,
       concurrency: 3,
-      timeout: 15000,
+      timeout: 10000,
       maxDepth: 2,
     });
 
-    spinner.text = 'Starting crawl and accessibility scan...';
+    spinner.text = 'Starting website crawl...';
 
-    const scanOptions = {
+    const crawlOptions = {
       url,
       enableAI: !!options.openaiKey,
       openaiKey: options.openaiKey,
       projectContext,
+      waitUntil: options.waitUntil || 'domcontentloaded',
+      rules: options.rules || {},
       ...numericOptions,
     };
 
     const client = CommandUtils.getClient();
-    const result = await client.scan(scanOptions);
+    const result = await client.crawl(crawlOptions);
 
-    spinner.succeed('Scan completed');
+    spinner.succeed('Crawl completed');
 
-    CommandUtils.displayScanResults(result);
+    CommandUtils.displayCrawlResults(result);
     CommandUtils.displayAIStatus(options, result);
     await CommandUtils.displayFooter(options);
 
   } catch (error: any) {
-    CommandUtils.handleError(error, spinner, 'Scan');
+    CommandUtils.handleError(error, spinner, 'Crawl');
   }
 }
