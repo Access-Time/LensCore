@@ -130,7 +130,7 @@ make build        # Build for production
 make start        # Run production server
 make test         # Run all tests
 make lint         # Run ESLint
-make fmt          # Format code with Prettier
+make format          # Format code with Prettier
 make typecheck    # TypeScript type checking
 
 make build-docker # Build Docker image

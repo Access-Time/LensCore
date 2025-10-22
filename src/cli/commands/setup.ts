@@ -6,7 +6,7 @@ import inquirer from 'inquirer';
 import { promises as fs } from 'fs';
 import path from 'path';
 import os from 'os';
-import { DockerService } from '../services/docker.js';
+import { DockerService } from '../services/docker';
 
 const GPT_MODELS = [
   { name: 'GPT-3.5 Turbo (Fast & Cost-effective)', value: 'gpt-3.5-turbo' },

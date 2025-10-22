@@ -24,7 +24,7 @@ test: ## Run all tests
 lint: ## Run ESLint
 	npm run lint
 
-fmt: ## Format code with Prettier
+format: ## Format code with Prettier
 	npm run format
 
 typecheck: ## Run TypeScript type checking

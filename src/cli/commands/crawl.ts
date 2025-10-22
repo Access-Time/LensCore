@@ -2,7 +2,7 @@
 /* eslint-disable no-console */
 import chalk from 'chalk';
 import ora from 'ora';
-import { CommandUtils } from '../utils/command-utils.js';
+import { CommandUtils } from '../utils/command-utils';
 
 export async function crawlCommand(url: string, options: any) {
   const spinner = ora('Starting crawl...').start();

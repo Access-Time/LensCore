@@ -5,9 +5,9 @@ import ora from 'ora';
 import { promises as fs } from 'fs';
 import path from 'path';
 import os from 'os';
-import { LensCoreClient } from '../services/lenscore-client.js';
-import { DockerService } from '../services/docker.js';
-import { WebReportService } from '../services/web-report.js';
+import { LensCoreClient } from '../services/lenscore-client';
+import { DockerService } from '../services/docker';
+import { WebReportService } from '../services/web-report';
 
 export class CommandUtils {
   private static client: LensCoreClient | null = null;
