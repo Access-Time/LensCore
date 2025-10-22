@@ -1,5 +1,5 @@
 {
-  "name": "@AccessTime/LensCore",
+  "name": "@accesstime/lenscore",
   "version": "0.1.0",
   "description": "Open-source accessibility testing and web crawling platform",
   "main": "dist/index.js",
