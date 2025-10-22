@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LensCore Test Results</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background-color: #f9fafb;
+        color: #111827;
+        line-height: 1.6;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+      }
+
+      .card {
+        background: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+      }
+
+      .title {
+        font-size: 1.875rem;
+        font-weight: bold;
+        color: #111827;
+        margin-bottom: 0.5rem;
+      }
+
+      .subtitle {
+        color: #6b7280;
+        font-size: 1rem;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .stat {
+        display: flex;
+        align-items: center;
+      }
+
+      .stat-icon {
+        padding: 0.5rem;
+        border-radius: 0.5rem;
+        margin-right: 1rem;
+        width: 2.5rem;
+        height: 2.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .stat-icon.blue {
+        background: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+      }
+
+      .stat-icon.green {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+      }
+
+      .stat-icon.yellow {
+        background: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+      }
+
+      .stat-icon.gray {
+        background: #f3f4f6;
+        color: #6b7280;
+      }
+
+      .stat-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #6b7280;
+        margin-bottom: 0.25rem;
+      }
+
+      .stat-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #111827;
+      }
+
+      .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #111827;
+        margin-bottom: 1rem;
+      }
+
+      .link {
+        color: #3b82f6;
+        text-decoration: none;
+      }
+
+      .link:hover {
+        text-decoration: underline;
+      }
+
+      .violation {
+        border: 1px solid rgba(245, 158, 11, 0.2);
+        background: rgba(245, 158, 11, 0.05);
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+      }
+
+      .violation-title {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #111827;
+        margin-bottom: 0.25rem;
+      }
+
+      .violation-desc {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-bottom: 0.5rem;
+      }
+
+      .violation-impact {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.5rem;
+        border-radius: 9999px;
+        background: rgba(245, 158, 11, 0.2);
+        color: #f59e0b;
+        font-size: 0.75rem;
+        margin-right: 1rem;
+      }
+
+      .success {
+        text-align: center;
+        padding: 2rem;
+      }
+
+      .success-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+      }
+
+      .success-title {
+        font-size: 1.125rem;
+        font-weight: 500;
+        color: #111827;
+        margin-bottom: 0.5rem;
+      }
+
+      .success-desc {
+        color: #6b7280;
+      }
+
+      .footer {
+        margin-top: 2rem;
+        text-align: center;
+        color: #6b7280;
+        font-size: 0.875rem;
+      }
+
+      .ai-explanation {
+        margin-top: 0.75rem;
+        padding: 0.75rem;
+        background: #eff6ff;
+        border-radius: 0.5rem;
+        border-left: 4px solid #3b82f6;
+      }
+
+      .ai-explanation-title {
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #1e40af;
+        margin-bottom: 0.25rem;
+      }
+
+      .ai-explanation-text {
+        font-size: 0.75rem;
+        color: #1e3a8a;
+      }
+
+      .ai-remediation {
+        margin-top: 0.5rem;
+        padding: 0.75rem;
+        background: #f0fdf4;
+        border-radius: 0.5rem;
+        border-left: 4px solid #10b981;
+      }
+
+      .ai-remediation-title {
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #166534;
+        margin-bottom: 0.25rem;
+      }
+
+      .ai-remediation-text {
+        font-size: 0.75rem;
+        color: #15803d;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <div class="card">
+        <div class="header">
+          <div>
+            <h1 class="title">LensCore Test Results</h1>
+            <p class="subtitle">Accessibility testing results</p>
+          </div>
+          <div style="text-align: right">
+            <div style="font-size: 0.875rem; color: #6b7280">Tested at</div>
+            <div style="font-size: 1.125rem; font-weight: 600; color: #111827">
+              {{TEST_TIME}}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- URL Info -->
+      <div class="card">
+        <h2 class="section-title">Tested URL</h2>
+        <a
+          href="{{TEST_URL}}"
+          target="_blank"
+          class="link"
+          style="font-size: 1.125rem"
+          >{{TEST_URL}}</a
+        >
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="grid">
+        <div class="card">
+          <div class="stat">
+            <div class="stat-icon blue">
+              <svg
+                width="24"
+                height="24"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                ></path>
+              </svg>
+            </div>
+            <div>
+              <div class="stat-label">Score</div>
+              <div class="stat-value">{{SCORE}}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="stat">
+            <div class="stat-icon green">
+              <svg
+                width="24"
+                height="24"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M5 13l4 4L19 7"
+                ></path>
+              </svg>
+            </div>
+            <div>
+              <div class="stat-label">Passed Checks</div>
+              <div class="stat-value">{{PASSED_CHECKS}}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="stat">
+            <div class="stat-icon yellow">
+              <svg
+                width="24"
+                height="24"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                ></path>
+              </svg>
+            </div>
+            <div>
+              <div class="stat-label">Violations</div>
+              <div class="stat-value">{{VIOLATIONS}}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="stat">
+            <div class="stat-icon gray">
+              <svg
+                width="24"
+                height="24"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                ></path>
+              </svg>
+            </div>
+            <div>
+              <div class="stat-label">Screenshot</div>
+              <div class="stat-value">{{SCREENSHOT_STATUS}}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Violations -->
+      <div class="card">
+        <h2 class="section-title">Violations</h2>
+        <div>{{VIOLATIONS_SECTION}}</div>
+      </div>
+
+      <!-- Passed Checks -->
+      <div class="card">
+        <h2 class="section-title">Passed Checks</h2>
+        <div>{{PASSED_CHECKS_SECTION}}</div>
+      </div>
+
+      <!-- Footer -->
+      <div class="footer">
+        <p>
+          Generated by LensCore CLI •
+          <a href="https://github.com/Access-Time/LensCore" class="link"
+            >GitHub</a
+          >
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

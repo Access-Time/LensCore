@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LensCore Crawl Results</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background-color: #f9fafb;
+        color: #111827;
+        line-height: 1.6;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+      }
+
+      .card {
+        background: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+      }
+
+      .title {
+        font-size: 1.875rem;
+        font-weight: bold;
+        color: #111827;
+        margin-bottom: 0.5rem;
+      }
+
+      .subtitle {
+        color: #6b7280;
+        font-size: 1rem;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .stat {
+        display: flex;
+        align-items: center;
+      }
+
+      .stat-icon {
+        padding: 0.5rem;
+        border-radius: 0.5rem;
+        margin-right: 1rem;
+        width: 2.5rem;
+        height: 2.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .stat-icon.blue {
+        background: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+      }
+
+      .stat-icon.green {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+      }
+
+      .stat-icon.gray {
+        background: #f3f4f6;
+        color: #6b7280;
+      }
+
+      .stat-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #6b7280;
+        margin-bottom: 0.25rem;
+      }
+
+      .stat-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #111827;
+      }
+
+      .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #111827;
+        margin-bottom: 1rem;
+      }
+
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+      }
+
+      .table th,
+      .table td {
+        padding: 0.75rem 1.5rem;
+        text-align: left;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      .table th {
+        background: #f9fafb;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .table td {
+        font-size: 0.875rem;
+        color: #111827;
+      }
+
+      .link {
+        color: #3b82f6;
+        text-decoration: none;
+      }
+
+      .link:hover {
+        text-decoration: underline;
+      }
+
+      .badge {
+        display: inline-flex;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border-radius: 9999px;
+      }
+
+      .badge.green {
+        background: #dcfce7;
+        color: #166534;
+      }
+
+      .badge.red {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+
+      .footer {
+        margin-top: 2rem;
+        text-align: center;
+        color: #6b7280;
+        font-size: 0.875rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <div class="card">
+        <div class="header">
+          <div>
+            <h1 class="title">LensCore Crawl Results</h1>
+            <p class="subtitle">Website crawling and page discovery</p>
+          </div>
+          <div style="text-align: right">
+            <div style="font-size: 0.875rem; color: #6b7280">Crawled at</div>
+            <div style="font-size: 1.125rem; font-weight: 600; color: #111827">
+              {{CRAWL_TIME}}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="grid">
+        <div class="card">
+          <div class="stat">
+            <div class="stat-icon blue">
+              <svg
+                width="24"
+                height="24"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                ></path>
+              </svg>
+            </div>
+            <div>
+              <div class="stat-label">Total Pages</div>
+              <div class="stat-value">{{TOTAL_PAGES}}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="stat">
+            <div class="stat-icon green">
+              <svg
+                width="24"
+                height="24"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M5 13l4 4L19 7"
+                ></path>
+              </svg>
+            </div>
+            <div>
+              <div class="stat-label">Successful</div>
+              <div class="stat-value">{{SUCCESSFUL_PAGES}}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="stat">
+            <div class="stat-icon gray">
+              <svg
+                width="24"
+                height="24"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                ></path>
+              </svg>
+            </div>
+            <div>
+              <div class="stat-label">Crawl Time</div>
+              <div class="stat-value">{{CRAWL_TIME_MS}}ms</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Crawl Results -->
+      <div class="card">
+        <h2 class="section-title">Discovered Pages</h2>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>URL</th>
+              <th>Title</th>
+              <th>Description</th>
+              <th>Status</th>
+              <th>Timestamp</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{CRAWL_TABLE_ROWS}}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Footer -->
+      <div class="footer">
+        <p>
+          Generated by LensCore CLI •
+          <a href="https://github.com/Access-Time/LensCore" class="link"
+            >GitHub</a
+          >
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

@@ -4,6 +4,7 @@ import { testHandler, testMultipleHandler } from './accessibility';
 import { combinedHandler } from './combined';
 import { healthHandler } from './health';
 import { cacheStatsHandler, cacheClearHandler } from './cache';
+import webRoutes from './web';
 
 export const setupRoutes = (app: Express) => {
   app.post('/api/crawl', crawlHandler);
@@ -15,4 +16,7 @@ export const setupRoutes = (app: Express) => {
   // Cache management endpoints
   app.get('/api/cache/stats', cacheStatsHandler);
   app.delete('/api/cache/clear', cacheClearHandler);
+
+  // Web report serving
+  app.use('/', webRoutes);
 };
