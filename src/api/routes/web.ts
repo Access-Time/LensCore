@@ -13,7 +13,6 @@ router.get('/web/:filename', (req: any, res: any) => {
   try {
     const { filename } = req.params;
 
-    // Validate filename to prevent directory traversal
     if (
       !filename ||
       filename.includes('..') ||
@@ -26,21 +25,17 @@ router.get('/web/:filename', (req: any, res: any) => {
     const webOutputDir = path.join(process.cwd(), 'web', 'output');
     const filePath = path.join(webOutputDir, filename);
 
-    // Check if file exists
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({ error: 'Report not found' });
     }
 
-    // Set appropriate headers
     res.setHeader('Content-Type', 'text/html');
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
 
-    // Send the file
     res.sendFile(filePath);
-  } catch (error) {
-    console.error('Error serving web report:', error);
+  } catch {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -53,7 +48,6 @@ router.get('/storage/screenshots/:filename', (req: any, res: any) => {
   try {
     const { filename } = req.params;
 
-    // Validate filename to prevent directory traversal
     if (
       !filename ||
       filename.includes('..') ||
@@ -66,19 +60,15 @@ router.get('/storage/screenshots/:filename', (req: any, res: any) => {
     const screenshotsDir = path.join(process.cwd(), 'storage', 'screenshots');
     const filePath = path.join(screenshotsDir, filename);
 
-    // Check if file exists
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({ error: 'Screenshot not found' });
     }
 
-    // Set appropriate headers for images
     res.setHeader('Content-Type', 'image/png');
-    res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+    res.setHeader('Cache-Control', 'public, max-age=3600');
 
-    // Send the file
     res.sendFile(filePath);
-  } catch (error) {
-    console.error('Error serving screenshot:', error);
+  } catch {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -113,8 +103,7 @@ router.get('/web', (_req: any, res: any) => {
       .sort((a, b) => b.created.getTime() - a.created.getTime());
 
     res.json({ reports: files });
-  } catch (error) {
-    console.error('Error listing web reports:', error);
+  } catch {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
