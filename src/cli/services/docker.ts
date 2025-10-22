@@ -38,22 +38,23 @@ export class DockerService {
 
   async start(): Promise<void> {
     const spinner = ora('Starting LensCore services...').start();
-    
+
     try {
       const isRunning = await this.isServiceRunning();
-      
+
       if (isRunning) {
         spinner.succeed('LensCore services already running');
         return;
       }
-      
+
       spinner.text = 'Starting with docker-compose...';
       await execAsync('docker-compose up -d --build');
-      
+
       spinner.succeed('LensCore services started');
-      console.log(chalk.blue(`🌐 LensCore running at: http://localhost:${this.port}`));
+      console.log(
+        chalk.blue(`🌐 LensCore running at: http://localhost:${this.port}`)
+      );
       console.log(chalk.gray('📊 Redis cache available at: localhost:6379'));
-      
     } catch (error) {
       spinner.fail('Failed to start LensCore services');
       throw error;
@@ -62,7 +63,7 @@ export class DockerService {
 
   async stop(): Promise<void> {
     const spinner = ora('Stopping LensCore services...').start();
-    
+
     try {
       await execAsync('docker-compose down');
       spinner.succeed('LensCore services stopped');
@@ -75,10 +76,12 @@ export class DockerService {
   async status(): Promise<void> {
     try {
       const isRunning = await this.isServiceRunning();
-      
+
       if (isRunning) {
         console.log(chalk.green('✅ LensCore services are running'));
-        console.log(chalk.blue(`🌐 Available at: http://localhost:${this.port}`));
+        console.log(
+          chalk.blue(`🌐 Available at: http://localhost:${this.port}`)
+        );
         console.log(chalk.gray('📊 Redis cache: localhost:6379'));
       } else {
         console.log(chalk.red('❌ LensCore services are not running'));
@@ -91,7 +94,9 @@ export class DockerService {
 
   private async isServiceRunning(): Promise<boolean> {
     try {
-      const { stdout } = await execAsync('docker-compose ps --services --filter "status=running"');
+      const { stdout } = await execAsync(
+        'docker-compose ps --services --filter "status=running"'
+      );
       return stdout.includes('lenscore') && stdout.includes('redis');
     } catch {
       return false;

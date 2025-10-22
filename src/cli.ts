@@ -22,7 +22,10 @@ program
   .command('scan <url>')
   .description('Scan website for accessibility issues')
   .option('-k, --openai-key <key>', 'OpenAI API key')
-  .option('-c, --project-context <context>', 'Project context (e.g., react,tailwind)')
+  .option(
+    '-c, --project-context <context>',
+    'Project context (e.g., react,tailwind)'
+  )
   .option('-o, --open', 'Open results in browser')
   .action(scanCommand);
 
