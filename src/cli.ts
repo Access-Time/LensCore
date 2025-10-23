@@ -10,13 +10,17 @@ import { testMultipleCommand } from './cli/commands/test-multiple.js';
 import { healthCommand } from './cli/commands/health.js';
 import { configCommand } from './cli/commands/config.js';
 import { GlobalErrorHandler } from './cli/services/error-handler.js';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
+const packageJson = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf8'));
 
 const program = new Command();
 
 program
   .name('lens-core')
   .description('LensCore CLI - Accessibility testing and web crawling platform')
-  .version('0.1.0');
+  .version(packageJson.version);
 
 // ============================================================================
 // SETUP & CONFIGURATION COMMANDS

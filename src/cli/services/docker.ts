@@ -227,9 +227,33 @@ CMD ["npm", "start"]`;
       );
 
       try {
-        const currentFile = __filename;
-        const packageDir = path.resolve(currentFile, '../../../../');
+        // Try multiple approaches to find the package directory
+        const possiblePackageDirs = [
+          // Development mode - from source
+          path.resolve(__filename, '../../../../'),
+          // Global install mode - from node_modules
+          path.resolve(require.resolve('@accesstime/lenscore'), '../..'),
+          // Alternative global install path
+          path.dirname(require.resolve('@accesstime/lenscore')),
+        ];
 
+        let packageDir: string | null = null;
+        for (const dir of possiblePackageDirs) {
+          try {
+            const packageJsonPath = path.join(dir, 'package.json');
+            await fs.access(packageJsonPath);
+            packageDir = dir;
+            break;
+          } catch {
+            // Continue to next path
+          }
+        }
+
+        if (!packageDir) {
+          throw new Error('Could not find package directory');
+        }
+
+        // Copy TypeScript config files
         const tsconfigFiles = ['tsconfig.json', 'tsconfig.cli.json'];
         for (const tsconfigFile of tsconfigFiles) {
           try {
@@ -250,6 +274,7 @@ CMD ["npm", "start"]`;
           // Skip if package-lock.json not found
         }
 
+        // Copy source directory
         const srcDir = path.join(packageDir, 'src');
         const destSrcDir = path.join(lenscoreDir, 'src');
         try {
@@ -258,8 +283,32 @@ CMD ["npm", "start"]`;
         } catch {
           // Skip if directory not found
         }
-      } catch {
-        // Skip if package path not found
+
+        // Copy web directory with templates - CRITICAL for global usage
+        const webDir = path.join(packageDir, 'web');
+        const destWebDir = path.join(lenscoreDir, 'web');
+        try {
+          await fs.access(webDir);
+          await this.copyDirectory(webDir, destWebDir);
+          console.log(`✅ Copied web templates from ${webDir} to ${destWebDir}`);
+        } catch (error) {
+          console.warn(`⚠️  Could not copy web templates: ${error}`);
+          // This is critical for global usage, so we'll create a fallback
+          await this.createFallbackTemplates(destWebDir);
+        }
+
+        // Ensure output directory exists
+        const outputDir = path.join(destWebDir, 'output');
+        try {
+          await fs.mkdir(outputDir, { recursive: true });
+          console.log(`✅ Created output directory: ${outputDir}`);
+        } catch (error) {
+          console.warn(`⚠️  Could not create output directory: ${error}`);
+        }
+      } catch (error) {
+        console.warn(`⚠️  Package setup warning: ${error}`);
+        // Create fallback templates even if package setup fails
+        await this.createFallbackTemplates(path.join(lenscoreDir, 'web'));
       }
 
       this.dockerComposePath = composePath;
@@ -283,6 +332,150 @@ CMD ["npm", "start"]`;
         await fs.copyFile(srcPath, destPath);
       }
     }
+  }
+
+  private async createFallbackTemplates(webDir: string): Promise<void> {
+    try {
+      const templatesDir = path.join(webDir, 'templates');
+      await fs.mkdir(templatesDir, { recursive: true });
+
+      // Create basic HTML templates as fallback
+      const templates = {
+        'scan-results.html': this.getScanTemplate(),
+        'crawl-results.html': this.getCrawlTemplate(),
+        'test-results.html': this.getTestTemplate(),
+        'test-multiple-results.html': this.getTestMultipleTemplate(),
+      };
+
+      for (const [filename, content] of Object.entries(templates)) {
+        const filePath = path.join(templatesDir, filename);
+        await fs.writeFile(filePath, content, 'utf8');
+      }
+
+      console.log(`✅ Created fallback templates in ${templatesDir}`);
+    } catch (error) {
+      console.error(`❌ Failed to create fallback templates: ${error}`);
+    }
+  }
+
+  private getScanTemplate(): string {
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LensCore Scan Results</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .header { background: #f0f0f0; padding: 20px; border-radius: 5px; }
+        .stats { display: flex; gap: 20px; margin: 20px 0; }
+        .stat { background: #e9ecef; padding: 15px; border-radius: 5px; flex: 1; }
+        .violations { background: #f8d7da; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .passed { background: #d4edda; padding: 15px; border-radius: 5px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔍 LensCore Scan Results</h1>
+        <p>Scan completed at: {{SCAN_TIME}}</p>
+    </div>
+    
+    <div class="stats">
+        <div class="stat">
+            <h3>Total Pages</h3>
+            <p>{{TOTAL_PAGES}}</p>
+        </div>
+        <div class="stat">
+            <h3>Passed Checks</h3>
+            <p>{{PASSED_CHECKS}}</p>
+        </div>
+        <div class="stat">
+            <h3>Violations</h3>
+            <p>{{VIOLATIONS}}</p>
+        </div>
+    </div>
+
+    {{VIOLATIONS_SECTION}}
+    {{PASSED_CHECKS_SECTION}}
+</body>
+</html>`;
+  }
+
+  private getCrawlTemplate(): string {
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LensCore Crawl Results</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .header { background: #f0f0f0; padding: 20px; border-radius: 5px; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🕷️ LensCore Crawl Results</h1>
+        <p>Crawl completed at: {{CRAWL_TIME}}</p>
+    </div>
+    
+    <h2>Discovered Pages</h2>
+    {{CRAWL_TABLE_ROWS}}
+</body>
+</html>`;
+  }
+
+  private getTestTemplate(): string {
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LensCore Test Results</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .header { background: #f0f0f0; padding: 20px; border-radius: 5px; }
+        .violations { background: #f8d7da; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .passed { background: #d4edda; padding: 15px; border-radius: 5px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>♿ LensCore Test Results</h1>
+        <p>Test completed at: {{TEST_TIME}}</p>
+    </div>
+    
+    {{VIOLATIONS_SECTION}}
+    {{PASSED_CHECKS_SECTION}}
+</body>
+</html>`;
+  }
+
+  private getTestMultipleTemplate(): string {
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LensCore Multiple Test Results</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .header { background: #f0f0f0; padding: 20px; border-radius: 5px; }
+        .url-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>♿ LensCore Multiple Test Results</h1>
+        <p>Tests completed at: {{TEST_TIME}}</p>
+    </div>
+    
+    {{MULTIPLE_TEST_SECTIONS}}
+</body>
+</html>`;
   }
 
   async checkDocker(): Promise<boolean> {

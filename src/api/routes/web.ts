@@ -2,8 +2,44 @@
 import { Router } from 'express';
 import path from 'path';
 import fs from 'fs';
+import os from 'os';
 
 const router = Router();
+
+/**
+ * Find web output directory with multiple fallback paths
+ */
+function findWebOutputDir(): string {
+  const possiblePaths = [
+    // User's home directory (preferred for global usage)
+    path.join(os.homedir(), '.lenscore', 'web', 'output'),
+    // Current working directory with .lenscore
+    path.join(process.cwd(), '.lenscore', 'web', 'output'),
+    // Development mode - from source
+    path.join(process.cwd(), 'web', 'output'),
+    // Docker container - from app directory
+    path.join('/app', 'web', 'output'),
+  ];
+
+  // Try to add global install path if available
+  try {
+    const globalPath = path.join(path.dirname(require.resolve('@accesstime/lenscore')), 'web', 'output');
+    possiblePaths.unshift(globalPath);
+  } catch {
+    // Package not found, skip this path
+  }
+
+  // Find the first existing path or use the first one
+  const foundPath = possiblePaths.find(p => {
+    try {
+      return fs.existsSync(p);
+    } catch {
+      return false;
+    }
+  });
+
+  return foundPath || possiblePaths[0]!;
+}
 
 /**
  * Serve web reports
@@ -22,7 +58,7 @@ router.get('/web/:filename', (req: any, res: any) => {
       return res.status(400).json({ error: 'Invalid filename' });
     }
 
-    const webOutputDir = path.join(process.cwd(), 'web', 'output');
+    const webOutputDir = findWebOutputDir();
     const filePath = path.join(webOutputDir, filename);
 
     if (!fs.existsSync(filePath)) {
@@ -79,7 +115,7 @@ router.get('/storage/screenshots/:filename', (req: any, res: any) => {
  */
 router.get('/web', (_req: any, res: any) => {
   try {
-    const webOutputDir = path.join(process.cwd(), 'web', 'output');
+    const webOutputDir = findWebOutputDir();
 
     if (!fs.existsSync(webOutputDir)) {
       return res.json({ reports: [] });
