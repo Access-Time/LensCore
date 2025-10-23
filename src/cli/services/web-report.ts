@@ -29,11 +29,15 @@ export class WebReportService {
       // Development mode - from source
       path.join(process.cwd(), 'web', 'output'),
       // Global install - from node_modules
-      path.join(path.dirname(require.resolve('@accesstime/lenscore')), 'web', 'output'),
+      path.join(
+        path.dirname(require.resolve('@accesstime/lenscore')),
+        'web',
+        'output'
+      ),
     ];
 
     // Find the first existing path or use the first one
-    const foundPath = possiblePaths.find(p => {
+    const foundPath = possiblePaths.find((p) => {
       try {
         return fs.existsSync(path.dirname(p));
       } catch {
@@ -50,7 +54,11 @@ export class WebReportService {
     // Multiple fallback paths for different installation scenarios
     const possiblePaths = [
       // Global install - from node_modules
-      path.join(path.dirname(require.resolve('@accesstime/lenscore')), 'web', 'templates'),
+      path.join(
+        path.dirname(require.resolve('@accesstime/lenscore')),
+        'web',
+        'templates'
+      ),
       // Development mode - from source
       path.join(process.cwd(), 'web', 'templates'),
       // User's home directory (created by Docker service)
@@ -60,11 +68,14 @@ export class WebReportService {
       // Relative to this file
       path.join(__dirname, '../../../../web/templates'),
       // Alternative global install path
-      path.join(path.dirname(require.resolve('@accesstime/lenscore')), '../web/templates'),
+      path.join(
+        path.dirname(require.resolve('@accesstime/lenscore')),
+        '../web/templates'
+      ),
     ];
 
     // Find the first existing path
-    const foundPath = possiblePaths.find(p => {
+    const foundPath = possiblePaths.find((p) => {
       try {
         return fs.existsSync(p) && fs.statSync(p).isDirectory();
       } catch {
@@ -78,8 +89,15 @@ export class WebReportService {
     }
 
     // If no templates found, create fallback templates
-    console.warn('⚠️  No template directory found, creating fallback templates');
-    const fallbackPath = path.join(os.homedir(), '.lenscore', 'web', 'templates');
+    console.warn(
+      '⚠️  No template directory found, creating fallback templates'
+    );
+    const fallbackPath = path.join(
+      os.homedir(),
+      '.lenscore',
+      'web',
+      'templates'
+    );
     this.createFallbackTemplates(fallbackPath);
     return fallbackPath;
   }

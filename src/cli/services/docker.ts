@@ -166,7 +166,7 @@ CMD ["npm", "start"]`;
           build: 'tsc',
           'build:cli': 'tsc -p tsconfig.cli.json',
         };
-        
+
         // Ensure all necessary dependencies are included
         packageJsonContent.dependencies = {
           ...packageJsonContent.dependencies,
@@ -290,7 +290,9 @@ CMD ["npm", "start"]`;
         try {
           await fs.access(webDir);
           await this.copyDirectory(webDir, destWebDir);
-          console.log(`✅ Copied web templates from ${webDir} to ${destWebDir}`);
+          console.log(
+            `✅ Copied web templates from ${webDir} to ${destWebDir}`
+          );
         } catch (error) {
           console.warn(`⚠️  Could not copy web templates: ${error}`);
           // This is critical for global usage, so we'll create a fallback

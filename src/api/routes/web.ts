@@ -23,14 +23,18 @@ function findWebOutputDir(): string {
 
   // Try to add global install path if available
   try {
-    const globalPath = path.join(path.dirname(require.resolve('@accesstime/lenscore')), 'web', 'output');
+    const globalPath = path.join(
+      path.dirname(require.resolve('@accesstime/lenscore')),
+      'web',
+      'output'
+    );
     possiblePaths.unshift(globalPath);
   } catch {
     // Package not found, skip this path
   }
 
   // Find the first existing path or use the first one
-  const foundPath = possiblePaths.find(p => {
+  const foundPath = possiblePaths.find((p) => {
     try {
       return fs.existsSync(p);
     } catch {
