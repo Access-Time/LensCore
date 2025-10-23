@@ -101,17 +101,23 @@ volumes:
 
 WORKDIR /app
 
+# Copy package files
 COPY package*.json ./
-RUN npm ci
 
+# Install dependencies (use npm install instead of npm ci since package-lock.json might not exist)
+RUN npm install
+
+# Copy source code
 COPY . .
 
+# Build the application
 RUN npm run build
 
 FROM node:20-alpine AS production
 
 WORKDIR /app
 
+# Install system dependencies for Puppeteer
 RUN apk add --no-cache \\
   chromium \\
   nss \\
@@ -121,18 +127,25 @@ RUN apk add --no-cache \\
   ca-certificates \\
   ttf-freefont
 
+# Set environment variables
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \\
   PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \\
   NODE_ENV=production
 
+# Copy package files and install production dependencies
 COPY package*.json ./
-COPY --from=builder /app/node_modules ./node_modules
+RUN npm install --production
+
+# Copy built application from builder stage
 COPY --from=builder /app/dist ./dist
 
+# Create necessary directories
 RUN mkdir -p logs storage
 
+# Expose port
 EXPOSE 3001
 
+# Start the application
 CMD ["npm", "start"]`;
 
       const packageJsonPath = path.join(lenscoreDir, 'package.json');
@@ -152,6 +165,26 @@ CMD ["npm", "start"]`;
           start: 'node dist/index.js',
           build: 'tsc',
           'build:cli': 'tsc -p tsconfig.cli.json',
+        };
+        
+        // Ensure all necessary dependencies are included
+        packageJsonContent.dependencies = {
+          ...packageJsonContent.dependencies,
+          '@google-cloud/storage': '^7.7.0',
+          'aws-sdk': '^2.1490.0',
+          'axe-core': '^4.8.2',
+          cheerio: '^1.0.0',
+          cors: '^2.8.5',
+          dotenv: '^16.3.1',
+          express: '^4.18.2',
+          helmet: '^7.1.0',
+          ioredis: '^5.8.1',
+          openai: '^6.5.0',
+          puppeteer: '^24.15.0',
+          sharp: '^0.33.0',
+          uuid: '^9.0.1',
+          winston: '^3.11.0',
+          zod: '^3.22.4',
         };
       } catch {
         packageJsonContent = {
@@ -206,6 +239,15 @@ CMD ["npm", "start"]`;
           } catch {
             // Skip if file not found
           }
+        }
+
+        // Copy package-lock.json if it exists
+        try {
+          const packageLockSrc = path.join(packageDir, 'package-lock.json');
+          const packageLockDest = path.join(lenscoreDir, 'package-lock.json');
+          await fs.copyFile(packageLockSrc, packageLockDest);
+        } catch {
+          // Skip if package-lock.json not found
         }
 
         const srcDir = path.join(packageDir, 'src');
