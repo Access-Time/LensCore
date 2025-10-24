@@ -50,6 +50,7 @@ export const errorHandler = (
 
   if (error instanceof z.ZodError) {
     res.status(400).json({
+      code: 'VALIDATION_ERROR',
       error: 'Validation error',
       message: 'Invalid request data',
       details: error.errors,
