@@ -41,12 +41,13 @@ export class LensCoreClient {
   private async fetchWithRetry(
     url: string,
     options: RequestInit,
-    retries = 3
+    retries = 3,
+    timeout = 30000
   ): Promise<Response> {
     for (let i = 0; i < retries; i++) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
 
         const response = await fetch(url, {
           ...options,
@@ -57,7 +58,7 @@ export class LensCoreClient {
         return response;
       } catch (error) {
         if (i === retries - 1) throw error;
-        await new Promise((resolve) => setTimeout(resolve, 1000 * (i + 1))); // Exponential backoff
+        await new Promise((resolve) => setTimeout(resolve, 1000 * (i + 1)));
       }
     }
     throw new Error('Max retries exceeded');
@@ -103,24 +104,30 @@ export class LensCoreClient {
 
   async test(options: any): Promise<any> {
     const spinner = ora('Testing accessibility...').start();
+    const timeout = Math.max(options.timeout || 10000, 30000);
 
     try {
-      const response = await this.fetchWithRetry(`${this.baseUrl}/api/test`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await this.fetchWithRetry(
+        `${this.baseUrl}/api/test`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            url: options.url,
+            includeScreenshot: options.includeScreenshot !== false,
+            timeout: timeout,
+            rules: options.rules || [],
+            tags: options.tags || [],
+            enableAI: options.enableAI,
+            aiApiKey: options.openaiKey,
+            projectContext: options.projectContext,
+          }),
         },
-        body: JSON.stringify({
-          url: options.url,
-          includeScreenshot: options.includeScreenshot !== false,
-          timeout: options.timeout || 10000,
-          rules: options.rules || [],
-          tags: options.tags || [],
-          enableAI: options.enableAI,
-          aiApiKey: options.openaiKey,
-          projectContext: options.projectContext,
-        }),
-      });
+        3,
+        timeout
+      );
 
       if (!response.ok) {
         const errorText = await response.text();
