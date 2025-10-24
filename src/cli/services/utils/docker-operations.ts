@@ -48,7 +48,10 @@ export class DockerOperationsService {
 
     try {
       const composePath = await this.configService.getDockerComposePath();
-      const isRunning = await this.validationService.isServiceRunning(this.port, composePath);
+      const isRunning = await this.validationService.isServiceRunning(
+        this.port,
+        composePath
+      );
 
       if (isRunning) {
         spinner.succeed('LensCore services already running');
@@ -89,7 +92,10 @@ export class DockerOperationsService {
   async status(): Promise<void> {
     try {
       const composePath = await this.configService.getDockerComposePath();
-      const isRunning = await this.validationService.isServiceRunning(this.port, composePath);
+      const isRunning = await this.validationService.isServiceRunning(
+        this.port,
+        composePath
+      );
 
       if (isRunning) {
         console.log(chalk.green('✅ LensCore services are running'));

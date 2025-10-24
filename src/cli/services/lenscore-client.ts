@@ -107,22 +107,27 @@ export class LensCoreClient {
     const timeout = Math.max(options.timeout || 10000, 30000);
 
     try {
-      const response = await this.fetchWithRetry(`${this.baseUrl}/api/test`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await this.fetchWithRetry(
+        `${this.baseUrl}/api/test`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            url: options.url,
+            includeScreenshot: options.includeScreenshot !== false,
+            timeout: timeout,
+            rules: options.rules || [],
+            tags: options.tags || [],
+            enableAI: options.enableAI,
+            aiApiKey: options.openaiKey,
+            projectContext: options.projectContext,
+          }),
         },
-        body: JSON.stringify({
-          url: options.url,
-          includeScreenshot: options.includeScreenshot !== false,
-          timeout: timeout,
-          rules: options.rules || [],
-          tags: options.tags || [],
-          enableAI: options.enableAI,
-          aiApiKey: options.openaiKey,
-          projectContext: options.projectContext,
-        }),
-      }, 3, timeout);
+        3,
+        timeout
+      );
 
       if (!response.ok) {
         const errorText = await response.text();

@@ -48,7 +48,7 @@ export const cacheWarmHandler = async (
 ) => {
   try {
     const { urls } = req.body;
-    
+
     if (!Array.isArray(urls) || urls.length === 0) {
       res.status(400).json({
         error: 'Invalid request',
@@ -61,21 +61,25 @@ export const cacheWarmHandler = async (
     for (const url of urls.slice(0, 5)) {
       try {
         const { CrawlingService } = await import('../../services/crawling');
-        const { AccessibilityService } = await import('../../services/accessibility');
-        
+        const { AccessibilityService } = await import(
+          '../../services/accessibility'
+        );
+
         const crawlingService = new CrawlingService();
         const accessibilityService = new AccessibilityService();
-        
+
         const crawlResult = await crawlingService.crawlWebsite({ url });
-        const testResult = await accessibilityService.testAccessibility({ url });
-        
+        const testResult = await accessibilityService.testAccessibility({
+          url,
+        });
+
         results.push({
           url,
           status: 'success',
           pagesCrawled: crawlResult.totalPages,
           accessibilityScore: testResult.score,
         });
-        
+
         await crawlingService.close();
         await accessibilityService.close();
       } catch (error) {

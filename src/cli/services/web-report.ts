@@ -26,8 +26,12 @@ export class WebReportService {
     let html = template;
 
     const totalPages = String(scanData.crawl?.totalPages || 0);
-    const passedChecks = String(DataProcessorService.getTotalPassedChecks(scanData));
-    const violations = String(DataProcessorService.getTotalViolations(scanData));
+    const passedChecks = String(
+      DataProcessorService.getTotalPassedChecks(scanData)
+    );
+    const violations = String(
+      DataProcessorService.getTotalViolations(scanData)
+    );
     const scanTimeMs = String(scanData.totalTime || 0);
     const scanTime = new Date().toLocaleString();
 
@@ -44,12 +48,16 @@ export class WebReportService {
 
     html = html.replace(
       /\{\{VIOLATIONS_SECTION\}\}/g,
-      HtmlGeneratorService.generateViolationsSection(scanData.accessibility?.results || [])
+      HtmlGeneratorService.generateViolationsSection(
+        scanData.accessibility?.results || []
+      )
     );
 
     html = html.replace(
       /\{\{PASSED_CHECKS_SECTION\}\}/g,
-      HtmlGeneratorService.generatePassedChecksSection(scanData.accessibility?.results || [])
+      HtmlGeneratorService.generatePassedChecksSection(
+        scanData.accessibility?.results || []
+      )
     );
 
     return FileService.saveHtmlFile(html, 'scan', this.outputDir);
@@ -104,12 +112,16 @@ export class WebReportService {
 
     html = html.replace(
       /\{\{VIOLATIONS_SECTION\}\}/g,
-      HtmlGeneratorService.generateTestViolationsSection(testData.violations || [])
+      HtmlGeneratorService.generateTestViolationsSection(
+        testData.violations || []
+      )
     );
 
     html = html.replace(
       /\{\{PASSED_CHECKS_SECTION\}\}/g,
-      HtmlGeneratorService.generateTestPassedChecksSection(testData.passes || [])
+      HtmlGeneratorService.generateTestPassedChecksSection(
+        testData.passes || []
+      )
     );
 
     return FileService.saveHtmlFile(html, 'test', this.outputDir);

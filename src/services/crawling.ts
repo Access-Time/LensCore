@@ -63,25 +63,25 @@ export class CrawlingService {
       waitUntil: request.waitUntil || env.CRAWL_WAIT_UNTIL,
       rules: request.rules || {},
     };
-    
+
     return `crawl:${crypto.createHash('md5').update(JSON.stringify(keyData)).digest('hex')}`;
   }
 
   async crawlWebsite(request: CrawlRequest): Promise<CrawlResponse> {
     const startTime = Date.now();
     const cacheKey = this.generateCacheKey(request);
-    
+
     try {
       const cachedResult = await this.cacheService.get({
         ruleId: cacheKey,
-        projectContext: {}
+        projectContext: {},
       });
-      
+
       if (cachedResult) {
         logger.info('Cache hit for crawl result', { url: request.url });
         return cachedResult.value as CrawlResponse;
       }
-      
+
       logger.info('Cache miss for crawl result', { url: request.url });
     } catch (error) {
       logger.warn('Cache error during crawl', { error });
@@ -146,9 +146,12 @@ export class CrawlingService {
           }
 
           const pageController = new AbortController();
-          const pageTimeoutId = setTimeout(() => {
-            pageController.abort();
-          }, Math.min(timeout, 15000));
+          const pageTimeoutId = setTimeout(
+            () => {
+              pageController.abort();
+            },
+            Math.min(timeout, 15000)
+          );
 
           try {
             const response = await page.goto(url, {
@@ -232,10 +235,14 @@ export class CrawlingService {
         return nextItems;
       };
 
-      while (queue.length > 0 && results.length < maxUrls && !controller.signal.aborted) {
+      while (
+        queue.length > 0 &&
+        results.length < maxUrls &&
+        !controller.signal.aborted
+      ) {
         const batch = queue.splice(0, concurrency);
         const promises = batch.map(crawlPage);
-        
+
         try {
           const batchResults = await Promise.allSettled(promises);
 
@@ -263,10 +270,13 @@ export class CrawlingService {
       };
 
       try {
-        await this.cacheService.set({
-          ruleId: cacheKey,
-          projectContext: {}
-        }, result);
+        await this.cacheService.set(
+          {
+            ruleId: cacheKey,
+            projectContext: {},
+          },
+          result
+        );
         logger.info('Cached crawl result', { url: request.url });
       } catch (error) {
         logger.warn('Failed to cache crawl result', { error });

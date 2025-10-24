@@ -45,7 +45,7 @@ export class AccessibilityService {
       rules: request.rules || [],
       tags: request.tags || [],
     };
-    
+
     return `accessibility:${crypto.createHash('md5').update(JSON.stringify(keyData)).digest('hex')}`;
   }
 
@@ -53,18 +53,18 @@ export class AccessibilityService {
     request: AccessibilityRequest
   ): Promise<AccessibilityResult> {
     const cacheKey = this.generateCacheKey(request);
-    
+
     try {
       const cachedResult = await this.cacheService.get({
         ruleId: cacheKey,
-        projectContext: {}
+        projectContext: {},
       });
-      
+
       if (cachedResult) {
         logger.info('Cache hit for accessibility result', { url: request.url });
         return cachedResult.value as AccessibilityResult;
       }
-      
+
       logger.info('Cache miss for accessibility result', { url: request.url });
     } catch (error) {
       logger.warn('Cache error during accessibility test', { error });
@@ -115,7 +115,10 @@ export class AccessibilityService {
                   tags: options.tags || [],
                 };
 
-                return await eval('window').axe.run(eval('document'), axeOptions);
+                return await eval('window').axe.run(
+                  eval('document'),
+                  axeOptions
+                );
               } catch (error) {
                 logger.error('Axe error:', { error });
                 return null;
@@ -130,7 +133,7 @@ export class AccessibilityService {
             controller.signal.addEventListener('abort', () => {
               reject(new Error('Axe evaluation timeout'));
             });
-          })
+          }),
         ]);
 
         let screenshotUrl: string | undefined;
@@ -153,7 +156,7 @@ export class AccessibilityService {
         }
 
         let result: AccessibilityResult;
-        
+
         if (axeResults && axeResults.violations) {
           const score = this.calculateScore(axeResults.violations);
 
@@ -172,10 +175,13 @@ export class AccessibilityService {
         }
 
         try {
-          await this.cacheService.set({
-            ruleId: cacheKey,
-            projectContext: {}
-          }, result);
+          await this.cacheService.set(
+            {
+              ruleId: cacheKey,
+              projectContext: {},
+            },
+            result
+          );
           logger.info('Cached accessibility result', { url: request.url });
         } catch (error) {
           logger.warn('Failed to cache accessibility result', { error });

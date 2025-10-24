@@ -16,7 +16,10 @@ export class FileService {
     return `http://localhost:${port}/web/${filename}`;
   }
 
-  static cleanupOldReports(outputDir: string, maxAge: number = 24 * 60 * 60 * 1000): void {
+  static cleanupOldReports(
+    outputDir: string,
+    maxAge: number = 24 * 60 * 60 * 1000
+  ): void {
     try {
       const files = fs.readdirSync(outputDir);
       const now = Date.now();

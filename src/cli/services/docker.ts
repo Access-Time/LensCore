@@ -53,5 +53,4 @@ export class DockerService {
   async ensureServicesReady(): Promise<void> {
     return this.operationsService.ensureServicesReady();
   }
-
 }

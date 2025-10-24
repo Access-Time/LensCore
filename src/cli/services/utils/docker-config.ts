@@ -147,7 +147,10 @@ CMD ["npm", "start"]`;
     const packageJsonPath = path.join(lenscoreDir, 'package.json');
     const packageJsonContent = await this.getPackageJsonContent();
 
-    await fs.writeFile(packageJsonPath, JSON.stringify(packageJsonContent, null, 2));
+    await fs.writeFile(
+      packageJsonPath,
+      JSON.stringify(packageJsonContent, null, 2)
+    );
 
     try {
       const packageDir = await this.findPackageDirectory();
@@ -165,7 +168,10 @@ CMD ["npm", "start"]`;
       const currentFile = __filename;
       const packageDir = path.resolve(currentFile, '../../../../');
       const originalPackageJsonPath = path.join(packageDir, 'package.json');
-      const originalPackageJson = await fs.readFile(originalPackageJsonPath, 'utf8');
+      const originalPackageJson = await fs.readFile(
+        originalPackageJsonPath,
+        'utf8'
+      );
       const packageJsonContent = JSON.parse(originalPackageJson);
 
       packageJsonContent.scripts = {
@@ -303,7 +309,10 @@ CMD ["npm", "start"]`;
     throw new Error('Could not find package directory');
   }
 
-  private async copyConfigFiles(packageDir: string, lenscoreDir: string): Promise<void> {
+  private async copyConfigFiles(
+    packageDir: string,
+    lenscoreDir: string
+  ): Promise<void> {
     const tsconfigFiles = ['tsconfig.json', 'tsconfig.cli.json'];
     for (const tsconfigFile of tsconfigFiles) {
       try {
@@ -324,7 +333,10 @@ CMD ["npm", "start"]`;
     }
   }
 
-  private async copySourceFiles(packageDir: string, lenscoreDir: string): Promise<void> {
+  private async copySourceFiles(
+    packageDir: string,
+    lenscoreDir: string
+  ): Promise<void> {
     const srcDir = path.join(packageDir, 'src');
     const destSrcDir = path.join(lenscoreDir, 'src');
     try {
@@ -335,7 +347,10 @@ CMD ["npm", "start"]`;
     }
   }
 
-  private async copyWebTemplates(packageDir: string, lenscoreDir: string): Promise<void> {
+  private async copyWebTemplates(
+    packageDir: string,
+    lenscoreDir: string
+  ): Promise<void> {
     const webDir = path.join(packageDir, 'web');
     const destWebDir = path.join(lenscoreDir, 'web');
     try {

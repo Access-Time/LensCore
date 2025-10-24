@@ -3,7 +3,11 @@ import { crawlHandler } from './crawl';
 import { testHandler, testMultipleHandler } from './accessibility';
 import { combinedHandler } from './combined';
 import { healthHandler } from './health';
-import { cacheStatsHandler, cacheClearHandler, cacheWarmHandler } from './cache';
+import {
+  cacheStatsHandler,
+  cacheClearHandler,
+  cacheWarmHandler,
+} from './cache';
 import { requestTimeout } from '../middleware';
 import webRoutes from './web';
 
