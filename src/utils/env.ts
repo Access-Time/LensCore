@@ -56,8 +56,8 @@ const envSchema = z.object({
 
   // Cache Configuration
   CACHE_TYPE: z.enum(['memory', 'redis', 'filesystem']).default('memory'),
-  CACHE_TTL: z.string().default('3600'),
-  CACHE_MAX_SIZE: z.string().default('1000'),
+  CACHE_TTL: z.string().default('7200'),
+  CACHE_MAX_SIZE: z.string().default('5000'),
   CACHE_PATH: z.string().default('./cache'),
   REDIS_HOST: z.string().default('localhost'),
   REDIS_PORT: z.string().default('6379'),

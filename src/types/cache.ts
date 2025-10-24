@@ -26,11 +26,7 @@ export interface CacheKey {
 
 export interface CacheEntry {
   key: string;
-  value: {
-    rule_id: string;
-    plain_explanation: string;
-    remediation: string;
-  };
+  value: any;
   timestamp: number;
   ttl: number;
 }

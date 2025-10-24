@@ -10,10 +10,18 @@ import {
 import { env } from '../utils/env';
 import { createStorageService } from '../storage';
 import logger from '../utils/logger';
+import { CacheService } from './cache';
+import { createCacheConfig } from '../config/cache';
+import crypto from 'crypto';
 
 export class AccessibilityService {
   private browser: Browser | null = null;
   private storageService = createStorageService();
+  private cacheService: CacheService;
+
+  constructor() {
+    this.cacheService = CacheService.getInstance(createCacheConfig());
+  }
 
   async initialize(): Promise<void> {
     this.browser = await puppeteer.launch({
@@ -29,10 +37,44 @@ export class AccessibilityService {
     }
   }
 
+  private generateCacheKey(request: AccessibilityRequest): string {
+    const keyData = {
+      url: request.url,
+      timeout: request.timeout || parseInt(env.AXE_TIMEOUT),
+      includeScreenshot: request.includeScreenshot,
+      rules: request.rules || [],
+      tags: request.tags || [],
+    };
+    
+    return `accessibility:${crypto.createHash('md5').update(JSON.stringify(keyData)).digest('hex')}`;
+  }
+
   async testAccessibility(
     request: AccessibilityRequest
   ): Promise<AccessibilityResult> {
+    const cacheKey = this.generateCacheKey(request);
+    
+    try {
+      const cachedResult = await this.cacheService.get({
+        ruleId: cacheKey,
+        projectContext: {}
+      });
+      
+      if (cachedResult) {
+        logger.info('Cache hit for accessibility result', { url: request.url });
+        return cachedResult.value as AccessibilityResult;
+      }
+      
+      logger.info('Cache miss for accessibility result', { url: request.url });
+    } catch (error) {
+      logger.warn('Cache error during accessibility test', { error });
+    }
+
     const timeout = request.timeout || parseInt(env.AXE_TIMEOUT);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, timeout);
 
     try {
       if (!this.browser) {
@@ -40,46 +82,60 @@ export class AccessibilityService {
       }
 
       const page = await this.browser!.newPage();
-
-      page.setDefaultTimeout(timeout);
+      page.setDefaultTimeout(Math.min(timeout, 15000));
 
       try {
+        if (controller.signal.aborted) {
+          throw new Error('Operation aborted');
+        }
+
         await page.goto(request.url, {
           waitUntil: 'domcontentloaded',
-          timeout: timeout,
+          timeout: Math.min(timeout, 15000),
         });
 
-        const axeResults = await page.evaluate(
-          async (options) => {
-            try {
-              const script = eval('document').createElement('script');
-              script.src = 'https://unpkg.com/axe-core@4.8.2/axe.min.js';
-              eval('document').head.appendChild(script);
+        if (controller.signal.aborted) {
+          throw new Error('Operation aborted');
+        }
 
-              await new Promise((resolve) => {
-                script.onload = resolve;
-              });
+        const axeResults = await Promise.race([
+          page.evaluate(
+            async (options) => {
+              try {
+                const script = eval('document').createElement('script');
+                script.src = 'https://unpkg.com/axe-core@4.8.2/axe.min.js';
+                eval('document').head.appendChild(script);
 
-              const axeOptions = {
-                rules: options.rules || {},
-                tags: options.tags || [],
-              };
+                await new Promise((resolve) => {
+                  script.onload = resolve;
+                });
 
-              return await eval('window').axe.run(eval('document'), axeOptions);
-            } catch (error) {
-              logger.error('Axe error:', { error });
-              return null;
+                const axeOptions = {
+                  rules: options.rules || {},
+                  tags: options.tags || [],
+                };
+
+                return await eval('window').axe.run(eval('document'), axeOptions);
+              } catch (error) {
+                logger.error('Axe error:', { error });
+                return null;
+              }
+            },
+            {
+              rules: request.rules,
+              tags: request.tags,
             }
-          },
-          {
-            rules: request.rules,
-            tags: request.tags,
-          }
-        );
+          ),
+          new Promise((_, reject) => {
+            controller.signal.addEventListener('abort', () => {
+              reject(new Error('Axe evaluation timeout'));
+            });
+          })
+        ]);
 
         let screenshotUrl: string | undefined;
 
-        if (request.includeScreenshot) {
+        if (request.includeScreenshot && !controller.signal.aborted) {
           try {
             const screenshot = await page.screenshot({ fullPage: true });
             const screenshotKey = `screenshots/${uuidv4()}.png`;
@@ -96,10 +152,12 @@ export class AccessibilityService {
           }
         }
 
+        let result: AccessibilityResult;
+        
         if (axeResults && axeResults.violations) {
           const score = this.calculateScore(axeResults.violations);
 
-          return {
+          result = {
             url: request.url,
             score,
             violations: axeResults.violations,
@@ -110,12 +168,26 @@ export class AccessibilityService {
             timestamp: new Date(),
           };
         } else {
-          return this.getMockResult(request, screenshotUrl);
+          result = this.getMockResult(request, screenshotUrl);
         }
+
+        try {
+          await this.cacheService.set({
+            ruleId: cacheKey,
+            projectContext: {}
+          }, result);
+          logger.info('Cached accessibility result', { url: request.url });
+        } catch (error) {
+          logger.warn('Failed to cache accessibility result', { error });
+        }
+
+        return result;
       } finally {
         await page.close();
+        clearTimeout(timeoutId);
       }
     } catch (error) {
+      clearTimeout(timeoutId);
       logger.error('Test accessibility error:', { error });
       return this.getMockResult(request);
     }
