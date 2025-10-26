@@ -51,26 +51,24 @@ export const combinedHandler = async (
 
     const processedResults = await Promise.all(
       testResult.results.map(async (result) => {
-        if (result.violations && Array.isArray(result.violations)) {
-          const aiResult = await aiService.processAccessibilityIssues(
-            result.violations,
-            {
-              apiKey: enableAI ? aiApiKey : undefined,
-              includeExplanations: enableAI,
-              includeRemediation: enableAI,
-              projectContext,
-            }
-          );
+        const violations = result.violations || [];
+        const aiResult = await aiService.processAccessibilityIssues(
+          violations,
+          {
+            apiKey: enableAI ? aiApiKey : undefined,
+            includeExplanations: enableAI,
+            includeRemediation: enableAI,
+            projectContext,
+          }
+        );
 
-          return {
-            ...result,
-            violations: aiResult.issues,
-            aiEnabled: aiResult.enabled,
-            aiError: aiResult.error,
-            metadata: aiResult.metadata,
-          };
-        }
-        return result;
+        return {
+          ...result,
+          violations: aiResult.issues,
+          aiEnabled: aiResult.enabled,
+          aiError: aiResult.error,
+          metadata: aiResult.metadata,
+        };
       })
     );
 

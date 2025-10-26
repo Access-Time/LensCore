@@ -32,7 +32,7 @@ export const testHandler = async (
 
     const testResult = await accessibilityService.testAccessibility(request);
 
-    if (testResult.violations) {
+    if (testResult.violations && testResult.violations.length > 0) {
       const aiResult = await aiService.processAccessibilityIssues(
         testResult.violations,
         {
@@ -51,7 +51,23 @@ export const testHandler = async (
         metadata: aiResult.metadata,
       });
     } else {
-      res.json(testResult);
+      const aiResult = await aiService.processAccessibilityIssues(
+        testResult.violations || [],
+        {
+          apiKey: enableAI ? aiApiKey : undefined,
+          includeExplanations: enableAI,
+          includeRemediation: enableAI,
+          projectContext,
+        }
+      );
+
+      res.json({
+        ...testResult,
+        violations: aiResult.issues,
+        aiEnabled: aiResult.enabled,
+        aiError: aiResult.error,
+        metadata: aiResult.metadata,
+      });
     }
   } catch (error) {
     next(error);
@@ -98,26 +114,24 @@ export const testMultipleHandler = async (
 
     const processedResults = await Promise.all(
       testResult.results.map(async (result) => {
-        if (result.violations && Array.isArray(result.violations)) {
-          const aiResult = await aiService.processAccessibilityIssues(
-            result.violations,
-            {
-              apiKey: enableAI ? aiApiKey : undefined,
-              includeExplanations: enableAI,
-              includeRemediation: enableAI,
-              projectContext,
-            }
-          );
+        const violations = result.violations || [];
+        const aiResult = await aiService.processAccessibilityIssues(
+          violations,
+          {
+            apiKey: enableAI ? aiApiKey : undefined,
+            includeExplanations: enableAI,
+            includeRemediation: enableAI,
+            projectContext,
+          }
+        );
 
-          return {
-            ...result,
-            violations: aiResult.issues,
-            aiEnabled: aiResult.enabled,
-            aiError: aiResult.error,
-            metadata: aiResult.metadata,
-          };
-        }
-        return result;
+        return {
+          ...result,
+          violations: aiResult.issues,
+          aiEnabled: aiResult.enabled,
+          aiError: aiResult.error,
+          metadata: aiResult.metadata,
+        };
       })
     );
 

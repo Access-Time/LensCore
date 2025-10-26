@@ -209,9 +209,19 @@ export class HtmlGeneratorService {
             </div>
           </div>
           ${
+            violation.userStory
+              ? `
+            <div class="ai-explanation" style="margin-top: 0.75rem;">
+              <h5 class="ai-explanation-title">User Story</h5>
+              <div class="ai-explanation-text">${violation.userStory}</div>
+            </div>
+          `
+              : ''
+          }
+          ${
             violation.aiExplanation
               ? `
-            <div class="ai-explanation">
+            <div class="ai-explanation" style="margin-top: 0.75rem;">
               <h5 class="ai-explanation-title">AI Explanation</h5>
               <div class="ai-explanation-text">${this.markdownToHtml(violation.aiExplanation)}</div>
             </div>
@@ -297,9 +307,19 @@ export class HtmlGeneratorService {
             </div>
           </div>
           ${
+            violation.userStory
+              ? `
+            <div class="ai-explanation" style="margin-top: 0.75rem;">
+              <h5 class="ai-explanation-title">User Story</h5>
+              <div class="ai-explanation-text">${violation.userStory}</div>
+            </div>
+          `
+              : ''
+          }
+          ${
             violation.aiExplanation
               ? `
-            <div class="ai-explanation">
+            <div class="ai-explanation" style="margin-top: 0.75rem;">
               <h5 class="ai-explanation-title">AI Explanation</h5>
               <div class="ai-explanation-text">${this.markdownToHtml(violation.aiExplanation)}</div>
             </div>
