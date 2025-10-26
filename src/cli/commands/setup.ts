@@ -14,7 +14,7 @@ const GPT_MODELS = [
   { name: 'GPT-4 Turbo (Latest & Fast)', value: 'gpt-4-turbo-preview' },
 ];
 
-export async function setupCommand() {
+export async function setupCommand(options: any) {
   const spinner = ora('Setting up LensCore...').start();
 
   try {
@@ -57,10 +57,23 @@ export async function setupCommand() {
 
     spinner.stop();
 
-    // Interactive setup
-    console.log(chalk.yellow('\n📋 Configuration Options:\n'));
+    const hasOptions = options.port || options.url || options.ai || options.openaiKey;
+    
+    let answers: any;
+    
+    if (hasOptions) {
+      answers = {
+        mode: 'local',
+        localUrl: options.url || `http://localhost:${options.port || 3001}`,
+        enableAI: options.ai || false,
+        openaiKey: options.openaiKey || '',
+        gptModel: 'gpt-3.5-turbo',
+      };
+    } else {
+      // Interactive setup
+      console.log(chalk.yellow('\n📋 Configuration Options:\n'));
 
-    const answers = await inquirer.prompt([
+      answers = await inquirer.prompt([
       {
         type: 'list',
         name: 'mode',
@@ -122,6 +135,7 @@ export async function setupCommand() {
         when: (answers) => answers.enableAI && answers.openaiKey,
       },
     ]);
+    }
 
     // Extract port from local URL for Docker configuration
     let dockerPort = 3001;
