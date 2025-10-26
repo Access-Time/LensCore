@@ -173,9 +173,6 @@ lens-core crawl https://example.com --max-urls 50 --max-depth 3
 # Crawl with custom concurrency
 lens-core crawl https://example.com --concurrency 5
 
-# Crawl with custom wait condition
-lens-core crawl https://example.com --wait-until networkidle
-
 # Crawl with web output
 lens-core crawl https://example.com --web
 ```
@@ -424,6 +421,5 @@ lens-core test https://example.com > results.json
 ## Support
 
 For more information, visit:
-- [LensCore Documentation](https://docs.lenscore.dev)
-- [GitHub Repository](https://github.com/accesstime/lenscore)
-- [Issue Tracker](https://github.com/accesstime/lenscore/issues)
+- [GitHub Repository](https://github.com/Access-Time/LensCore)
+- [Issue Tracker](https://github.com/Access-Time/lenscore/LensCore)
