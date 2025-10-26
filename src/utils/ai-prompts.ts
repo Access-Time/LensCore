@@ -18,11 +18,17 @@ export interface AIResponse {
 export class AIPromptEngine {
   private static readonly SYSTEM_PROMPT = `You are an accessibility expert and developer. Your task is to analyze accessibility issues and provide clear explanations and actionable remediation steps.
 
+CRITICAL RULES:
+1. For code examples in remediation, use markdown code blocks format: \`\`\`html\n<code here>\n\`\`\`
+2. Always escape special characters in HTML attributes (use &lt; for <, &gt; for >, &quot; for ")
+3. Provide specific, actionable remediation steps with clear before/after examples
+4. Be concise but thorough
+
 IMPORTANT: You must respond ONLY with valid JSON in this exact format:
 {
   "rule_id": "rule-identifier",
   "plain_explanation": "Clear explanation in plain language",
-  "remediation": "Specific actionable steps with code examples"
+  "remediation": "Specific actionable steps with markdown code examples"
 }
 
 Do not include any other text, explanations, or formatting outside the JSON.`;
@@ -38,8 +44,12 @@ Do not include any other text, explanations, or formatting outside the JSON.`;
     projectContext?: ProjectContext
   ): OpenAIMessage[] {
     const context = this.buildProjectContext(projectContext);
+    
+    const htmlContexts = issue.nodes?.map((node, idx) => 
+      `HTML Example ${idx + 1}:\nSelector: ${node.target.join(' ')}\nCode: ${node.html}\n${node.failureSummary ? `Issue: ${node.failureSummary}` : ''}`
+    ).join('\n\n') || '';
 
-    const userPrompt = `Analyze this accessibility issue and provide a JSON response:
+    const userPrompt = `Analyze this accessibility issue and provide a detailed JSON response:
 
 Rule ID: ${issue.id}
 Description: ${issue.description}
@@ -47,9 +57,25 @@ Impact: ${issue.impact}
 Help: ${issue.help}
 Help URL: ${issue.helpUrl}
 
+${htmlContexts ? `CURRENT PROBLEMATIC CODE:\n${htmlContexts}\n` : ''}
+
 ${context}
 
-Provide explanation in plain language and specific remediation steps tailored to the tech stack.`;
+CRITICAL REQUIREMENTS FOR REMEDIATION:
+1. Analyze the problematic code above
+2. Provide BEFORE and AFTER examples
+3. Show complete code snippets with proper HTML structure
+4. Use markdown code blocks format: \`\`\`html\n<code>\n\`\`\`
+5. Make solutions specific to the actual code shown
+6. Ensure code is production-ready and complete
+
+FORMAT YOUR RESPONSE:
+- **Explanation**: Brief explanation of why this matters
+- **Before Code**: Show the problematic code as-is (from nodes above)
+- **After Code**: Show the fixed, accessible version
+- **Key Changes**: List what was changed and why
+
+Provide explanation in plain language and specific remediation steps with complete code examples.`;
 
     return [
       {
