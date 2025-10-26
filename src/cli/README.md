@@ -11,26 +11,31 @@ npm install -g @accesstime/lenscore
 ## Quick Start
 
 1. **Setup LensCore**:
+
    ```bash
    lens-core setup --port 3009
    ```
 
 2. **Build and start services**:
+
    ```bash
    lens-core build
    ```
 
 3. **Check service status**:
+
    ```bash
    lens-core status
    ```
 
 4. **Test a single page**:
+
    ```bash
    lens-core test https://example.com
    ```
 
 5. **Crawl a website**:
+
    ```bash
    lens-core crawl https://example.com
    ```
@@ -47,24 +52,28 @@ npm install -g @accesstime/lenscore
 ### Setup & Configuration
 
 #### `setup [options]`
+
 Setup LensCore configuration and Docker environment.
 
-
 **Examples:**
+
 ```bash
 # Interactive setup
 lens-core setup
 ```
 
 #### `config [options]`
+
 Manage LensCore configuration settings.
 
 **Options:**
+
 - `-s, --set <key=value>`: Set configuration value (e.g., docker.port=3003)
 - `-g, --get <key>`: Get configuration value (e.g., docker.port)
 - `-l, --list`: List all configuration settings
 
 **Examples:**
+
 ```bash
 # List all configuration
 lens-core config --list
@@ -82,9 +91,11 @@ lens-core config --set "openai.apiKey=your-key-here"
 ### Accessibility Testing
 
 #### `test [options] <url>`
+
 Test accessibility of a single page.
 
 **Options:**
+
 - `--enable-ai`: Enable AI analysis (uses config API key)
 - `-k, --openai-key <key>`: Override OpenAI API key
 - `-c, --project-context <context>`: Project context (e.g., react,tailwind,typescript)
@@ -95,6 +106,7 @@ Test accessibility of a single page.
 - `--no-screenshot`: Disable screenshot capture
 
 **Examples:**
+
 ```bash
 # Basic accessibility test
 lens-core test https://example.com
@@ -119,9 +131,11 @@ lens-core test https://example.com --no-screenshot
 ```
 
 #### `test-multiple [options] <urls...>`
+
 Test accessibility of multiple pages simultaneously.
 
 **Options:**
+
 - `--enable-ai`: Enable AI analysis (uses config API key)
 - `-k, --openai-key <key>`: Override OpenAI API key
 - `-c, --project-context <context>`: Project context (e.g., react,tailwind,typescript)
@@ -132,6 +146,7 @@ Test accessibility of multiple pages simultaneously.
 - `--no-screenshot`: Disable screenshot capture
 
 **Examples:**
+
 ```bash
 # Test multiple pages
 lens-core test-multiple https://example.com https://google.com https://github.com
@@ -152,9 +167,11 @@ lens-core test-multiple https://example.com https://google.com --web
 ### Web Crawling
 
 #### `crawl [options] <url>`
+
 Crawl website and discover pages.
 
 **Options:**
+
 - `-w, --web`: Open results in browser (default: JSON output)
 - `-u, --max-urls <number>`: Maximum URLs to crawl (default: 10)
 - `-d, --max-depth <number>`: Maximum crawl depth (default: 2)
@@ -163,6 +180,7 @@ Crawl website and discover pages.
 - `-l, --wait-until <condition>`: Page load condition (default: domcontentloaded)
 
 **Examples:**
+
 ```bash
 # Basic crawl
 lens-core crawl https://example.com
@@ -180,9 +198,11 @@ lens-core crawl https://example.com --web
 ### Combined Operations
 
 #### `scan [options] <url>`
+
 Crawl website and test accessibility (combined operation).
 
 **Options:**
+
 - `--enable-ai`: Enable AI analysis (uses config API key)
 - `-k, --openai-key <key>`: Override OpenAI API key
 - `-c, --project-context <context>`: Project context (e.g., react,tailwind,typescript)
@@ -193,6 +213,7 @@ Crawl website and test accessibility (combined operation).
 - `-j, --concurrency <number>`: Number of concurrent requests (default: 3)
 
 **Examples:**
+
 ```bash
 # Full website scan
 lens-core scan https://example.com
@@ -213,36 +234,44 @@ lens-core scan https://example.com --web
 ### Docker Management
 
 #### `build`
+
 Build and start LensCore Docker services.
 
 **Examples:**
+
 ```bash
 # Build and start services
 lens-core build
 ```
 
 #### `up`
+
 Start LensCore Docker services.
 
 **Examples:**
+
 ```bash
 # Start services
 lens-core up
 ```
 
 #### `down`
+
 Stop LensCore Docker services.
 
 **Examples:**
+
 ```bash
 # Stop services
 lens-core down
 ```
 
 #### `status`
+
 Check LensCore Docker services status.
 
 **Examples:**
+
 ```bash
 # Check service status
 lens-core status
@@ -251,9 +280,11 @@ lens-core status
 ### Health & Monitoring
 
 #### `health`
+
 Check LensCore health status.
 
 **Examples:**
+
 ```bash
 # Check health
 lens-core health
@@ -262,11 +293,13 @@ lens-core health
 ## Output Formats
 
 ### JSON Output (Default)
+
 ```bash
 lens-core test https://example.com
 ```
 
 ### Web Output (HTML Report)
+
 ```bash
 lens-core test https://example.com --web
 ```
@@ -310,6 +343,7 @@ LensCore configuration is stored in `~/.lenscore/config.json` and includes:
 ## Examples
 
 ### Complete Website Analysis
+
 ```bash
 # Setup LensCore with AI
 lens-core setup --ai --openai-key your-api-key
@@ -325,6 +359,7 @@ lens-core scan https://example.com --max-urls 50 --enable-ai --web
 ```
 
 ### Batch Testing
+
 ```bash
 # Test multiple pages with AI analysis
 lens-core test-multiple \
@@ -337,6 +372,7 @@ lens-core test-multiple \
 ```
 
 ### Custom Crawling
+
 ```bash
 # Deep crawl with custom settings
 lens-core crawl https://example.com \
@@ -352,25 +388,28 @@ lens-core crawl https://example.com \
 ### Common Issues
 
 1. **Docker not running**:
+
    ```bash
    # Check Docker status
    docker info
-   
+
    # Start Docker services
    lens-core up
    ```
 
 2. **Port conflicts**:
+
    ```bash
    # Use different port
    lens-core setup --port 3002
    ```
 
 3. **Permission issues**:
+
    ```bash
    # Check permissions
    ls -la ~/.lenscore/
-   
+
    # Reset configuration
    lens-core config --reset
    ```
@@ -385,6 +424,7 @@ lens-core crawl https://example.com \
 ## Advanced Usage
 
 ### Custom Rules
+
 ```bash
 # Test with specific accessibility rules
 lens-core test https://example.com --rules "color-contrast,keyboard"
@@ -394,6 +434,7 @@ lens-core test https://example.com --tags "wcag2a,wcag2aa"
 ```
 
 ### Performance Tuning
+
 ```bash
 # High-performance scan
 lens-core scan https://example.com \
@@ -404,6 +445,7 @@ lens-core scan https://example.com \
 ```
 
 ### Integration with CI/CD
+
 ```bash
 # Non-interactive setup for CI
 lens-core setup --port 3001 --ai --openai-key $OPENAI_API_KEY
@@ -421,5 +463,6 @@ lens-core test https://example.com > results.json
 ## Support
 
 For more information, visit:
+
 - [GitHub Repository](https://github.com/Access-Time/LensCore)
 - [Issue Tracker](https://github.com/Access-Time/lenscore/LensCore)

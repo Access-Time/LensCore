@@ -44,10 +44,14 @@ Do not include any other text, explanations, or formatting outside the JSON.`;
     projectContext?: ProjectContext
   ): OpenAIMessage[] {
     const context = this.buildProjectContext(projectContext);
-    
-    const htmlContexts = issue.nodes?.map((node, idx) => 
-      `HTML Example ${idx + 1}:\nSelector: ${node.target.join(' ')}\nCode: ${node.html}\n${node.failureSummary ? `Issue: ${node.failureSummary}` : ''}`
-    ).join('\n\n') || '';
+
+    const htmlContexts =
+      issue.nodes
+        ?.map(
+          (node, idx) =>
+            `HTML Example ${idx + 1}:\nSelector: ${node.target.join(' ')}\nCode: ${node.html}\n${node.failureSummary ? `Issue: ${node.failureSummary}` : ''}`
+        )
+        .join('\n\n') || '';
 
     const userPrompt = `Analyze this accessibility issue and provide a detailed JSON response:
 

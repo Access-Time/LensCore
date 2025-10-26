@@ -57,10 +57,11 @@ export async function setupCommand(options: any) {
 
     spinner.stop();
 
-    const hasOptions = options.port || options.url || options.ai || options.openaiKey;
-    
+    const hasOptions =
+      options.port || options.url || options.ai || options.openaiKey;
+
     let answers: any;
-    
+
     if (hasOptions) {
       answers = {
         mode: 'local',
@@ -74,67 +75,67 @@ export async function setupCommand(options: any) {
       console.log(chalk.yellow('\n📋 Configuration Options:\n'));
 
       answers = await inquirer.prompt([
-      {
-        type: 'list',
-        name: 'mode',
-        message: 'Choose LensCore mode:',
-        choices: [
-          { name: 'Local mode (run LensCore in Docker)', value: 'local' },
-          {
-            name: 'Remote mode (connect to existing LensCore instance)',
-            value: 'remote',
+        {
+          type: 'list',
+          name: 'mode',
+          message: 'Choose LensCore mode:',
+          choices: [
+            { name: 'Local mode (run LensCore in Docker)', value: 'local' },
+            {
+              name: 'Remote mode (connect to existing LensCore instance)',
+              value: 'remote',
+            },
+          ],
+          default: 'local',
+        },
+        {
+          type: 'input',
+          name: 'localUrl',
+          message: 'Enter local LensCore URL:',
+          default: 'http://localhost:3001',
+          when: (answers) => answers.mode === 'local',
+          validate: (input) => {
+            if (!input.trim()) {
+              return 'Local URL is required for local mode';
+            }
+            try {
+              new URL(input);
+              return true;
+            } catch {
+              return 'Please enter a valid URL (e.g., http://localhost:3001)';
+            }
           },
-        ],
-        default: 'local',
-      },
-      {
-        type: 'input',
-        name: 'localUrl',
-        message: 'Enter local LensCore URL:',
-        default: 'http://localhost:3001',
-        when: (answers) => answers.mode === 'local',
-        validate: (input) => {
-          if (!input.trim()) {
-            return 'Local URL is required for local mode';
-          }
-          try {
-            new URL(input);
+        },
+        {
+          type: 'confirm',
+          name: 'enableAI',
+          message: 'Enable AI-powered accessibility analysis?',
+          default: false,
+        },
+        {
+          type: 'input',
+          name: 'openaiKey',
+          message: 'Enter your OpenAI API key:',
+          when: (answers) => answers.enableAI,
+          validate: (input) => {
+            if (!input.trim()) {
+              return 'API key is required when AI is enabled';
+            }
+            if (!input.startsWith('sk-')) {
+              return 'OpenAI API key should start with "sk-"';
+            }
             return true;
-          } catch {
-            return 'Please enter a valid URL (e.g., http://localhost:3001)';
-          }
+          },
         },
-      },
-      {
-        type: 'confirm',
-        name: 'enableAI',
-        message: 'Enable AI-powered accessibility analysis?',
-        default: false,
-      },
-      {
-        type: 'input',
-        name: 'openaiKey',
-        message: 'Enter your OpenAI API key:',
-        when: (answers) => answers.enableAI,
-        validate: (input) => {
-          if (!input.trim()) {
-            return 'API key is required when AI is enabled';
-          }
-          if (!input.startsWith('sk-')) {
-            return 'OpenAI API key should start with "sk-"';
-          }
-          return true;
+        {
+          type: 'list',
+          name: 'gptModel',
+          message: 'Choose GPT model:',
+          choices: GPT_MODELS,
+          default: 'gpt-3.5-turbo',
+          when: (answers) => answers.enableAI && answers.openaiKey,
         },
-      },
-      {
-        type: 'list',
-        name: 'gptModel',
-        message: 'Choose GPT model:',
-        choices: GPT_MODELS,
-        default: 'gpt-3.5-turbo',
-        when: (answers) => answers.enableAI && answers.openaiKey,
-      },
-    ]);
+      ]);
     }
 
     // Extract port from local URL for Docker configuration

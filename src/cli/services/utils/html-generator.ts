@@ -6,58 +6,78 @@ export class HtmlGeneratorService {
       '<': '&lt;',
       '>': '&gt;',
       '"': '&quot;',
-      "'": '&#039;'
+      "'": '&#039;',
     };
     return text.replace(/[&<>"']/g, (m) => map[m] || m);
   }
 
   private static formatHtml(htmlString: string): string {
     if (!htmlString) return '';
-    
+
     const formatted = htmlString.trim();
     let indent = 0;
     let result = '';
     let i = 0;
-    
+
     while (i < formatted.length) {
       const char = formatted[i];
-      
+
       if (char === '<') {
         const tagEnd = formatted.indexOf('>', i);
         if (tagEnd === -1) break;
-        
+
         const tag = formatted.substring(i, tagEnd + 1);
         const tagName = tag.match(/<\/?(\w+)/)?.[1] || '';
-        
+
         if (tag.startsWith('</')) {
           indent = Math.max(0, indent - 1);
           result += '\n' + '  '.repeat(indent) + tag;
-        } else if (tag.endsWith('/>') || ['img', 'br', 'hr', 'input', 'meta', 'link'].includes(tagName)) {
+        } else if (
+          tag.endsWith('/>') ||
+          ['img', 'br', 'hr', 'input', 'meta', 'link'].includes(tagName)
+        ) {
           result += '\n' + '  '.repeat(indent) + tag;
         } else if (tag.startsWith('<!')) {
           result += tag;
         } else {
           result += '\n' + '  '.repeat(indent) + tag;
-          if (!['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'].includes(tagName)) {
+          if (
+            ![
+              'area',
+              'base',
+              'br',
+              'col',
+              'embed',
+              'hr',
+              'img',
+              'input',
+              'link',
+              'meta',
+              'param',
+              'source',
+              'track',
+              'wbr',
+            ].includes(tagName)
+          ) {
             indent++;
           }
         }
-        
+
         i = tagEnd + 1;
       } else {
         result += char;
         i++;
       }
     }
-    
+
     return result.trim();
   }
 
   private static markdownToHtml(text: string): string {
     if (!text) return '';
-    
+
     let html = this.escapeHtml(text);
-    
+
     const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
     html = html.replace(codeBlockRegex, (_, lang, code) => {
       const trimmedCode = code.trim();
@@ -65,29 +85,32 @@ export class HtmlGeneratorService {
       const escapedCode = formatted;
       return `<pre><code class="language-${lang || 'text'}" style="display: block; background: #1f2937; color: #f9fafb; border: 1px solid #374151; border-radius: 0.5rem; padding: 1rem; overflow-x: auto; font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace; font-size: 0.875rem; line-height: 1.6; margin: 0.75rem 0; white-space: pre; word-spacing: normal; tab-size: 2;">${escapedCode}</code></pre>`;
     });
-    
+
     const inlineCodeRegex = /`([^`]+)`/g;
     html = html.replace(inlineCodeRegex, (_, code) => {
       const escapedCode = this.escapeHtml(code);
       return `<code style="background: #f3f4f6; padding: 0.125rem 0.375rem; border-radius: 0.25rem; font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace; font-size: 0.875em;">${escapedCode}</code>`;
     });
-    
+
     const boldRegex = /\*\*(.+?)\*\*/g;
     html = html.replace(boldRegex, '<strong>$1</strong>');
-    
+
     html = html.replace(/\n/g, '<br>');
-    
+
     return html;
   }
 
-  private static generateCollapsibleCode(nodes: any[], type: 'problem' | 'solution'): string {
+  private static generateCollapsibleCode(
+    nodes: any[],
+    type: 'problem' | 'solution'
+  ): string {
     const isProblem = type === 'problem';
     const icon = isProblem ? '⚠️' : '✅';
     const title = isProblem ? 'Problematic Code Detected' : 'AI Remediation';
     const bgColor = isProblem ? '#fef3c7' : '#d1fae5';
     const borderColor = isProblem ? '#f59e0b' : '#10b981';
     const textColor = isProblem ? '#78350f' : '#065f46';
-    
+
     return `
       <details style="margin-top: 1rem; background: ${bgColor}; border-left: 4px solid ${borderColor}; border-radius: 0.375rem; overflow: hidden;">
         <summary style="padding: 1rem; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-size: 0.875rem; font-weight: 600; color: ${textColor}; list-style: none; user-select: none; word-break: break-word;">
@@ -95,7 +118,9 @@ export class HtmlGeneratorService {
           <span style="transition: transform 0.3s ease; flex-shrink: 0; margin-left: 0.5rem;">▼</span>
         </summary>
         <div style="padding: 0 1rem 1rem 1rem; word-break: break-word; overflow-wrap: break-word;">
-          ${nodes.map((node: any, idx: number) => `
+          ${nodes
+            .map(
+              (node: any, idx: number) => `
             <div style="margin-bottom: ${idx < nodes.length - 1 ? '1rem' : '0'};">
               ${node.target ? `<div style="font-size: 0.75rem; color: ${isProblem ? '#92400e' : '#065f46'}; font-family: monospace; margin-bottom: 0.25rem; word-break: break-word;">Target: ${node.target.join(' > ')}</div>` : ''}
               <div style="background: #1f2937; color: #f9fafb; padding: 0.75rem; border-radius: 0.375rem; overflow-x: auto; font-size: 0.875rem; font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace; line-height: 1.5; max-width: 100%;">
@@ -103,7 +128,9 @@ export class HtmlGeneratorService {
               </div>
               ${node.failureSummary ? `<div style="margin-top: 0.5rem; font-size: 0.75rem; color: ${isProblem ? '#92400e' : '#065f46'}; word-break: break-word;">${this.escapeHtml(node.failureSummary)}</div>` : ''}
             </div>
-          `).join('')}
+          `
+            )
+            .join('')}
         </div>
       </details>
       <style>
