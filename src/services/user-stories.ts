@@ -42,7 +42,9 @@ export class UserStoryService {
     if (this.loaded) return;
 
     try {
-      const dataPath = path.join(__dirname, '..', 'data', 'rulesData.json');
+      const dataPath = process.env['NODE_ENV'] === 'production'
+        ? path.join(__dirname, '..', '..', 'src', 'data', 'rulesData.json')
+        : path.join(__dirname, '..', 'data', 'rulesData.json');
       const data = await fs.readFile(dataPath, 'utf8');
       this.rulesData = JSON.parse(data);
 

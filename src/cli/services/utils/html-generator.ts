@@ -213,7 +213,75 @@ export class HtmlGeneratorService {
               ? `
             <div class="ai-explanation" style="margin-top: 0.75rem;">
               <h5 class="ai-explanation-title">User Story</h5>
-              <div class="ai-explanation-text">${violation.userStory}</div>
+              <div class="ai-explanation-text">${this.escapeHtml(violation.userStory)}</div>
+            </div>
+          `
+              : ''
+          }
+          ${
+            violation.aiExplanation
+              ? `
+            <div class="ai-explanation" style="margin-top: 0.75rem;">
+              <h5 class="ai-explanation-title">AI Explanation</h5>
+              <div class="ai-explanation-text">${this.markdownToHtml(violation.aiExplanation)}</div>
+            </div>
+          `
+              : ''
+          }
+          ${
+            violation.nodes && violation.nodes.length > 0
+              ? this.generateCollapsibleCode(violation.nodes, 'problem')
+              : ''
+          }
+          ${
+            violation.aiRemediation
+              ? `
+            <div class="ai-remediation" style="margin-top: 1rem;">
+              <h5 class="ai-remediation-title">AI Remediation</h5>
+              <div class="ai-remediation-text">${this.markdownToHtml(violation.aiRemediation)}</div>
+            </div>
+          `
+              : ''
+          }
+        </div>
+      </div>
+    `
+      )
+      .join('');
+  }
+
+  static generateTestViolationsSection(violations: any[]): string {
+    if (!violations || violations.length === 0) {
+      return `
+        <div class="success">
+          <div class="success-icon" style="color: #10b981;">🎉</div>
+          <h3 class="success-title">No violations found!</h3>
+          <p class="success-desc">Great job! This page passed all accessibility checks.</p>
+        </div>
+      `;
+    }
+
+    return violations
+      .map(
+        (violation) => `
+      <div class="violation">
+        <div>
+          <h4 class="violation-title">${violation.id}</h4>
+          <p class="violation-desc">${violation.description}</p>
+          <div style="margin-top: 0.5rem;">
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; word-break: break-word;">
+              <span class="violation-impact" style="flex-shrink: 0;">${violation.impact || 'unknown'} impact</span>
+              <div style="font-size: 0.75rem; color: #6b7280; word-break: break-all; overflow-wrap: anywhere; min-width: 0;">
+                Help: <a href="${violation.helpUrl}" target="_blank" class="link" style="word-break: break-all; overflow-wrap: anywhere; display: inline;">${violation.help}</a>
+              </div>
+            </div>
+          </div>
+          ${
+            violation.userStory
+              ? `
+            <div class="ai-explanation" style="margin-top: 0.75rem;">
+              <h5 class="ai-explanation-title">User Story</h5>
+              <div class="ai-explanation-text">${this.escapeHtml(violation.userStory)}</div>
             </div>
           `
               : ''
@@ -278,74 +346,6 @@ export class HtmlGeneratorService {
           .join('')}
       </div>
     `;
-  }
-
-  static generateTestViolationsSection(violations: any[]): string {
-    if (!violations || violations.length === 0) {
-      return `
-        <div class="success">
-          <div class="success-icon" style="color: #10b981;">🎉</div>
-          <h3 class="success-title">No violations found!</h3>
-          <p class="success-desc">Great job! This page passed all accessibility checks.</p>
-        </div>
-      `;
-    }
-
-    return violations
-      .map(
-        (violation) => `
-      <div class="violation">
-        <div>
-          <h4 class="violation-title">${violation.id}</h4>
-          <p class="violation-desc">${violation.description}</p>
-          <div style="margin-top: 0.5rem;">
-            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; word-break: break-word;">
-              <span class="violation-impact" style="flex-shrink: 0;">${violation.impact || 'unknown'} impact</span>
-              <div style="font-size: 0.75rem; color: #6b7280; word-break: break-all; overflow-wrap: anywhere; min-width: 0;">
-                Help: <a href="${violation.helpUrl}" target="_blank" class="link" style="word-break: break-all; overflow-wrap: anywhere; display: inline;">${violation.help}</a>
-              </div>
-            </div>
-          </div>
-          ${
-            violation.userStory
-              ? `
-            <div class="ai-explanation" style="margin-top: 0.75rem;">
-              <h5 class="ai-explanation-title">User Story</h5>
-              <div class="ai-explanation-text">${violation.userStory}</div>
-            </div>
-          `
-              : ''
-          }
-          ${
-            violation.aiExplanation
-              ? `
-            <div class="ai-explanation" style="margin-top: 0.75rem;">
-              <h5 class="ai-explanation-title">AI Explanation</h5>
-              <div class="ai-explanation-text">${this.markdownToHtml(violation.aiExplanation)}</div>
-            </div>
-          `
-              : ''
-          }
-          ${
-            violation.nodes && violation.nodes.length > 0
-              ? this.generateCollapsibleCode(violation.nodes, 'problem')
-              : ''
-          }
-          ${
-            violation.aiRemediation
-              ? `
-            <div class="ai-remediation" style="margin-top: 1rem;">
-              <h5 class="ai-remediation-title">AI Remediation</h5>
-              <div class="ai-remediation-text">${this.markdownToHtml(violation.aiRemediation)}</div>
-            </div>
-          `
-              : ''
-          }
-        </div>
-      </div>
-    `
-      )
-      .join('');
   }
 
   static generateTestPassedChecksSection(passes: any[]): string {

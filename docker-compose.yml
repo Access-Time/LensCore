@@ -1,4 +1,4 @@
-version: '3.9'
+version: "3.9"
 
 services:
   lenscore-init:
@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
     volumes:
       - node_modules_data:/app/node_modules
-    profiles: ['init']
+    profiles: ["init"]
 
   lenscore:
     container_name: lenscore-app
@@ -15,13 +15,22 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - '${LENSCORE_PORT:-3001}:${LENSCORE_PORT:-3001}'
+      - "${LENSCORE_PORT:-3001}:${LENSCORE_PORT:-3001}"
     environment:
       - NODE_ENV=development
       - PORT=${LENSCORE_PORT:-3001}
       - CACHE_TYPE=redis
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_MODEL=${OPENAI_MODEL}
+      - OPENAI_MAX_TOKENS=${OPENAI_MAX_TOKENS}
+      - OPENAI_TEMPERATURE=${OPENAI_TEMPERATURE}
+      - OPENAI_TIMEOUT=${OPENAI_TIMEOUT}
+      - OPENAI_RETRY_ATTEMPTS=${OPENAI_RETRY_ATTEMPTS}
+      - OPENAI_RETRY_DELAY=${OPENAI_RETRY_DELAY}
+    env_file:
+      - .env
     volumes:
       - ./logs:/app/logs
       - ./cache:/app/cache
@@ -34,7 +43,7 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - '6379:6379'
+      - "6379:6379"
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
