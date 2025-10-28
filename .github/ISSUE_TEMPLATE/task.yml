@@ -1,0 +1,102 @@
+name: Task / Ticket
+description: Create a general task or ticket
+title: '[Task]: '
+labels: ['task', 'needs-review']
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for general tasks or tickets that need to be completed.
+
+        **Tip:** Make sure to provide enough information so other developers can understand and work on this task.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Task Description
+      description: A clear description of this task or ticket
+      placeholder: 'This task aims to...'
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance Criteria
+      description: Criteria that must be met for this task to be considered complete
+      placeholder: |
+        - [ ] Requirement 1 must be achieved
+        - [ ] Requirement 2 must be achieved
+        - [ ] Tests have been added
+    validations:
+      required: true
+
+  - type: textarea
+    id: technical_requirements
+    attributes:
+      label: Technical Requirements
+      description: Technical requirements that need to be considered
+      placeholder: |
+        - Framework/technology that must be used
+        - Constraints or limitations
+        - Performance requirements
+    validations:
+      required: false
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: Other tasks or issues that must be completed first
+      placeholder: |
+        - PR #123 must be merged first
+        - Issue #456 must be resolved first
+    validations:
+      required: false
+
+  - type: input
+    id: related_issues
+    attributes:
+      label: Related Issues/Tickets
+      description: Issue or ticket numbers that are related (comma-separated)
+      placeholder: '#123, #456'
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: Select the priority for this task
+      options:
+        - Low - Not urgent, can be done anytime
+        - Medium - Important, should be done soon
+        - High - Very important, must be completed immediately
+        - Critical - Blocker for release or other features
+    validations:
+      required: true
+
+  - type: dropdown
+    id: estimated_effort
+    attributes:
+      label: Estimated Effort (Optional)
+      description: Estimated time required
+      options:
+        - '< 1 hour'
+        - '1-4 hours'
+        - 'Half day'
+        - '1-2 days'
+        - '> 2 days'
+        - 'Unknown'
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional_notes
+    attributes:
+      label: Additional Notes
+      description: Any additional notes
+      placeholder: Links to documentation, references, or additional information
+    validations:
+      required: false

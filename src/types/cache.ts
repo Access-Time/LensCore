@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface CacheConfig {
   type: 'memory' | 'redis' | 'filesystem';
   ttl: number;

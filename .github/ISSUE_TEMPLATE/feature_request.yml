@@ -1,0 +1,97 @@
+name: Feature Request
+description: Suggest an idea for LensCore
+title: '[Feature]: '
+labels: ['enhancement', 'needs-review']
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for your idea! Feature suggestions help us improve LensCore.
+
+        **Tip:** Make sure to explain the problem you want to solve and why this feature is important.
+
+  - type: textarea
+    id: feature_description
+    attributes:
+      label: Feature Description
+      description: A clear and concise description of the feature you want to propose
+      placeholder: 'I would like a feature that can...'
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem_statement
+    attributes:
+      label: Problem Statement
+      description: What problem does this feature solve?
+      placeholder: 'Currently, when I want to do X, I have to...'
+    validations:
+      required: true
+
+  - type: textarea
+    id: user_story
+    attributes:
+      label: Use Case / User Story
+      description: How will this feature be used?
+      placeholder: |
+        As a [type of user], I want to [goal] so that [reason/value]
+
+        Example: As a developer, I want to save configuration so I don't have to re-enter it every time
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance Criteria
+      description: Criteria that must be met for this feature to be considered complete
+      placeholder: |
+        - [ ] Feature X can do A
+        - [ ] Feature X can do B
+        - [ ] Documentation has been added
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed_solution
+    attributes:
+      label: Proposed Solution (Optional)
+      description: If you have ideas on how this feature could be implemented
+      placeholder: 'I think we could add a new CLI command like...'
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this feature to you?
+      options:
+        - Nice to Have - Would be very useful if available
+        - Important - Very important for my workflow
+        - Critical - Very disruptive if not available
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Additional Context
+      description: Screenshots, mockups, references, or other relevant information
+      placeholder: Links to related issues, implementation references in other projects, etc.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checkboxes
+    attributes:
+      label: Checklist
+      description: Please make sure you've completed the following
+      options:
+        - label: I have searched for similar feature requests
+          required: true
+        - label: I have read the documentation to ensure this feature doesn't already exist
+          required: true
+        - label: I have provided a clear use case
+          required: true
