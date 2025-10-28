@@ -4,6 +4,7 @@
 
 <p>
 <a href="https://opensource.org/licenses/MIT"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
+<a href="CODE_OF_CONDUCT.md"><img alt="Contributor Covenant" src="https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg"></a>
 <a href="https://www.docker.com/"><img alt="Docker" src="https://img.shields.io/badge/Docker-Ready-blue.svg"></a>
 <a href="https://www.typescriptlang.org/"><img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-Ready-blue.svg"></a>
 <a href="https://nodejs.org/"><img alt="Node.js" src="https://img.shields.io/badge/Node.js-20+-green.svg"></a>
@@ -35,6 +36,7 @@
 - [Configuration](#️-configuration)
 - [API Documentation](#-api-documentation)
 - [AI Integration](#-ai-integration)
+- [Code of Conduct](#code-of-conduct)
 - [License](#-license)
 
 ## ⚡ Quick Start
@@ -910,6 +912,12 @@ curl -X POST http://localhost:3001/api/combined \
     }
   }'
 ```
+
+---
+
+## Code of Conduct
+
+This project adheres to the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md) to ensure a welcoming and inclusive environment for all contributors. By participating in this project, you are expected to uphold this code. Please report any violations to the project maintainers.
 
 ---
 
