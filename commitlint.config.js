@@ -9,7 +9,7 @@ module.exports = {
         'fix', // Bug fix
         'docs', // Documentation changes
         'style', // Code style changes (formatting, missing semi colons, etc)
-        'refactor', // Code refactoring
+        'refactor', // Code refactoring that neither fixes a bug nor adds a feature
         'perf', // Performance improvements
         'test', // Adding or updating tests
         'build', // Build system or external dependencies changes
