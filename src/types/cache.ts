@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface CacheConfig {
   type: 'memory' | 'redis' | 'filesystem';
   ttl: number;
@@ -27,7 +26,7 @@ export interface CacheKey {
 
 export interface CacheEntry {
   key: string;
-  value: any;
+  value: unknown;
   timestamp: number;
   ttl: number;
 }
