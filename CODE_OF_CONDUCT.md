@@ -42,7 +42,7 @@ All community leaders are obligated to respect the privacy and security of the r
 
 Project maintainers can be contacted at:
 
-- **Email**: accesslens@accesstime.co
+- **Email**: lenscore@accesstime.co
 - **GitHub**: Open an issue in the repository or contact project maintainers directly
 
 ## Enforcement Guidelines
