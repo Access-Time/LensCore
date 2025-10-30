@@ -1,0 +1,338 @@
+/**
+ * Custom styles for LensCore documentation
+ * Full-screen layout optimized for modern documentation
+ */
+
+/* Accessibility improvements */
+:root {
+  --vp-c-brand: #6366f1;
+  --vp-c-brand-light: #818cf8;
+  --vp-c-brand-lighter: #a5b4fc;
+  --vp-c-brand-dark: #4f46e5;
+  --vp-c-brand-darker: #4338ca;
+
+  /* Full-screen layout variables */
+  --vp-layout-max-width: 1920px;
+  --vp-sidebar-width: 280px;
+}
+
+/* Full-screen layout */
+.VPDoc.has-sidebar .container {
+  max-width: 100% !important;
+}
+
+.VPDoc.has-sidebar .content {
+  max-width: none !important;
+  padding-left: 64px !important;
+  padding-right: 64px !important;
+}
+
+/* Main content area - wider for better readability */
+.vp-doc {
+  max-width: 1400px !important;
+  margin: 0 auto;
+}
+
+/* Sidebar full height */
+.VPSidebar {
+  width: var(--vp-sidebar-width);
+  height: 100vh;
+  position: fixed;
+  top: var(--vp-nav-height);
+  bottom: 0;
+  left: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Sidebar font size improvements */
+.VPSidebar .group + .group,
+.VPSidebar .group {
+  font-size: 15px;
+}
+
+.VPSidebar .text {
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.VPSidebar .VPSidebarItem.level-0 .text {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.VPSidebar .VPSidebarItem .link {
+  padding: 8px 12px;
+}
+
+/* Fix sidebar hover bug - ensure only hovered item gets highlight */
+.VPSidebar .VPSidebarItem .link:hover {
+  background-color: var(--vp-c-default-soft);
+}
+
+.VPSidebar .VPSidebarItem .link.active {
+  background-color: var(--vp-c-brand-soft);
+  color: var(--vp-c-brand);
+}
+
+.VPSidebar .VPSidebarItem .link.active:hover {
+  background-color: var(--vp-c-brand-soft);
+  color: var(--vp-c-brand);
+}
+
+/* Remove hover state from parent when child is active */
+.VPSidebar .VPSidebarItem:has(.link.active) > .link:not(.active) {
+  background-color: transparent;
+}
+
+.VPSidebar .VPSidebarItem:has(.link.active) > .link:not(.active):hover {
+  background-color: var(--vp-c-default-soft);
+}
+
+/* Adjust content when sidebar is visible */
+@media (min-width: 960px) {
+  .VPDoc.has-sidebar .content-container {
+    max-width: 100% !important;
+  }
+
+  .VPDoc .container {
+    max-width: 100% !important;
+  }
+}
+
+/* Remove default max-width constraints */
+.VPContent {
+  max-width: 100% !important;
+}
+
+/* Better spacing for full-screen */
+.VPDoc .container > .content {
+  padding-left: 48px;
+  padding-right: 48px;
+}
+
+@media (min-width: 1440px) {
+  .VPDoc .container > .content {
+    padding-left: 64px;
+    padding-right: 64px;
+  }
+}
+
+@media (min-width: 1920px) {
+  .VPDoc .container > .content {
+    padding-left: 96px;
+    padding-right: 96px;
+  }
+}
+
+/* Ensure proper focus visible */
+*:focus-visible {
+  outline: 2px solid var(--vp-c-brand);
+  outline-offset: 2px;
+}
+
+/* Header/Navbar font size improvements */
+.VPNav .VPNavBar {
+  font-size: 16px;
+}
+
+.VPNav .menu-text,
+.VPNav .VPLink {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.VPNav .title .text {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* Menu items in nav */
+.VPFlyout .text,
+.VPMenu .text {
+  font-size: 15px;
+}
+
+/* Skip link styles */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--vp-c-brand);
+  color: white;
+  padding: 8px 16px;
+  text-decoration: none;
+  border-radius: 0 0 4px 0;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* Improve code block accessibility */
+.vp-code-group {
+  margin: 1.5rem 0;
+}
+
+/* Better table styles */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+}
+
+th,
+td {
+  padding: 0.75rem;
+  border: 1px solid var(--vp-c-divider);
+  text-align: left;
+}
+
+th {
+  background-color: var(--vp-c-bg-soft);
+  font-weight: 600;
+}
+
+/* Dark mode adjustments */
+.dark {
+  --vp-c-brand: #818cf8;
+  --vp-c-brand-light: #a5b4fc;
+  --vp-c-brand-lighter: #c7d2fe;
+  --vp-c-brand-dark: #6366f1;
+  --vp-c-brand-darker: #4f46e5;
+}
+
+/* Custom container styles */
+.tip,
+.warning,
+.danger {
+  padding: 1rem 1.5rem;
+  margin: 1.5rem 0;
+  border-left: 4px solid;
+  border-radius: 4px;
+}
+
+.tip {
+  background-color: var(--vp-custom-block-tip-bg);
+  border-color: var(--vp-custom-block-tip-border);
+}
+
+.warning {
+  background-color: var(--vp-custom-block-warning-bg);
+  border-color: var(--vp-custom-block-warning-border);
+}
+
+.danger {
+  background-color: var(--vp-custom-block-danger-bg);
+  border-color: var(--vp-custom-block-danger-border);
+}
+
+/* Improve link visibility */
+.vp-doc a {
+  text-decoration: underline;
+  text-decoration-color: var(--vp-c-brand-light);
+  text-underline-offset: 2px;
+}
+
+.vp-doc a:hover {
+  text-decoration-color: var(--vp-c-brand);
+}
+
+/* Responsive images */
+.vp-doc img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 1.5rem 0;
+}
+
+/* Better spacing for lists */
+.vp-doc ul,
+.vp-doc ol {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+}
+
+.vp-doc li {
+  margin: 0.5rem 0;
+}
+
+/* Home page full-screen hero */
+.VPHome .VPHero {
+  max-width: 100% !important;
+  padding-left: 48px;
+  padding-right: 48px;
+}
+
+.VPHome .VPFeatures {
+  max-width: 1600px !important;
+  margin: 0 auto;
+  padding-left: 48px;
+  padding-right: 48px;
+}
+
+/* Wider code blocks for full-screen */
+.vp-doc div[class*='language-'] {
+  margin: 1.5rem 0;
+  border-radius: 8px;
+}
+
+/* Full-width tables */
+.vp-doc table {
+  width: 100%;
+  display: table;
+}
+
+/* Aside/TOC positioning for full-screen */
+.VPDocAside {
+  position: fixed;
+  top: calc(var(--vp-nav-height) + 32px);
+  right: 32px;
+  width: 224px;
+  max-height: calc(100vh - var(--vp-nav-height) - 64px);
+  overflow-y: auto;
+}
+
+@media (max-width: 1439px) {
+  .VPDocAside {
+    right: 16px;
+    width: 200px;
+  }
+}
+
+/* Ensure sidebar doesn't overlap content on smaller screens */
+@media (max-width: 959px) {
+  .VPDoc .container > .content {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  .VPHome .VPHero,
+  .VPHome .VPFeatures {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  .VPDocAside {
+    position: static;
+    width: 100%;
+    max-height: none;
+    padding: 0 24px;
+  }
+}
+
+/* Optimize reading width while using full screen */
+.vp-doc p,
+.vp-doc li {
+  max-width: 80ch;
+}
+
+.vp-doc h1,
+.vp-doc h2,
+.vp-doc h3,
+.vp-doc h4,
+.vp-doc h5,
+.vp-doc h6 {
+  max-width: 100%;
+}

@@ -7,7 +7,7 @@ export const openApiSpec = {
       'Open-source accessibility testing and web crawling REST API. Provides endpoints for automated WCAG compliance testing using axe-core, web crawling with configurable rules, and optional AI-powered analysis.',
     contact: {
       name: 'AccessTime Team',
-      url: 'https://github.com/AccessTime/LensCore',
+      url: 'https://github.com/Access-Time/LensCore',
     },
     license: {
       name: 'MIT',
