@@ -1,4 +1,4 @@
-import { ProjectContext } from './ai-prompts';
+import { ProjectContext, AIResponse } from './ai-prompts';
 
 /**
  * Helper functions for AI integration
@@ -123,20 +123,20 @@ export class AIHelpers {
    * @param response - AI response object
    * @returns True if response is valid
    */
-  static isValidAIResponse(response: any): response is {
-    rule_id: string;
-    plain_explanation: string;
-    remediation: string;
-  } {
+  static isValidAIResponse(response: unknown): response is AIResponse {
+    const obj = response as Record<string, unknown>;
     return (
-      response &&
+      response !== null &&
       typeof response === 'object' &&
-      typeof response.rule_id === 'string' &&
-      typeof response.plain_explanation === 'string' &&
-      typeof response.remediation === 'string' &&
-      response.rule_id.trim() !== '' &&
-      response.plain_explanation.trim() !== '' &&
-      response.remediation.trim() !== ''
+      'rule_id' in response &&
+      'plain_explanation' in response &&
+      'remediation' in response &&
+      typeof obj['rule_id'] === 'string' &&
+      typeof obj['plain_explanation'] === 'string' &&
+      typeof obj['remediation'] === 'string' &&
+      (obj['rule_id'] as string).trim() !== '' &&
+      (obj['plain_explanation'] as string).trim() !== '' &&
+      (obj['remediation'] as string).trim() !== ''
     );
   }
 

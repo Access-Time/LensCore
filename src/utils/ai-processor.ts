@@ -213,7 +213,7 @@ export class AIProcessor {
     const cachedEntry = await this.cacheService.get(cacheKey);
     if (cachedEntry) {
       logger.info('Cache hit for AI response', { ruleId: issue.id });
-      return { aiResponse: cachedEntry.value, cacheHit: true };
+      return { aiResponse: cachedEntry.value as AIResponse, cacheHit: true };
     }
 
     logger.info('Cache miss for AI response', { ruleId: issue.id });

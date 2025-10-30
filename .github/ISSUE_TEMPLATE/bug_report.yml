@@ -1,0 +1,110 @@
+name: Bug Report
+description: File a bug report to help us improve
+title: '[Bug]: '
+labels: ['bug', 'needs-triage']
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug! Your information will help us fix it.
+
+        **Tip:** Try searching for similar issues before creating a new one.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of the bug
+      placeholder: 'Example: When I run command X, error Y occurs...'
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps_to_reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: Steps to reproduce the behavior
+      placeholder: |
+        1. Run command '...'
+        2. Click on '...'
+        3. Scroll down to '...'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: Expected Behavior
+      description: What should happen?
+      placeholder: The system should display X...
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual_behavior
+    attributes:
+      label: Actual Behavior
+      description: What actually happens?
+      placeholder: The system displays Y and produces an error...
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment Details
+      description: Information about your environment
+      placeholder: |
+        - OS: [e.g., macOS, Linux, Windows]
+        - Node.js Version: [e.g., 18.17.0]
+        - NPM Version: [e.g., 9.6.7]
+        - LensCore Version: [e.g., 1.2.3]
+        - Browser (if applicable): [e.g., Chrome 115]
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots / Logs
+      description: If possible, add screenshots or error logs
+      placeholder: 'Drop screenshots or copy-paste logs here'
+    validations:
+      required: false
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity/Priority
+      description: Select the severity level of this bug
+      options:
+        - Critical - Application crash or data loss
+        - High - Core functionality not working
+        - Medium - Function affected but workaround available
+        - Low - Minor or cosmetic issue
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Additional Context
+      description: Any other relevant information
+      placeholder: Links to related issues, related work, etc.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checkboxes
+    attributes:
+      label: Checklist
+      description: Please make sure you've completed the following
+      options:
+        - label: I have searched for similar issues first
+          required: true
+        - label: I have read the relevant documentation
+          required: false
+        - label: I have tried updating to the latest version
+          required: false

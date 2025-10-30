@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Command } from 'commander';
 import { setupCommand } from './cli/commands/setup.js';
 import { scanCommand } from './cli/commands/scan.js';
@@ -181,8 +180,8 @@ program
 
 const errorHandler = new GlobalErrorHandler();
 
-program.parseAsync().catch((error: any) => {
-  if (error.code === 'commander.help') {
+program.parseAsync().catch((error: unknown) => {
+  if ((error as { code?: string }).code === 'commander.help') {
     process.exit(0);
   }
   errorHandler.handle(error);
