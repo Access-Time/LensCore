@@ -4,63 +4,13 @@ on:
   workflow_call:
     inputs:
       mode:
-        description: 'Deployment mode: vercel | nextjs | custom'
+        description: 'Deployment mode (vercel | nextjs | custom)'
         required: true
         type: string
       url:
         description: 'Target URL to scan (if already deployed/known)'
         required: false
         type: string
-      build-command:
-        description: 'Build command for nextjs/custom'
-        required: false
-        type: string
-        default: 'npm run build'
-      start-command:
-        description: 'Start command for nextjs/custom'
-        required: false
-        type: string
-        default: 'npm start'
-      port:
-        description: 'Local port the app listens to (nextjs/custom)'
-        required: false
-        type: number
-        default: 3000
-      scan-depth:
-        description: 'Max crawl depth'
-        required: false
-        type: number
-        default: 2
-      max-urls:
-        description: 'Max URLs to crawl'
-        required: false
-        type: number
-        default: 10
-      timeout:
-        description: 'Request timeout (ms)'
-        required: false
-        type: number
-        default: 15000
-      use-web-report:
-        description: 'Generate HTML report in addition to JSON'
-        required: false
-        type: boolean
-        default: true
-      fail-on-violations:
-        description: 'Fail CI when violations > 0'
-        required: false
-        type: boolean
-        default: true
-      vercel-project-path:
-        description: 'Relative path to the Vercel project (for monorepo)'
-        required: false
-        type: string
-        default: '.'
-      vercel-environment:
-        description: 'Vercel environment: preview | production'
-        required: false
-        type: string
-        default: 'preview'
     secrets:
       VERCEL_TOKEN:
         required: false
@@ -92,17 +42,41 @@ jobs:
         run: |
           echo "mode=${{ inputs.mode }}" >> $GITHUB_OUTPUT
 
-      - name: Deploy with Vercel (if mode=vercel)
+      - name: Validate inputs
+        run: |
+          case "${{ inputs.mode }}" in
+            vercel|nextjs|custom) echo "Mode OK" ;;
+            *) echo "Invalid mode: ${{ inputs.mode }}. Allowed: vercel|nextjs|custom" >&2; exit 1 ;;
+          esac
+
+      - name: Install Vercel CLI (if mode=vercel)
+        if: ${{ inputs.mode == 'vercel' }}
+        run: npm i -g vercel@latest
+
+      - name: Deploy with Vercel CLI (if mode=vercel)
         id: vercel_deploy
         if: ${{ inputs.mode == 'vercel' }}
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          working-directory: ${{ inputs.vercel-project-path }}
-          vercel-args: '--build-env NEXT_TELEMETRY_DISABLED=1'
-          scope: ${{ secrets.VERCEL_ORG_ID }}
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_PROJECT_PATH: ${{ vars.VERCEL_PROJECT_PATH }}
+          VERCEL_ENVIRONMENT: ${{ vars.VERCEL_ENVIRONMENT }}
+        run: |
+          set -euo pipefail
+          WORKDIR=${VERCEL_PROJECT_PATH:-.}
+          echo "Working dir: $WORKDIR"
+          cd "$WORKDIR"
+          vercel pull --yes --token "$VERCEL_TOKEN" --environment=${VERCEL_ENVIRONMENT:-preview}
+          vercel build --token "$VERCEL_TOKEN"
+          DEPLOY_OUTPUT=$(vercel deploy --prebuilt --token "$VERCEL_TOKEN")
+          echo "$DEPLOY_OUTPUT"
+          PREVIEW_URL=$(echo "$DEPLOY_OUTPUT" | tail -n1)
+          if [ -z "$PREVIEW_URL" ]; then
+            echo "Failed to obtain Vercel preview URL" >&2
+            exit 1
+          fi
+          echo "preview-url=$PREVIEW_URL" >> $GITHUB_OUTPUT
 
       - name: Resolve target URL for Vercel
         if: ${{ inputs.mode == 'vercel' }}
@@ -127,22 +101,22 @@ jobs:
       - name: Build app (nextjs/custom)
         if: ${{ inputs.mode == 'nextjs' || inputs.mode == 'custom' }}
         run: |
-          ${INPUT_BUILD_COMMAND:-echo}
+          ${BUILD_COMMAND:-npm run build}
         env:
-          INPUT_BUILD_COMMAND: ${{ inputs['build-command'] }}
+          BUILD_COMMAND: ${{ vars.BUILD_COMMAND }}
 
       - name: Start app (nextjs/custom)
         if: ${{ inputs.mode == 'nextjs' || inputs.mode == 'custom' }}
         run: |
-          nohup bash -lc "${INPUT_START_COMMAND}" >/dev/null 2>&1 &
+          nohup bash -lc "${START_COMMAND:-npm start}" >/dev/null 2>&1 &
           echo $! > app.pid
         env:
-          INPUT_START_COMMAND: ${{ inputs['start-command'] }}
+          START_COMMAND: ${{ vars.START_COMMAND }}
 
       - name: Wait for app to be ready (nextjs/custom)
         if: ${{ inputs.mode == 'nextjs' || inputs.mode == 'custom' }}
         run: |
-          npx -y wait-on@7.2.0 http-get://localhost:${{ inputs.port }} --timeout 300000
+          npx -y wait-on@7.2.0 http-get://localhost:${{ vars.PORT || 3000 }} --timeout 300000
 
       - name: Resolve target URL (nextjs/custom)
         if: ${{ inputs.mode == 'nextjs' || inputs.mode == 'custom' }}
@@ -150,7 +124,7 @@ jobs:
         run: |
           TARGET_URL="${{ inputs.url }}"
           if [ -z "$TARGET_URL" ]; then
-            TARGET_URL="http://localhost:${{ inputs.port }}"
+            TARGET_URL="http://localhost:${{ vars.PORT || 3000 }}"
           fi
           echo "target_url=$TARGET_URL" >> $GITHUB_OUTPUT
 
@@ -164,20 +138,26 @@ jobs:
         id: scan
         env:
           TARGET_URL: ${{ steps.resolve-vercel.outputs.target_url || steps.resolve-local.outputs.target_url || inputs.url }}
+          MAX_URLS: ${{ vars.MAX_URLS || 10 }}
+          SCAN_DEPTH: ${{ vars.SCAN_DEPTH || 2 }}
+          TIMEOUT: ${{ vars.TIMEOUT || 15000 }}
         run: |
           if [ -z "$TARGET_URL" ]; then
             echo "Target URL is required but not provided" >&2
             exit 1
           fi
           echo "Scanning: $TARGET_URL"
-          lens-core scan "$TARGET_URL" -u ${{ inputs.max-urls }} -d ${{ inputs.scan-depth }} -t ${{ inputs.timeout }} > lenscore-report.json
+          lens-core scan "$TARGET_URL" -u "$MAX_URLS" -d "$SCAN_DEPTH" -t "$TIMEOUT" > lenscore-report.json
 
       - name: Generate HTML report (optional)
-        if: ${{ inputs.use-web-report }}
+        if: ${{ vars.USE_WEB_REPORT == 'true' }}
         env:
           TARGET_URL: ${{ steps.resolve-vercel.outputs.target_url || steps.resolve-local.outputs.target_url || inputs.url }}
+          MAX_URLS: ${{ vars.MAX_URLS || 10 }}
+          SCAN_DEPTH: ${{ vars.SCAN_DEPTH || 2 }}
+          TIMEOUT: ${{ vars.TIMEOUT || 15000 }}
         run: |
-          lens-core scan "$TARGET_URL" -u ${{ inputs.max-urls }} -d ${{ inputs.scan-depth }} -t ${{ inputs.timeout }} --web || true
+          lens-core scan "$TARGET_URL" -u "$MAX_URLS" -d "$SCAN_DEPTH" -t "$TIMEOUT" --web || true
 
       - name: Upload report artifacts
         uses: actions/upload-artifact@v4
@@ -189,7 +169,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Fail if violations found
-        if: ${{ inputs.fail-on-violations }}
+        if: ${{ vars.FAIL_ON_VIOLATIONS == 'true' || vars.FAIL_ON_VIOLATIONS == '' }}
         run: |
           VIOLATIONS=$(jq '[.accessibility.results[]? | .violations | length] | add // 0' lenscore-report.json)
           echo "Violations found: $VIOLATIONS"

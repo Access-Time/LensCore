@@ -964,22 +964,24 @@ Note: Replace `accesstimehq/LensCore@v0.1.21` with the appropriate tag/release o
 
 ### 2) Supported Inputs
 
-- `mode` (required): `vercel` | `nextjs` | `custom`
+- `mode` (required, choice): `vercel` | `nextjs` | `custom`
 - `url` (optional): Target URL if already available (skips deploy/local start)
-- `build-command` (optional, default `npm run build`)
-- `start-command` (optional, default `npm start`)
-- `port` (optional, default `3000` for `nextjs`/`custom`)
-- `scan-depth` (optional, default `2`)
-- `max-urls` (optional, default `10`)
-- `timeout` (optional, default `15000` ms)
-- `use-web-report` (optional, default `true`): also generate HTML report
-- `fail-on-violations` (optional, default `true`): fail if violations > 0
-- `vercel-project-path` (optional, default `.`): project path (monorepo)
-- `vercel-environment` (optional, default `preview`)
 
 Secrets for `mode=vercel`:
 
 - `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
+
+Additional settings via GitHub Variables (Repository/Environment variables):
+- `BUILD_COMMAND` (default `npm run build`)
+- `START_COMMAND` (default `npm start`)
+- `PORT` (default `3000`)
+- `SCAN_DEPTH` (default `2`)
+- `MAX_URLS` (default `10`)
+- `TIMEOUT` (default `15000`)
+- `USE_WEB_REPORT` (`true`/`false`, default `true`)
+- `FAIL_ON_VIOLATIONS` (`true`/`false`, default `true`)
+- `VERCEL_PROJECT_PATH` (default `.`)
+- `VERCEL_ENVIRONMENT` (`preview`|`production`, default `preview`)
 
 ### 3) Usage Modes
 
@@ -993,7 +995,6 @@ jobs:
     uses: accesstimehq/LensCore/.github/workflows/lens-core.yml@v0.1.21
     with:
       mode: vercel
-      vercel-project-path: .
     secrets:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -1010,9 +1011,7 @@ jobs:
     uses: accesstimehq/LensCore/.github/workflows/lens-core.yml@v0.1.21
     with:
       mode: nextjs
-      port: 3000
-      build-command: npm run build
-      start-command: npm start
+    # Configure variables in GitHub → Settings → Variables
 ```
 
 The workflow will wait for `http://localhost:PORT` to be ready, then run `lens-core scan`.
@@ -1025,9 +1024,7 @@ jobs:
     uses: accesstimehq/LensCore/.github/workflows/lens-core.yml@v0.1.21
     with:
       mode: custom
-      port: 5173
-      build-command: npm run build
-      start-command: npm run preview
+    # Configure variables in GitHub → Settings → Variables
 ```
 
 ### 4) Outputs & Artifacts
@@ -1054,11 +1051,8 @@ Scan a specific URL (e.g., a critical page) and limit the crawl:
 with:
   mode: nextjs
   url: http://localhost:3000/checkout
-  max-urls: 1
-  scan-depth: 1
-  timeout: 20000
-  use-web-report: true
-  fail-on-violations: true
+# and set variables:
+# MAX_URLS=1, SCAN_DEPTH=1, TIMEOUT=20000, USE_WEB_REPORT=true, FAIL_ON_VIOLATIONS=true
 ```
 
 ---
