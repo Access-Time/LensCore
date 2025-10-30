@@ -10,6 +10,7 @@ import {
 } from './cache';
 import { requestTimeout } from '../middleware';
 import webRoutes from './web';
+import { openApiSpec } from '../openapi';
 
 export const setupRoutes = (app: Express) => {
   app.post('/api/crawl', requestTimeout(120000), crawlHandler);
@@ -21,6 +22,11 @@ export const setupRoutes = (app: Express) => {
   app.get('/api/cache/stats', cacheStatsHandler);
   app.delete('/api/cache/clear', cacheClearHandler);
   app.post('/api/cache/warm', requestTimeout(300000), cacheWarmHandler);
+
+  app.get('/api/docs/openapi.json', (_req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.json(openApiSpec);
+  });
 
   app.use('/', webRoutes);
 };

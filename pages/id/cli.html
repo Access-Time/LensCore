@@ -1,0 +1,784 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Penggunaan CLI • LensCore</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = { darkMode: 'class' };
+    </script>
+    <script>
+      function toggleTheme() {
+        const e = document.documentElement,
+          t = e.classList.contains('dark');
+        e.classList.toggle('dark', !t);
+        localStorage.setItem(
+          'theme',
+          e.classList.contains('dark') ? 'dark' : 'light'
+        );
+      }
+      (() => {
+        const e = localStorage.getItem('theme');
+        if (e) {
+          document.documentElement.classList.toggle('dark', e === 'dark');
+        } else {
+          const t =
+            window.matchMedia &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches;
+          document.documentElement.classList.toggle('dark', t);
+        }
+      })();
+    </script>
+    <style>
+      body {
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          sans-serif;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+    </style>
+  </head>
+  <body class="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">
+    <a
+      href="#content"
+      class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 px-3 py-2 rounded bg-indigo-600 text-white z-50"
+      >Loncat ke konten</a
+    >
+
+    <!-- Top Header -->
+    <header
+      class="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
+    >
+      <div class="flex h-16 items-center px-4 sm:px-6 lg:px-8">
+        <a
+          href="/pages/id/index.html"
+          class="flex items-center gap-2 font-semibold text-lg"
+        >
+          <img
+            src="/public/img/logo.jpeg"
+            alt="Logo LensCore"
+            class="h-8 w-8 rounded"
+          />
+          <span>LensCore</span>
+        </a>
+
+        <nav class="hidden md:flex items-center gap-6 ml-8">
+          <a href="/pages/id/index.html" class="text-sm hover:text-indigo-600"
+            >Beranda</a
+          >
+          <a
+            href="/pages/id/getting-started.html"
+            class="text-sm hover:text-indigo-600"
+            >Dokumentasi</a
+          >
+          <a href="/pages/id/api.html" class="text-sm hover:text-indigo-600"
+            >API</a
+          >
+        </nav>
+
+        <div class="flex items-center gap-3 ml-auto">
+          <a
+            href="/pages/en/cli.html"
+            class="px-3 py-1.5 text-sm rounded border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+            hreflang="en"
+            >EN</a
+          >
+          <button
+            type="button"
+            class="px-3 py-1.5 text-sm rounded bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
+            onclick="toggleTheme()"
+          >
+            Tema
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div class="flex">
+      <!-- Sidebar Navigation -->
+      <aside
+        class="hidden lg:block fixed top-16 left-0 bottom-0 w-64 border-r border-slate-200 dark:border-slate-800 overflow-y-auto bg-white dark:bg-slate-900 z-30"
+      >
+        <nav class="p-6 space-y-8">
+          <div>
+            <h3
+              class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3"
+            >
+              Penggunaan CLI
+            </h3>
+            <ul class="space-y-2">
+              <li>
+                <a
+                  href="#introduction"
+                  class="block text-sm text-indigo-600 font-medium"
+                  >Pengenalan</a
+                >
+              </li>
+              <li>
+                <a
+                  href="#installation"
+                  class="block text-sm hover:text-indigo-600"
+                  >Instalasi</a
+                >
+              </li>
+              <li>
+                <a
+                  href="#quick-start"
+                  class="block text-sm hover:text-indigo-600"
+                  >Mulai Cepat</a
+                >
+              </li>
+              <li>
+                <a href="#commands" class="block text-sm hover:text-indigo-600"
+                  >Perintah</a
+                >
+              </li>
+              <li>
+                <a href="#testing" class="block text-sm hover:text-indigo-600"
+                  >Testing</a
+                >
+              </li>
+              <li>
+                <a href="#crawling" class="block text-sm hover:text-indigo-600"
+                  >Crawling</a
+                >
+              </li>
+              <li>
+                <a href="#docker" class="block text-sm hover:text-indigo-600"
+                  >Docker</a
+                >
+              </li>
+              <li>
+                <a href="#examples" class="block text-sm hover:text-indigo-600"
+                  >Contoh</a
+                >
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h3
+              class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3"
+            >
+              Dokumentasi
+            </h3>
+            <ul class="space-y-2">
+              <li>
+                <a
+                  href="/pages/id/getting-started.html"
+                  class="block text-sm hover:text-indigo-600"
+                  >Memulai</a
+                >
+              </li>
+              <li>
+                <a
+                  href="/pages/id/api.html"
+                  class="block text-sm hover:text-indigo-600"
+                  >Referensi API</a
+                >
+              </li>
+              <li>
+                <a
+                  href="/pages/id/contributing.html"
+                  class="block text-sm hover:text-indigo-600"
+                  >Kontribusi</a
+                >
+              </li>
+              <li>
+                <a
+                  href="/pages/id/accessibility.html"
+                  class="block text-sm hover:text-indigo-600"
+                  >Aksesibilitas</a
+                >
+              </li>
+            </ul>
+          </div>
+        </nav>
+      </aside>
+
+      <!-- Main Content -->
+      <main id="content" class="flex-1 lg:pl-64">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <section id="introduction">
+            <h1 class="text-4xl font-bold tracking-tight">LensCore CLI</h1>
+            <p
+              class="mt-4 text-lg text-slate-600 dark:text-slate-400 leading-relaxed"
+            >
+              LensCore CLI adalah antarmuka baris perintah yang powerful untuk
+              pengujian aksesibilitas dan web crawling. Menyediakan alat
+              komprehensif untuk menganalisis website terhadap kepatuhan
+              aksesibilitas, crawl halaman web, dan menghasilkan laporan detail.
+            </p>
+          </section>
+
+          <section id="installation" class="mt-12">
+            <h2 class="text-2xl font-bold">Instalasi</h2>
+            <div
+              class="mt-4 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto"
+            >
+              <pre
+                class="text-slate-100 text-sm"
+              ><code>npm install -g @accesstime/lenscore</code></pre>
+            </div>
+          </section>
+
+          <section id="quick-start" class="mt-12">
+            <h2 class="text-2xl font-bold">Mulai Cepat</h2>
+
+            <div class="mt-6 space-y-6">
+              <div>
+                <h3 class="text-lg font-semibold">1. Setup LensCore</h3>
+                <div
+                  class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto"
+                >
+                  <pre
+                    class="text-slate-100 text-sm"
+                  ><code>lens-core setup --port 3009</code></pre>
+                </div>
+              </div>
+
+              <div>
+                <h3 class="text-lg font-semibold">
+                  2. Build dan Jalankan Service
+                </h3>
+                <div
+                  class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto"
+                >
+                  <pre
+                    class="text-slate-100 text-sm"
+                  ><code>lens-core build</code></pre>
+                </div>
+              </div>
+
+              <div>
+                <h3 class="text-lg font-semibold">3. Cek Status Service</h3>
+                <div
+                  class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto"
+                >
+                  <pre
+                    class="text-slate-100 text-sm"
+                  ><code>lens-core status</code></pre>
+                </div>
+              </div>
+
+              <div>
+                <h3 class="text-lg font-semibold">4. Test Satu Halaman</h3>
+                <div
+                  class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto"
+                >
+                  <pre
+                    class="text-slate-100 text-sm"
+                  ><code>lens-core test https://example.com</code></pre>
+                </div>
+              </div>
+
+              <div>
+                <h3 class="text-lg font-semibold">5. Crawl Website</h3>
+                <div
+                  class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto"
+                >
+                  <pre
+                    class="text-slate-100 text-sm"
+                  ><code>lens-core crawl https://example.com</code></pre>
+                </div>
+              </div>
+
+              <div>
+                <h3 class="text-lg font-semibold">6. Scan Website Lengkap</h3>
+                <div
+                  class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto"
+                >
+                  <pre
+                    class="text-slate-100 text-sm"
+                  ><code>lens-core scan https://example.com</code></pre>
+                </div>
+              </div>
+            </div>
+
+            <div
+              class="mt-6 p-4 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800"
+            >
+              <p class="text-sm text-slate-700 dark:text-slate-300">
+                <strong>Catatan:</strong> Setelah setup, Anda bisa menjalankan
+                <code
+                  class="px-2 py-1 rounded bg-slate-900 dark:bg-slate-950 text-slate-100"
+                  >lens-core build</code
+                >
+                (yang build dan start service) atau
+                <code
+                  class="px-2 py-1 rounded bg-slate-900 dark:bg-slate-950 text-slate-100"
+                  >lens-core up</code
+                >
+                (yang hanya start service). Gunakan
+                <code
+                  class="px-2 py-1 rounded bg-slate-900 dark:bg-slate-950 text-slate-100"
+                  >lens-core status</code
+                >
+                untuk mengecek apakah service berjalan dengan baik.
+              </p>
+            </div>
+          </section>
+
+          <section id="commands" class="mt-12">
+            <h2 class="text-2xl font-bold">Ringkasan Perintah</h2>
+
+            <div class="mt-8">
+              <h3 class="text-xl font-semibold">Setup & Konfigurasi</h3>
+
+              <div
+                class="mt-6 p-5 rounded-lg border border-slate-200 dark:border-slate-700"
+              >
+                <h4 class="font-semibold text-lg">
+                  <code>setup [options]</code>
+                </h4>
+                <p class="mt-2 text-slate-600 dark:text-slate-400">
+                  Setup konfigurasi LensCore dan environment Docker.
+                </p>
+                <div
+                  class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto"
+                >
+                  <pre class="text-slate-100 text-sm"><code># Setup interaktif
+lens-core setup</code></pre>
+                </div>
+              </div>
+
+              <div
+                class="mt-6 p-5 rounded-lg border border-slate-200 dark:border-slate-700"
+              >
+                <h4 class="font-semibold text-lg">
+                  <code>config [options]</code>
+                </h4>
+                <p class="mt-2 text-slate-600 dark:text-slate-400">
+                  Kelola pengaturan konfigurasi LensCore.
+                </p>
+                <p class="mt-3 font-semibold text-sm">Opsi:</p>
+                <ul
+                  class="mt-2 space-y-1 text-sm text-slate-600 dark:text-slate-400"
+                >
+                  <li>
+                    • <code>-s, --set &lt;key=value&gt;</code>: Set nilai
+                    konfigurasi
+                  </li>
+                  <li>
+                    • <code>-g, --get &lt;key&gt;</code>: Get nilai konfigurasi
+                  </li>
+                  <li>
+                    • <code>-l, --list</code>: Tampilkan semua pengaturan
+                    konfigurasi
+                  </li>
+                </ul>
+                <div
+                  class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto"
+                >
+                  <pre
+                    class="text-slate-100 text-sm"
+                  ><code># Tampilkan semua konfigurasi
+lens-core config --list
+
+# Get nilai konfigurasi tertentu
+lens-core config --get docker.port
+
+# Set nilai konfigurasi
+lens-core config --set "docker.port=3009"
+
+# Set OpenAI API key
+lens-core config --set "openai.apiKey=your-key-here"</code></pre>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section id="testing" class="mt-12">
+            <h2 class="text-2xl font-bold">Testing Aksesibilitas</h2>
+
+            <div
+              class="mt-6 p-5 rounded-lg border border-slate-200 dark:border-slate-700"
+            >
+              <h3 class="font-semibold text-lg">
+                <code>test [options] &lt;url&gt;</code>
+              </h3>
+              <p class="mt-2 text-slate-600 dark:text-slate-400">
+                Test aksesibilitas satu halaman.
+              </p>
+              <p class="mt-3 font-semibold text-sm">Opsi:</p>
+              <ul
+                class="mt-2 space-y-1 text-sm text-slate-600 dark:text-slate-400"
+              >
+                <li>
+                  • <code>--enable-ai</code>: Aktifkan analisis berbasis AI
+                </li>
+                <li>• <code>-k, --openai-key</code>: OpenAI API key</li>
+                <li>• <code>-c, --project-context</code>: Konteks proyek</li>
+                <li>• <code>-w, --web</code>: Generate laporan HTML</li>
+                <li>• <code>-t, --timeout</code>: Timeout load halaman</li>
+                <li>• <code>-r, --rules</code>: Rule spesifik untuk di-test</li>
+                <li>• <code>--no-screenshot</code>: Skip screenshot</li>
+              </ul>
+              <div
+                class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto"
+              >
+                <pre
+                  class="text-slate-100 text-sm"
+                ><code>lens-core test https://example.com
+lens-core test https://example.com --enable-ai
+lens-core test https://example.com --timeout 30000
+lens-core test https://example.com --rules "color-contrast,keyboard"
+lens-core test https://example.com --project-context "react,tailwind"
+lens-core test https://example.com --web
+lens-core test https://example.com --no-screenshot</code></pre>
+              </div>
+            </div>
+
+            <div
+              class="mt-6 p-5 rounded-lg border border-slate-200 dark:border-slate-700"
+            >
+              <h3 class="font-semibold text-lg">
+                <code>test-multiple [options] &lt;urls...&gt;</code>
+              </h3>
+              <p class="mt-2 text-slate-600 dark:text-slate-400">
+                Test aksesibilitas beberapa halaman secara bersamaan.
+              </p>
+              <div
+                class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto"
+              >
+                <pre
+                  class="text-slate-100 text-sm"
+                ><code>lens-core test-multiple https://example.com https://google.com
+lens-core test-multiple https://example.com https://google.com --enable-ai
+lens-core test-multiple https://example.com https://google.com --web</code></pre>
+              </div>
+            </div>
+          </section>
+
+          <section id="crawling" class="mt-12">
+            <h2 class="text-2xl font-bold">Web Crawling</h2>
+
+            <div
+              class="mt-6 p-5 rounded-lg border border-slate-200 dark:border-slate-700"
+            >
+              <h3 class="font-semibold text-lg">
+                <code>crawl [options] &lt;url&gt;</code>
+              </h3>
+              <p class="mt-2 text-slate-600 dark:text-slate-400">
+                Crawl website dan temukan halaman.
+              </p>
+              <p class="mt-3 font-semibold text-sm">Opsi:</p>
+              <ul
+                class="mt-2 space-y-1 text-sm text-slate-600 dark:text-slate-400"
+              >
+                <li>• <code>-w, --web</code>: Generate laporan HTML</li>
+                <li>
+                  • <code>-u, --max-urls</code>: Maksimum URL untuk di-crawl
+                </li>
+                <li>
+                  • <code>-d, --max-depth</code>: Kedalaman maksimum crawl
+                </li>
+                <li>• <code>-t, --timeout</code>: Timeout load halaman</li>
+                <li>• <code>-j, --concurrency</code>: Request bersamaan</li>
+              </ul>
+              <div
+                class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto"
+              >
+                <pre
+                  class="text-slate-100 text-sm"
+                ><code>lens-core crawl https://example.com
+lens-core crawl https://example.com --max-urls 50 --max-depth 3
+lens-core crawl https://example.com --concurrency 5
+lens-core crawl https://example.com --web</code></pre>
+              </div>
+            </div>
+
+            <div
+              class="mt-6 p-5 rounded-lg border border-slate-200 dark:border-slate-700"
+            >
+              <h3 class="font-semibold text-lg">
+                <code>scan [options] &lt;url&gt;</code>
+              </h3>
+              <p class="mt-2 text-slate-600 dark:text-slate-400">
+                Crawl website dan test aksesibilitas (operasi gabungan).
+              </p>
+              <div
+                class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto"
+              >
+                <pre
+                  class="text-slate-100 text-sm"
+                ><code>lens-core scan https://example.com
+lens-core scan https://example.com --enable-ai
+lens-core scan https://example.com --max-urls 50 --max-depth 3
+lens-core scan https://example.com --project-context "react,tailwind"
+lens-core scan https://example.com --web</code></pre>
+              </div>
+            </div>
+          </section>
+
+          <section id="docker" class="mt-12">
+            <h2 class="text-2xl font-bold">Manajemen Docker</h2>
+
+            <div class="mt-6 grid gap-4 sm:grid-cols-2">
+              <div
+                class="p-4 rounded-lg border border-slate-200 dark:border-slate-700"
+              >
+                <h3 class="font-semibold"><code>build</code></h3>
+                <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                  Build dan jalankan container Docker
+                </p>
+                <div
+                  class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-3 overflow-x-auto"
+                >
+                  <pre
+                    class="text-slate-100 text-xs"
+                  ><code>lens-core build</code></pre>
+                </div>
+              </div>
+
+              <div
+                class="p-4 rounded-lg border border-slate-200 dark:border-slate-700"
+              >
+                <h3 class="font-semibold"><code>up</code></h3>
+                <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                  Jalankan container Docker
+                </p>
+                <div
+                  class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-3 overflow-x-auto"
+                >
+                  <pre
+                    class="text-slate-100 text-xs"
+                  ><code>lens-core up</code></pre>
+                </div>
+              </div>
+
+              <div
+                class="p-4 rounded-lg border border-slate-200 dark:border-slate-700"
+              >
+                <h3 class="font-semibold"><code>down</code></h3>
+                <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                  Stop container Docker
+                </p>
+                <div
+                  class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-3 overflow-x-auto"
+                >
+                  <pre
+                    class="text-slate-100 text-xs"
+                  ><code>lens-core down</code></pre>
+                </div>
+              </div>
+
+              <div
+                class="p-4 rounded-lg border border-slate-200 dark:border-slate-700"
+              >
+                <h3 class="font-semibold"><code>status</code></h3>
+                <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                  Cek status container
+                </p>
+                <div
+                  class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-3 overflow-x-auto"
+                >
+                  <pre
+                    class="text-slate-100 text-xs"
+                  ><code>lens-core status</code></pre>
+                </div>
+              </div>
+
+              <div
+                class="p-4 rounded-lg border border-slate-200 dark:border-slate-700"
+              >
+                <h3 class="font-semibold"><code>health</code></h3>
+                <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                  Cek kesehatan API
+                </p>
+                <div
+                  class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-3 overflow-x-auto"
+                >
+                  <pre
+                    class="text-slate-100 text-xs"
+                  ><code>lens-core health</code></pre>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section id="examples" class="mt-12">
+            <h2 class="text-2xl font-bold">Contoh Penggunaan</h2>
+
+            <div class="mt-6 space-y-6">
+              <div
+                class="p-5 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800"
+              >
+                <h3 class="text-lg font-semibold">Analisis Website Lengkap</h3>
+                <div
+                  class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto"
+                >
+                  <pre
+                    class="text-slate-100 text-sm"
+                  ><code>lens-core setup --ai --openai-key your-api-key
+lens-core build
+lens-core health
+lens-core scan https://example.com --max-urls 50 --enable-ai --web</code></pre>
+                </div>
+              </div>
+
+              <div
+                class="p-5 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800"
+              >
+                <h3 class="text-lg font-semibold">Batch Testing</h3>
+                <div
+                  class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto"
+                >
+                  <pre
+                    class="text-slate-100 text-sm"
+                  ><code>lens-core test-multiple \
+  https://example.com \
+  https://example.com/about \
+  https://example.com/contact \
+  --enable-ai \
+  --project-context "react,tailwind" \
+  --web</code></pre>
+                </div>
+              </div>
+
+              <div
+                class="p-5 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800"
+              >
+                <h3 class="text-lg font-semibold">Crawling Kustom</h3>
+                <div
+                  class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto"
+                >
+                  <pre
+                    class="text-slate-100 text-sm"
+                  ><code>lens-core crawl https://example.com \
+  --max-urls 50 \
+  --max-depth 3 \
+  --concurrency 5 \
+  --wait-until networkidle \
+  --web</code></pre>
+                </div>
+              </div>
+
+              <div
+                class="p-5 rounded-lg bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800"
+              >
+                <h3 class="text-lg font-semibold">Integrasi CI/CD</h3>
+                <div
+                  class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto"
+                >
+                  <pre
+                    class="text-slate-100 text-sm"
+                  ><code>lens-core setup --port 3001 --ai --openai-key $OPENAI_API_KEY
+lens-core build
+lens-core health
+lens-core test https://example.com > results.json</code></pre>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section
+            class="mt-12 pb-12 border-t border-slate-200 dark:border-slate-800 pt-12"
+          >
+            <h2 class="text-xl font-semibold">Butuh Bantuan?</h2>
+            <p class="mt-3 text-slate-600 dark:text-slate-400">
+              Untuk informasi lebih lanjut, gunakan
+              <code
+                class="px-2 py-1 rounded bg-slate-900 dark:bg-slate-950 text-slate-100"
+                >lens-core --help</code
+              >
+              atau
+              <code
+                class="px-2 py-1 rounded bg-slate-900 dark:bg-slate-950 text-slate-100"
+                >lens-core help &lt;command&gt;</code
+              >
+            </p>
+            <ul class="mt-4 space-y-2 text-slate-600 dark:text-slate-400">
+              <li>
+                • Kunjungi
+                <a
+                  href="https://github.com/AccessTime/LensCore"
+                  class="text-indigo-600 hover:underline"
+                  >Repository GitHub</a
+                >
+              </li>
+              <li>
+                • Laporkan issue di
+                <a
+                  href="https://github.com/AccessTime/LensCore/issues"
+                  class="text-indigo-600 hover:underline"
+                  >Issue Tracker</a
+                >
+              </li>
+            </ul>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      // Sidebar navigation active state
+      function updateActiveNavigation() {
+        const sections = document.querySelectorAll('section[id]');
+        const navLinks = document.querySelectorAll('aside nav a[href^="#"]');
+
+        let currentSection = '';
+        const scrollPosition = window.scrollY + 100;
+
+        sections.forEach((section) => {
+          const sectionTop = section.offsetTop;
+          const sectionHeight = section.offsetHeight;
+
+          if (
+            scrollPosition >= sectionTop &&
+            scrollPosition < sectionTop + sectionHeight
+          ) {
+            currentSection = section.getAttribute('id');
+          }
+        });
+
+        navLinks.forEach((link) => {
+          link.classList.remove('text-indigo-600', 'font-medium');
+          link.classList.add('hover:text-indigo-600');
+
+          if (link.getAttribute('href') === `#${currentSection}`) {
+            link.classList.add('text-indigo-600', 'font-medium');
+            link.classList.remove('hover:text-indigo-600');
+          }
+        });
+      }
+
+      window.addEventListener('scroll', updateActiveNavigation);
+      document.addEventListener('DOMContentLoaded', updateActiveNavigation);
+
+      document.querySelectorAll('aside nav a[href^="#"]').forEach((link) => {
+        link.addEventListener('click', function (e) {
+          e.preventDefault();
+          const targetId = this.getAttribute('href').substring(1);
+          const targetSection = document.getElementById(targetId);
+
+          if (targetSection) {
+            const headerOffset = 80;
+            const elementPosition = targetSection.offsetTop;
+            const offsetPosition = elementPosition - headerOffset;
+
+            window.scrollTo({
+              top: offsetPosition,
+              behavior: 'smooth',
+            });
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

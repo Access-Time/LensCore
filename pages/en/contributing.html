@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Contributing • LensCore</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = { darkMode: 'class' };
+    </script>
+    <script>
+      function toggleTheme() {
+        const e = document.documentElement,
+          t = e.classList.contains('dark');
+        e.classList.toggle('dark', !t);
+        localStorage.setItem(
+          'theme',
+          e.classList.contains('dark') ? 'dark' : 'light'
+        );
+      }
+      (() => {
+        const e = localStorage.getItem('theme');
+        if (e) {
+          document.documentElement.classList.toggle('dark', e === 'dark');
+        } else {
+          const t =
+            window.matchMedia &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches;
+          document.documentElement.classList.toggle('dark', t);
+        }
+      })();
+    </script>
+    <style>
+      body {
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+    </style>
+  </head>
+  <body class="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">
+    <a
+      href="#content"
+      class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 px-3 py-2 rounded bg-indigo-600 text-white z-50"
+      >Skip to content</a
+    >
+    
+    <!-- Top Header -->
+    <header class="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+      <div class="flex h-16 items-center px-4 sm:px-6 lg:px-8">
+        <a href="/pages/en/index.html" class="flex items-center gap-2 font-semibold text-lg">
+          <img src="/public/img/logo.jpeg" alt="LensCore logo" class="h-8 w-8 rounded" />
+          <span>LensCore</span>
+        </a>
+        
+        <nav class="hidden md:flex items-center gap-6 ml-8">
+          <a href="/pages/en/index.html" class="text-sm hover:text-indigo-600">Home</a>
+          <a href="/pages/en/getting-started.html" class="text-sm hover:text-indigo-600">Docs</a>
+          <a href="/pages/en/api.html" class="text-sm hover:text-indigo-600">API</a>
+        </nav>
+        
+        <div class="flex items-center gap-3 ml-auto">
+          <a
+            href="/pages/id/contributing.html"
+            class="px-3 py-1.5 text-sm rounded border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+            hreflang="id"
+            >ID</a
+          >
+          <button
+            type="button"
+            class="px-3 py-1.5 text-sm rounded bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
+            onclick="toggleTheme()"
+          >
+            Theme
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div class="flex">
+      <!-- Sidebar Navigation -->
+      <aside class="hidden lg:block fixed top-16 left-0 bottom-0 w-64 border-r border-slate-200 dark:border-slate-800 overflow-y-auto bg-white dark:bg-slate-900 z-30">
+        <nav class="p-6 space-y-8">
+          <div>
+            <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+              Contributing
+            </h3>
+            <ul class="space-y-2">
+              <li>
+                <a href="#introduction" class="block text-sm text-indigo-600 font-medium">Introduction</a>
+              </li>
+              <li>
+                <a href="#getting-started" class="block text-sm hover:text-indigo-600">Getting Started</a>
+              </li>
+              <li>
+                <a href="#development" class="block text-sm hover:text-indigo-600">Development</a>
+              </li>
+              <li>
+                <a href="#guidelines" class="block text-sm hover:text-indigo-600">Guidelines</a>
+              </li>
+              <li>
+                <a href="#pull-requests" class="block text-sm hover:text-indigo-600">Pull Requests</a>
+              </li>
+            </ul>
+          </div>
+          
+          <div>
+            <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+              Documentation
+            </h3>
+            <ul class="space-y-2">
+              <li>
+                <a href="/pages/en/getting-started.html" class="block text-sm hover:text-indigo-600">Getting Started</a>
+              </li>
+              <li>
+                <a href="/pages/en/cli.html" class="block text-sm hover:text-indigo-600">CLI Usage</a>
+              </li>
+              <li>
+                <a href="/pages/en/api.html" class="block text-sm hover:text-indigo-600">API Reference</a>
+              </li>
+              <li>
+                <a href="/pages/en/accessibility.html" class="block text-sm hover:text-indigo-600">Accessibility</a>
+              </li>
+            </ul>
+          </div>
+        </nav>
+      </aside>
+
+      <!-- Main Content -->
+      <main id="content" class="flex-1 lg:pl-64">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <section id="introduction">
+            <h1 class="text-4xl font-bold tracking-tight">Contributing to LensCore</h1>
+            <p class="mt-4 text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
+              Thank you for your interest in contributing to LensCore! We welcome contributions from 
+              everyone. This guide will help you get started with contributing to the project.
+            </p>
+          </section>
+
+          <section class="mt-12 p-6 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800">
+            <h2 class="text-xl font-semibold">Ways to Contribute</h2>
+            <ul class="mt-4 space-y-2 text-slate-700 dark:text-slate-300">
+              <li class="flex items-start gap-2">
+                <span class="text-indigo-600 dark:text-indigo-400">•</span>
+                <span>Report bugs and issues</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-indigo-600 dark:text-indigo-400">•</span>
+                <span>Suggest new features or improvements</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-indigo-600 dark:text-indigo-400">•</span>
+                <span>Improve documentation</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-indigo-600 dark:text-indigo-400">•</span>
+                <span>Write tests</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-indigo-600 dark:text-indigo-400">•</span>
+                <span>Submit code changes</span>
+              </li>
+            </ul>
+          </section>
+
+          <section id="getting-started" class="mt-12">
+            <h2 class="text-2xl font-bold">Getting Started</h2>
+            
+            <div class="mt-6">
+              <h3 class="text-xl font-semibold">1. Fork the Repository</h3>
+              <p class="mt-2 text-slate-600 dark:text-slate-400">
+                Start by forking the repository on GitHub:
+              </p>
+              <div class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto">
+                <pre class="text-slate-100 text-sm"><code># Fork on GitHub, then clone your fork
+git clone https://github.com/YOUR_USERNAME/LensCore.git
+cd LensCore</code></pre>
+              </div>
+            </div>
+
+            <div class="mt-8">
+              <h3 class="text-xl font-semibold">2. Set Up Development Environment</h3>
+              <div class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto">
+                <pre class="text-slate-100 text-sm"><code># Install dependencies
+make install
+
+# Copy environment file
+cp env.example .env
+
+# Start development server
+make dev</code></pre>
+              </div>
+            </div>
+
+            <div class="mt-8">
+              <h3 class="text-xl font-semibold">3. Create a Branch</h3>
+              <p class="mt-2 text-slate-600 dark:text-slate-400">
+                Create a new branch for your feature or bugfix:
+              </p>
+              <div class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto">
+                <pre class="text-slate-100 text-sm"><code>git checkout -b feature/your-feature-name
+# or
+git checkout -b fix/your-bugfix-name</code></pre>
+              </div>
+            </div>
+          </section>
+
+          <section id="development" class="mt-12">
+            <h2 class="text-2xl font-bold">Development Workflow</h2>
+            
+            <div class="mt-6 space-y-6">
+              <div>
+                <h3 class="text-lg font-semibold">Running Tests</h3>
+                <div class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto">
+                  <pre class="text-slate-100 text-sm"><code># Run all tests
+make test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run specific test file
+npm test -- path/to/test.ts</code></pre>
+                </div>
+              </div>
+
+              <div>
+                <h3 class="text-lg font-semibold">Linting & Formatting</h3>
+                <div class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto">
+                  <pre class="text-slate-100 text-sm"><code># Run linter
+make lint
+
+# Fix linting issues
+make lint:fix
+
+# Format code
+make format</code></pre>
+                </div>
+              </div>
+
+              <div>
+                <h3 class="text-lg font-semibold">Type Checking</h3>
+                <div class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto">
+                  <pre class="text-slate-100 text-sm"><code># Run TypeScript type checking
+make typecheck</code></pre>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section id="guidelines" class="mt-12">
+            <h2 class="text-2xl font-bold">Contribution Guidelines</h2>
+
+            <div class="mt-6 space-y-6">
+              <div class="p-5 rounded-lg border border-slate-200 dark:border-slate-700">
+                <h3 class="font-semibold text-lg">Code Style</h3>
+                <ul class="mt-3 space-y-2 text-slate-600 dark:text-slate-400 text-sm">
+                  <li>• Follow the existing code style and conventions</li>
+                  <li>• Use TypeScript with strict type checking</li>
+                  <li>• Write clear, self-documenting code</li>
+                  <li>• Add comments for complex logic</li>
+                  <li>• Use meaningful variable and function names</li>
+                </ul>
+              </div>
+
+              <div class="p-5 rounded-lg border border-slate-200 dark:border-slate-700">
+                <h3 class="font-semibold text-lg">Testing</h3>
+                <ul class="mt-3 space-y-2 text-slate-600 dark:text-slate-400 text-sm">
+                  <li>• Write tests for new features</li>
+                  <li>• Ensure existing tests pass</li>
+                  <li>• Aim for high code coverage</li>
+                  <li>• Test edge cases and error scenarios</li>
+                </ul>
+              </div>
+
+              <div class="p-5 rounded-lg border border-slate-200 dark:border-slate-700">
+                <h3 class="font-semibold text-lg">Accessibility</h3>
+                <ul class="mt-3 space-y-2 text-slate-600 dark:text-slate-400 text-sm">
+                  <li>• Follow WCAG 2.1 guidelines</li>
+                  <li>• Ensure keyboard navigation works</li>
+                  <li>• Provide proper ARIA labels</li>
+                  <li>• Test with screen readers</li>
+                  <li>• Maintain sufficient color contrast</li>
+                </ul>
+              </div>
+
+              <div class="p-5 rounded-lg border border-slate-200 dark:border-slate-700">
+                <h3 class="font-semibold text-lg">Documentation</h3>
+                <ul class="mt-3 space-y-2 text-slate-600 dark:text-slate-400 text-sm">
+                  <li>• Update relevant documentation</li>
+                  <li>• Add JSDoc comments to functions</li>
+                  <li>• Update README if needed</li>
+                  <li>• Document breaking changes</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <section id="pull-requests" class="mt-12">
+            <h2 class="text-2xl font-bold">Submitting Pull Requests</h2>
+
+            <div class="mt-6">
+              <h3 class="text-xl font-semibold">Before Submitting</h3>
+              <div class="mt-3 p-4 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                <ol class="space-y-3 text-slate-600 dark:text-slate-400">
+                  <li class="flex gap-3">
+                    <span class="font-semibold">1.</span>
+                    <span>Ensure all tests pass and code is linted</span>
+                  </li>
+                  <li class="flex gap-3">
+                    <span class="font-semibold">2.</span>
+                    <span>Update documentation if necessary</span>
+                  </li>
+                  <li class="flex gap-3">
+                    <span class="font-semibold">3.</span>
+                    <span>Add or update tests for your changes</span>
+                  </li>
+                  <li class="flex gap-3">
+                    <span class="font-semibold">4.</span>
+                    <span>Commit your changes with clear messages</span>
+                  </li>
+                  <li class="flex gap-3">
+                    <span class="font-semibold">5.</span>
+                    <span>Push to your fork and create a pull request</span>
+                  </li>
+                </ol>
+              </div>
+            </div>
+
+            <div class="mt-8">
+              <h3 class="text-xl font-semibold">Commit Message Format</h3>
+              <p class="mt-2 text-slate-600 dark:text-slate-400">
+                Use clear and descriptive commit messages:
+              </p>
+              <div class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto">
+                <pre class="text-slate-100 text-sm"><code>feat: add new accessibility rule for color contrast
+fix: resolve issue with crawling nested pages
+docs: update API documentation for new endpoint
+test: add unit tests for accessibility service
+refactor: improve code structure in AI processor</code></pre>
+              </div>
+            </div>
+
+            <div class="mt-8">
+              <h3 class="text-xl font-semibold">Pull Request Template</h3>
+              <p class="mt-2 text-slate-600 dark:text-slate-400">
+                Include the following in your PR description:
+              </p>
+              <div class="mt-3 p-4 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                <ul class="space-y-2 text-slate-600 dark:text-slate-400 text-sm">
+                  <li>• <strong>Description:</strong> What does this PR do?</li>
+                  <li>• <strong>Related Issue:</strong> Link to related issue(s)</li>
+                  <li>• <strong>Type of Change:</strong> Bug fix, feature, documentation, etc.</li>
+                  <li>• <strong>Testing:</strong> How has this been tested?</li>
+                  <li>• <strong>Screenshots:</strong> If applicable</li>
+                  <li>• <strong>Checklist:</strong> Tests pass, docs updated, etc.</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <section class="mt-12 p-6 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
+            <h2 class="text-xl font-semibold">Code of Conduct</h2>
+            <p class="mt-3 text-slate-700 dark:text-slate-300">
+              We are committed to providing a welcoming and inclusive environment. Please be respectful 
+              and considerate in your interactions with other contributors. We expect all contributors 
+              to follow our Code of Conduct.
+            </p>
+          </section>
+
+          <section class="mt-12 pb-12 border-t border-slate-200 dark:border-slate-800 pt-12">
+            <h2 class="text-xl font-semibold">Questions?</h2>
+            <p class="mt-3 text-slate-600 dark:text-slate-400">
+              If you have any questions about contributing, feel free to:
+            </p>
+            <ul class="mt-4 space-y-2 text-slate-600 dark:text-slate-400">
+              <li>• Open an issue on <a href="https://github.com/AccessTime/LensCore/issues" class="text-indigo-600 hover:underline">GitHub</a></li>
+              <li>• Join our community discussions</li>
+              <li>• Reach out to the maintainers</li>
+            </ul>
+            <p class="mt-6 text-slate-600 dark:text-slate-400">
+              Thank you for helping make LensCore better! 🎉
+            </p>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      // Sidebar navigation active state
+      function updateActiveNavigation() {
+        const sections = document.querySelectorAll('section[id]');
+        const navLinks = document.querySelectorAll('aside nav a[href^="#"]');
+        
+        let currentSection = '';
+        const scrollPosition = window.scrollY + 100;
+        
+        sections.forEach(section => {
+          const sectionTop = section.offsetTop;
+          const sectionHeight = section.offsetHeight;
+          
+          if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+            currentSection = section.getAttribute('id');
+          }
+        });
+        
+        navLinks.forEach(link => {
+          link.classList.remove('text-indigo-600', 'font-medium');
+          link.classList.add('hover:text-indigo-600');
+          
+          if (link.getAttribute('href') === `#${currentSection}`) {
+            link.classList.add('text-indigo-600', 'font-medium');
+            link.classList.remove('hover:text-indigo-600');
+          }
+        });
+      }
+      
+      window.addEventListener('scroll', updateActiveNavigation);
+      document.addEventListener('DOMContentLoaded', updateActiveNavigation);
+      
+      document.querySelectorAll('aside nav a[href^="#"]').forEach(link => {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          const targetId = this.getAttribute('href').substring(1);
+          const targetSection = document.getElementById(targetId);
+          
+          if (targetSection) {
+            const headerOffset = 80;
+            const elementPosition = targetSection.offsetTop;
+            const offsetPosition = elementPosition - headerOffset;
+            
+            window.scrollTo({
+              top: offsetPosition,
+              behavior: 'smooth'
+            });
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

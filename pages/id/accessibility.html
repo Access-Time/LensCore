@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Aksesibilitas • LensCore</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = { darkMode: 'class' };
+    </script>
+    <script>
+      function toggleTheme() {
+        const e = document.documentElement,
+          t = e.classList.contains('dark');
+        e.classList.toggle('dark', !t);
+          localStorage.setItem(
+            'theme',
+            e.classList.contains('dark') ? 'dark' : 'light'
+        );
+      }
+      (() => {
+        const e = localStorage.getItem('theme');
+        if (e) {
+          document.documentElement.classList.toggle('dark', e === 'dark');
+        } else {
+          const t =
+            window.matchMedia &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches;
+          document.documentElement.classList.toggle('dark', t);
+        }
+      })();
+    </script>
+    <style>
+      body {
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+    </style>
+  </head>
+  <body class="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">
+    <a
+      href="#content"
+      class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 px-3 py-2 rounded bg-indigo-600 text-white z-50"
+      >Loncat ke konten</a
+    >
+    
+    <!-- Top Header -->
+    <header class="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+      <div class="flex h-16 items-center px-4 sm:px-6 lg:px-8">
+        <a href="/pages/id/index.html" class="flex items-center gap-2 font-semibold text-lg">
+          <img src="/public/img/logo.jpeg" alt="Logo LensCore" class="h-8 w-8 rounded" />
+          <span>LensCore</span>
+        </a>
+        
+        <nav class="hidden md:flex items-center gap-6 ml-8">
+          <a href="/pages/id/index.html" class="text-sm hover:text-indigo-600">Beranda</a>
+          <a href="/pages/id/getting-started.html" class="text-sm hover:text-indigo-600">Dokumentasi</a>
+          <a href="/pages/id/api.html" class="text-sm hover:text-indigo-600">API</a>
+        </nav>
+        
+        <div class="flex items-center gap-3 ml-auto">
+          <a
+            href="/pages/en/accessibility.html"
+            class="px-3 py-1.5 text-sm rounded border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+            hreflang="en"
+            >EN</a
+          >
+          <button
+            type="button"
+            class="px-3 py-1.5 text-sm rounded bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
+            onclick="toggleTheme()"
+          >
+            Tema
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div class="flex">
+      <!-- Sidebar Navigation -->
+      <aside class="hidden lg:block fixed top-16 left-0 bottom-0 w-64 border-r border-slate-200 dark:border-slate-800 overflow-y-auto bg-white dark:bg-slate-900 z-30">
+        <nav class="p-6 space-y-8">
+          <div>
+            <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+              Aksesibilitas
+            </h3>
+            <ul class="space-y-2">
+              <li>
+                <a href="#overview" class="block text-sm text-indigo-600 font-medium">Ringkasan</a>
+              </li>
+              <li>
+                <a href="#wcag" class="block text-sm hover:text-indigo-600">WCAG 2.1</a>
+              </li>
+              <li>
+                <a href="#practices" class="block text-sm hover:text-indigo-600">Praktik Terbaik</a>
+              </li>
+              <li>
+                <a href="#features" class="block text-sm hover:text-indigo-600">Fitur</a>
+              </li>
+              <li>
+                <a href="#feedback" class="block text-sm hover:text-indigo-600">Umpan Balik</a>
+              </li>
+            </ul>
+          </div>
+          
+          <div>
+            <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+              Dokumentasi
+            </h3>
+            <ul class="space-y-2">
+              <li>
+                <a href="/pages/id/getting-started.html" class="block text-sm hover:text-indigo-600">Memulai</a>
+              </li>
+              <li>
+                <a href="/pages/id/cli.html" class="block text-sm hover:text-indigo-600">Penggunaan CLI</a>
+              </li>
+              <li>
+                <a href="/pages/id/api.html" class="block text-sm hover:text-indigo-600">Referensi API</a>
+              </li>
+              <li>
+                <a href="/pages/id/contributing.html" class="block text-sm hover:text-indigo-600">Kontribusi</a>
+              </li>
+            </ul>
+          </div>
+        </nav>
+      </aside>
+
+      <!-- Main Content -->
+      <main id="content" class="flex-1 lg:pl-64">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <section id="overview">
+            <h1 class="text-4xl font-bold tracking-tight">Aksesibilitas</h1>
+            <p class="mt-4 text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
+              LensCore mengikuti prinsip WCAG 2.1 AA untuk memastikan bahwa dokumentasi dan alat 
+              kami dapat diakses oleh semua orang, termasuk orang dengan disabilitas. Kami 
+              berkomitmen untuk menyediakan pengalaman yang inklusif untuk semua pengguna.
+            </p>
+          </section>
+
+          <section id="wcag" class="mt-12">
+            <h2 class="text-2xl font-bold">Kepatuhan WCAG 2.1</h2>
+            <p class="mt-4 text-slate-600 dark:text-slate-400">
+              Web Content Accessibility Guidelines (WCAG) 2.1 menyediakan standar bersama untuk 
+              aksesibilitas konten web. LensCore mematuhi kepatuhan Level AA, memenuhi prinsip 
+              kunci berikut:
+            </p>
+
+            <div class="mt-8 grid gap-6 sm:grid-cols-2">
+              <div class="p-6 rounded-lg border border-slate-200 dark:border-slate-700">
+                <h3 class="font-semibold text-lg">Dapat Dipersepsikan</h3>
+                <p class="mt-3 text-sm text-slate-600 dark:text-slate-400">
+                  Informasi dan komponen antarmuka pengguna harus dapat ditampilkan kepada 
+                  pengguna dengan cara yang dapat mereka persepsikan.
+                </p>
+                <ul class="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                  <li>• Alternatif teks untuk gambar</li>
+                  <li>• Kontras warna yang cukup</li>
+                  <li>• Teks yang dapat diperbesar</li>
+                  <li>• Konten yang dapat beradaptasi</li>
+                </ul>
+              </div>
+
+              <div class="p-6 rounded-lg border border-slate-200 dark:border-slate-700">
+                <h3 class="font-semibold text-lg">Dapat Dioperasikan</h3>
+                <p class="mt-3 text-sm text-slate-600 dark:text-slate-400">
+                  Komponen antarmuka pengguna dan navigasi harus dapat dioperasikan oleh semua 
+                  pengguna.
+                </p>
+                <ul class="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                  <li>• Dapat diakses dengan keyboard</li>
+                  <li>• Waktu cukup untuk membaca</li>
+                  <li>• Tidak ada konten pemicu kejang</li>
+                  <li>• Navigasi yang mudah</li>
+                </ul>
+              </div>
+
+              <div class="p-6 rounded-lg border border-slate-200 dark:border-slate-700">
+                <h3 class="font-semibold text-lg">Dapat Dimengerti</h3>
+                <p class="mt-3 text-sm text-slate-600 dark:text-slate-400">
+                  Informasi dan operasi antarmuka pengguna harus dapat dimengerti.
+                </p>
+                <ul class="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                  <li>• Teks yang dapat dibaca</li>
+                  <li>• Perilaku yang dapat diprediksi</li>
+                  <li>• Bantuan input</li>
+                  <li>• Pencegahan kesalahan</li>
+                </ul>
+              </div>
+
+              <div class="p-6 rounded-lg border border-slate-200 dark:border-slate-700">
+                <h3 class="font-semibold text-lg">Robust</h3>
+                <p class="mt-3 text-sm text-slate-600 dark:text-slate-400">
+                  Konten harus cukup kuat untuk dapat diinterpretasikan oleh berbagai agen 
+                  pengguna.
+                </p>
+                <ul class="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                  <li>• Markup HTML yang valid</li>
+                  <li>• Label ARIA yang tepat</li>
+                  <li>• Kompatibel dengan teknologi bantu</li>
+                  <li>• Sesuai standar</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <section id="practices" class="mt-12">
+            <h2 class="text-2xl font-bold">Praktik Aksesibilitas Kami</h2>
+            
+            <div class="mt-6 space-y-6">
+              <div class="p-5 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800">
+                <h3 class="text-lg font-semibold">HTML Semantik</h3>
+                <p class="mt-2 text-slate-700 dark:text-slate-300">
+                  Kami menggunakan elemen semantik HTML5 yang tepat (header, nav, main, article, 
+                  section, footer) dan hierarki heading (h1-h6) untuk memberikan struktur yang 
+                  bermakna bagi screen reader dan teknologi bantu.
+                </p>
+              </div>
+
+              <div class="p-5 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
+                <h3 class="text-lg font-semibold">Navigasi Keyboard</h3>
+                <p class="mt-2 text-slate-700 dark:text-slate-300">
+                  Semua elemen interaktif dapat diakses dengan keyboard. Indikator fokus yang 
+                  terlihat menunjukkan elemen mana yang memiliki fokus. Pengguna dapat bernavigasi 
+                  melalui seluruh situs hanya menggunakan keyboard (Tab, Shift+Tab, Enter, Escape).
+                </p>
+              </div>
+
+              <div class="p-5 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+                <h3 class="text-lg font-semibold">Kontras Warna</h3>
+                <p class="mt-2 text-slate-700 dark:text-slate-300">
+                  Kami mempertahankan rasio kontras minimum 4.5:1 untuk teks normal dan 3:1 untuk 
+                  teks besar, memenuhi standar WCAG AA. Tema terang dan gelap diuji untuk kontras 
+                  yang cukup.
+                </p>
+              </div>
+
+              <div class="p-5 rounded-lg bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800">
+                <h3 class="text-lg font-semibold">Dukungan Screen Reader</h3>
+                <p class="mt-2 text-slate-700 dark:text-slate-300">
+                  Kami menggunakan label ARIA, role, dan properti jika diperlukan. Skip link 
+                  memungkinkan pengguna melewati konten yang berulang. Alt text mendeskripsikan 
+                  gambar secara bermakna.
+                </p>
+              </div>
+
+              <div class="p-5 rounded-lg bg-pink-50 dark:bg-pink-950/30 border border-pink-200 dark:border-pink-800">
+                <h3 class="text-lg font-semibold">Dukungan Bahasa</h3>
+                <p class="mt-2 text-slate-700 dark:text-slate-300">
+                  Kami menyediakan atribut bahasa (lang) yang tepat untuk konten Bahasa Inggris 
+                  dan Indonesia, memungkinkan screen reader menggunakan pengucapan dan suara yang 
+                  benar.
+                </p>
+              </div>
+
+              <div class="p-5 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+                <h3 class="text-lg font-semibold">Desain Responsif</h3>
+                <p class="mt-2 text-slate-700 dark:text-slate-300">
+                  Dokumentasi kami sepenuhnya responsif dan berfungsi di semua ukuran perangkat. 
+                  Teks dapat diperbesar hingga 200% tanpa kehilangan konten atau fungsionalitas.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section id="features" class="mt-12">
+            <h2 class="text-2xl font-bold">Fitur Aksesibilitas</h2>
+
+            <div class="mt-6">
+              <ul class="space-y-4">
+                <li class="flex gap-3">
+                  <span class="text-indigo-600 dark:text-indigo-400 font-semibold">✓</span>
+                  <div>
+                    <strong>Link Skip Navigasi:</strong> Link skip ke konten utama di bagian atas setiap halaman
+                  </div>
+                </li>
+                <li class="flex gap-3">
+                  <span class="text-indigo-600 dark:text-indigo-400 font-semibold">✓</span>
+                  <div>
+                    <strong>Indikator Fokus yang Terlihat:</strong> Indikasi visual yang jelas dari fokus keyboard
+                  </div>
+                </li>
+                <li class="flex gap-3">
+                  <span class="text-indigo-600 dark:text-indigo-400 font-semibold">✓</span>
+                  <div>
+                    <strong>Dukungan Mode Gelap:</strong> Secara otomatis mendeteksi preferensi sistem dengan toggle manual
+                  </div>
+                </li>
+                <li class="flex gap-3">
+                  <span class="text-indigo-600 dark:text-indigo-400 font-semibold">✓</span>
+                  <div>
+                    <strong>Teks Link Deskriptif:</strong> Link dengan jelas mendeskripsikan tujuan mereka
+                  </div>
+                </li>
+                <li class="flex gap-3">
+                  <span class="text-indigo-600 dark:text-indigo-400 font-semibold">✓</span>
+                  <div>
+                    <strong>Urutan Tab Logis:</strong> Navigasi tab mengikuti layout visual
+                  </div>
+                </li>
+                <li class="flex gap-3">
+                  <span class="text-indigo-600 dark:text-indigo-400 font-semibold">✓</span>
+                  <div>
+                    <strong>Label ARIA:</strong> Atribut ARIA yang tepat untuk pengalaman screen reader yang lebih baik
+                  </div>
+                </li>
+                <li class="flex gap-3">
+                  <span class="text-indigo-600 dark:text-indigo-400 font-semibold">✓</span>
+                  <div>
+                    <strong>Navigasi Konsisten:</strong> Struktur navigasi yang dapat diprediksi di semua halaman
+                  </div>
+                </li>
+                <li class="flex gap-3">
+                  <span class="text-indigo-600 dark:text-indigo-400 font-semibold">✓</span>
+                  <div>
+                    <strong>Dukungan Dwibahasa:</strong> Konten tersedia dalam Bahasa Inggris dan Indonesia
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </section>
+
+          <section id="feedback" class="mt-12 pb-12 border-t border-slate-200 dark:border-slate-800 pt-12">
+            <h2 class="text-2xl font-bold">Umpan Balik Aksesibilitas</h2>
+            <p class="mt-4 text-slate-600 dark:text-slate-400">
+              Kami terus berupaya meningkatkan aksesibilitas LensCore. Jika Anda mengalami 
+              hambatan aksesibilitas atau memiliki saran untuk perbaikan, silakan beritahu kami.
+            </p>
+
+            <div class="mt-6 p-6 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+              <h3 class="font-semibold text-lg">Laporkan Masalah Aksesibilitas</h3>
+              <p class="mt-3 text-sm text-slate-600 dark:text-slate-400">
+                Anda dapat melaporkan masalah aksesibilitas melalui:
+              </p>
+              <ul class="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                <li>• GitHub Issues: <a href="https://github.com/AccessTime/LensCore/issues" class="text-indigo-600 hover:underline">Laporkan issue</a></li>
+                <li>• Email: accessibility@accesstime.com</li>
+                <li>• Diskusi Komunitas</li>
+              </ul>
+              <p class="mt-4 text-sm text-slate-600 dark:text-slate-400">
+                Harap sertakan:
+              </p>
+              <ul class="mt-2 space-y-1 text-sm text-slate-600 dark:text-slate-400">
+                <li>• Deskripsi masalah</li>
+                <li>• URL halaman di mana Anda mengalami masalah</li>
+                <li>• Browser dan teknologi bantu yang digunakan</li>
+                <li>• Langkah-langkah untuk mereproduksi (jika ada)</li>
+      </ul>
+            </div>
+
+            <p class="mt-6 text-slate-600 dark:text-slate-400">
+              Terima kasih telah membantu kami membuat LensCore lebih mudah diakses untuk semua orang! ♿
+            </p>
+          </section>
+        </div>
+    </main>
+      </div>
+
+    <script>
+      // Sidebar navigation active state
+      function updateActiveNavigation() {
+        const sections = document.querySelectorAll('section[id]');
+        const navLinks = document.querySelectorAll('aside nav a[href^="#"]');
+        
+        let currentSection = '';
+        const scrollPosition = window.scrollY + 100;
+        
+        sections.forEach(section => {
+          const sectionTop = section.offsetTop;
+          const sectionHeight = section.offsetHeight;
+          
+          if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+            currentSection = section.getAttribute('id');
+          }
+        });
+        
+        navLinks.forEach(link => {
+          link.classList.remove('text-indigo-600', 'font-medium');
+          link.classList.add('hover:text-indigo-600');
+          
+          if (link.getAttribute('href') === `#${currentSection}`) {
+            link.classList.add('text-indigo-600', 'font-medium');
+            link.classList.remove('hover:text-indigo-600');
+          }
+        });
+      }
+      
+      window.addEventListener('scroll', updateActiveNavigation);
+      document.addEventListener('DOMContentLoaded', updateActiveNavigation);
+      
+      document.querySelectorAll('aside nav a[href^="#"]').forEach(link => {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          const targetId = this.getAttribute('href').substring(1);
+          const targetSection = document.getElementById(targetId);
+          
+          if (targetSection) {
+            const headerOffset = 80;
+            const elementPosition = targetSection.offsetTop;
+            const offsetPosition = elementPosition - headerOffset;
+            
+            window.scrollTo({
+              top: offsetPosition,
+              behavior: 'smooth'
+            });
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

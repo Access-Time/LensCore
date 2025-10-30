@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Getting Started • LensCore</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = { darkMode: 'class' };
+    </script>
+    <script>
+      function toggleTheme() {
+        const e = document.documentElement,
+          t = e.classList.contains('dark');
+        e.classList.toggle('dark', !t);
+        localStorage.setItem(
+          'theme',
+          e.classList.contains('dark') ? 'dark' : 'light'
+        );
+      }
+      (() => {
+        const e = localStorage.getItem('theme');
+        if (e) {
+          document.documentElement.classList.toggle('dark', e === 'dark');
+        } else {
+          const t =
+            window.matchMedia &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches;
+          document.documentElement.classList.toggle('dark', t);
+        }
+      })();
+    </script>
+    <style>
+      body {
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+    </style>
+  </head>
+  <body class="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">
+    <!-- Skip to content -->
+    <a
+      href="#content"
+      class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 px-3 py-2 rounded bg-indigo-600 text-white z-50"
+      >Skip to content</a
+    >
+    
+    <!-- Top Header -->
+    <header class="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+      <div class="flex h-16 items-center px-4 sm:px-6 lg:px-8">
+        <a href="/pages/en/index.html" class="flex items-center gap-2 font-semibold text-lg">
+          <img src="/public/img/logo.jpeg" alt="LensCore logo" class="h-8 w-8 rounded" />
+          <span>LensCore</span>
+        </a>
+        
+        <nav class="hidden md:flex items-center gap-6 ml-8">
+          <a href="/pages/en/index.html" class="text-sm hover:text-indigo-600">Home</a>
+          <a href="/pages/en/getting-started.html" class="text-sm font-medium text-indigo-600">Docs</a>
+          <a href="/pages/en/api.html" class="text-sm hover:text-indigo-600">API</a>
+        </nav>
+        
+        <div class="flex items-center gap-3 ml-auto">
+          <a
+            href="/pages/id/getting-started.html"
+            class="px-3 py-1.5 text-sm rounded border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+            hreflang="id"
+            >ID</a
+          >
+          <button
+            type="button"
+            class="px-3 py-1.5 text-sm rounded bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
+            onclick="toggleTheme()"
+          >
+            Theme
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div class="flex">
+      <!-- Sidebar Navigation -->
+      <aside class="hidden lg:block fixed top-16 left-0 bottom-0 w-64 border-r border-slate-200 dark:border-slate-800 overflow-y-auto bg-white dark:bg-slate-900 z-30">
+        <nav class="p-6 space-y-8">
+          <div>
+            <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+              Getting Started
+            </h3>
+            <ul class="space-y-2">
+              <li>
+                <a href="#introduction" class="block text-sm text-indigo-600 font-medium">Introduction</a>
+              </li>
+              <li>
+                <a href="#prerequisites" class="block text-sm hover:text-indigo-600">Prerequisites</a>
+              </li>
+              <li>
+                <a href="#installation" class="block text-sm hover:text-indigo-600">Installation</a>
+              </li>
+              <li>
+                <a href="#quick-start" class="block text-sm hover:text-indigo-600">Quick Start</a>
+              </li>
+              <li>
+                <a href="#configuration" class="block text-sm hover:text-indigo-600">Configuration</a>
+              </li>
+            </ul>
+          </div>
+          
+          <div>
+            <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+              Guides
+            </h3>
+            <ul class="space-y-2">
+              <li>
+                <a href="/pages/en/cli.html" class="block text-sm hover:text-indigo-600">CLI Usage</a>
+              </li>
+              <li>
+                <a href="/pages/en/api.html" class="block text-sm hover:text-indigo-600">API Reference</a>
+              </li>
+              <li>
+                <a href="/pages/en/accessibility.html" class="block text-sm hover:text-indigo-600">Accessibility</a>
+              </li>
+              <li>
+                <a href="/pages/en/contributing.html" class="block text-sm hover:text-indigo-600">Contributing</a>
+              </li>
+            </ul>
+          </div>
+        </nav>
+      </aside>
+
+      <!-- Main Content -->
+      <main id="content" class="flex-1 lg:pl-64">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <!-- Introduction -->
+          <section id="introduction">
+            <h1 class="text-4xl font-bold tracking-tight">Getting Started</h1>
+            <p class="mt-4 text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
+              Welcome to LensCore! This guide will help you get started with our open-source 
+              accessibility testing and web crawling platform. Whether you prefer Docker or 
+              Node.js, we've got you covered.
+            </p>
+          </section>
+
+          <!-- What is LensCore -->
+          <section class="mt-12">
+            <h2 class="text-2xl font-bold">What is LensCore?</h2>
+            <p class="mt-4 text-slate-600 dark:text-slate-400 leading-relaxed">
+              LensCore is a comprehensive platform for automated accessibility testing and web crawling. 
+              It provides:
+            </p>
+            <ul class="mt-4 space-y-2 text-slate-600 dark:text-slate-400">
+              <li class="flex items-start gap-3">
+                <span class="text-green-600 dark:text-green-400 font-bold">✓</span>
+                <span><strong>WCAG Compliance Testing</strong> - Automated testing using axe-core</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="text-green-600 dark:text-green-400 font-bold">✓</span>
+                <span><strong>Web Crawling</strong> - Configurable depth and URL limits</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="text-green-600 dark:text-green-400 font-bold">✓</span>
+                <span><strong>AI-Powered Analysis</strong> - Optional AI insights (OpenAI & Anthropic)</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="text-green-600 dark:text-green-400 font-bold">✓</span>
+                <span><strong>Flexible Storage</strong> - Local, S3, or Google Cloud Storage</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <span class="text-green-600 dark:text-green-400 font-bold">✓</span>
+                <span><strong>RESTful API</strong> - Easy integration with your workflow</span>
+              </li>
+            </ul>
+          </section>
+
+          <!-- Prerequisites -->
+          <section id="prerequisites" class="mt-12">
+            <h2 class="text-2xl font-bold">Prerequisites</h2>
+            <p class="mt-4 text-slate-600 dark:text-slate-400">
+              Before you begin, ensure you have the following installed:
+            </p>
+            
+            <div class="mt-6 grid md:grid-cols-2 gap-4">
+              <div class="p-5 rounded-lg border border-slate-200 dark:border-slate-700">
+                <h3 class="font-semibold text-lg">Node.js 20+</h3>
+                <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                  Required for running the application
+                </p>
+                <a href="https://nodejs.org" class="mt-3 inline-block text-sm text-indigo-600 hover:underline">
+                  Download Node.js →
+                </a>
+              </div>
+              
+              <div class="p-5 rounded-lg border border-slate-200 dark:border-slate-700">
+                <h3 class="font-semibold text-lg">Docker & Docker Compose</h3>
+                <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                  Optional, for containerized deployment
+                </p>
+                <a href="https://docker.com" class="mt-3 inline-block text-sm text-indigo-600 hover:underline">
+                  Download Docker →
+                </a>
+              </div>
+            </div>
+          </section>
+
+          <!-- Installation -->
+          <section id="installation" class="mt-12">
+            <h2 class="text-2xl font-bold">Installation</h2>
+            
+            <div class="mt-6">
+              <h3 class="text-xl font-semibold">1. Clone the Repository</h3>
+              <div class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto">
+                <pre class="text-slate-100 text-sm"><code>git clone https://github.com/AccessTime/LensCore.git
+cd LensCore</code></pre>
+              </div>
+            </div>
+
+            <div class="mt-8">
+              <h3 class="text-xl font-semibold">2. Set Up Environment Variables</h3>
+              <p class="mt-2 text-slate-600 dark:text-slate-400">
+                Copy the example environment file and configure it:
+              </p>
+              <div class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto">
+                <pre class="text-slate-100 text-sm"><code>cp env.example .env</code></pre>
+              </div>
+            </div>
+
+            <div class="mt-8">
+              <h3 class="text-xl font-semibold">3. Install Dependencies</h3>
+              <div class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto">
+                <pre class="text-slate-100 text-sm"><code>make install
+# or
+npm install</code></pre>
+              </div>
+            </div>
+          </section>
+
+          <!-- Quick Start -->
+          <section id="quick-start" class="mt-12">
+            <h2 class="text-2xl font-bold">Quick Start</h2>
+            <p class="mt-4 text-slate-600 dark:text-slate-400">
+              Choose your preferred method to run LensCore:
+            </p>
+
+            <!-- Docker Method -->
+            <div class="mt-8 p-6 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+              <div class="flex items-center gap-2">
+                <div class="px-2 py-1 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-semibold">
+                  RECOMMENDED
+                </div>
+                <h3 class="text-xl font-semibold">Option 1: Docker</h3>
+              </div>
+              <p class="mt-3 text-slate-600 dark:text-slate-400">
+                The easiest way to get started. Everything is pre-configured:
+              </p>
+              
+              <div class="mt-4 space-y-3">
+                <div>
+                  <p class="text-sm font-medium mb-2">Build and start:</p>
+                  <div class="rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto">
+                    <pre class="text-slate-100 text-sm"><code>make build-docker</code></pre>
+                  </div>
+                </div>
+                
+                <div>
+                  <p class="text-sm font-medium mb-2">Verify it's running:</p>
+                  <div class="rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto">
+                    <pre class="text-slate-100 text-sm"><code>curl http://localhost:3001/api/health</code></pre>
+                  </div>
+                </div>
+
+                <div>
+                  <p class="text-sm font-medium mb-2">Stop the service:</p>
+                  <div class="rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto">
+                    <pre class="text-slate-100 text-sm"><code>make down</code></pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Node.js Method -->
+            <div class="mt-6 p-6 rounded-lg border border-slate-200 dark:border-slate-700">
+              <h3 class="text-xl font-semibold">Option 2: Node.js</h3>
+              <p class="mt-3 text-slate-600 dark:text-slate-400">
+                Run directly with Node.js for development:
+              </p>
+              
+              <div class="mt-4 space-y-3">
+                <div>
+                  <p class="text-sm font-medium mb-2">Development mode (with hot reload):</p>
+                  <div class="rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto">
+                    <pre class="text-slate-100 text-sm"><code>make dev
+# or
+npm run dev</code></pre>
+                  </div>
+                </div>
+                
+                <div>
+                  <p class="text-sm font-medium mb-2">Production mode:</p>
+                  <div class="rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto">
+                    <pre class="text-slate-100 text-sm"><code>make build
+make start
+# or
+npm run build && npm start</code></pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- First API Call -->
+            <div class="mt-8">
+              <h3 class="text-xl font-semibold">Make Your First API Call</h3>
+              <p class="mt-3 text-slate-600 dark:text-slate-400">
+                Test accessibility of a website:
+              </p>
+              <div class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto">
+                <pre class="text-slate-100 text-sm"><code>curl -X POST http://localhost:3001/api/test \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com"}'</code></pre>
+              </div>
+            </div>
+          </section>
+
+          <!-- Configuration -->
+          <section id="configuration" class="mt-12">
+            <h2 class="text-2xl font-bold">Configuration</h2>
+            <p class="mt-4 text-slate-600 dark:text-slate-400">
+              Customize LensCore by editing your <code class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 text-sm">.env</code> file:
+            </p>
+
+            <div class="mt-6 space-y-6">
+              <!-- Core Settings -->
+              <div>
+                <h3 class="text-lg font-semibold">Core Settings</h3>
+                <div class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto">
+                  <pre class="text-slate-100 text-sm"><code># Server Configuration
+PORT=3001
+NODE_ENV=development</code></pre>
+                </div>
+              </div>
+
+              <!-- Storage -->
+              <div>
+                <h3 class="text-lg font-semibold">Storage</h3>
+                <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                  Choose your storage backend: <code class="px-1 py-0.5 rounded bg-slate-200 dark:bg-slate-800">local</code>, <code class="px-1 py-0.5 rounded bg-slate-200 dark:bg-slate-800">s3</code>, or <code class="px-1 py-0.5 rounded bg-slate-200 dark:bg-slate-800">gcs</code>
+                </p>
+                <div class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto">
+                  <pre class="text-slate-100 text-sm"><code>STORAGE_TYPE=local
+STORAGE_LOCAL_PATH=./storage</code></pre>
+                </div>
+              </div>
+
+              <!-- Crawling -->
+              <div>
+                <h3 class="text-lg font-semibold">Crawling</h3>
+                <div class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto">
+                  <pre class="text-slate-100 text-sm"><code>CRAWL_CONCURRENCY=5
+CRAWL_MAX_DEPTH=3
+CRAWL_MAX_URLS=50
+CRAWL_TIMEOUT=30000</code></pre>
+                </div>
+              </div>
+
+              <!-- Accessibility Testing -->
+              <div>
+                <h3 class="text-lg font-semibold">Accessibility Testing</h3>
+                <div class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto">
+                  <pre class="text-slate-100 text-sm"><code>AXE_CONCURRENCY=5
+AXE_TIMEOUT=30000</code></pre>
+                </div>
+              </div>
+
+              <!-- AI (Optional) -->
+              <div>
+                <h3 class="text-lg font-semibold">AI Features (Optional)</h3>
+                <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                  Enable AI-powered analysis and recommendations:
+                </p>
+                <div class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto">
+                  <pre class="text-slate-100 text-sm"><code>AI_ENABLED=true
+OPENAI_API_KEY=your_openai_key
+# or
+ANTHROPIC_API_KEY=your_anthropic_key</code></pre>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Next Steps -->
+          <section class="mt-12 p-6 rounded-lg bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 border border-indigo-200 dark:border-indigo-800">
+            <h2 class="text-2xl font-bold">Next Steps</h2>
+            <p class="mt-3 text-slate-700 dark:text-slate-300">
+              Now that you have LensCore running, explore these resources:
+            </p>
+            <div class="mt-6 grid sm:grid-cols-2 gap-4">
+              <a href="/pages/en/api.html" class="block p-4 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors">
+                <h3 class="font-semibold">API Documentation</h3>
+                <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                  Explore all available endpoints
+                </p>
+              </a>
+              <a href="/pages/en/cli.html" class="block p-4 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors">
+                <h3 class="font-semibold">CLI Guide</h3>
+                <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                  Use LensCore from command line
+                </p>
+              </a>
+              <a href="/pages/en/accessibility.html" class="block p-4 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors">
+                <h3 class="font-semibold">Accessibility</h3>
+                <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                  Learn about WCAG standards
+                </p>
+              </a>
+              <a href="/pages/en/contributing.html" class="block p-4 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors">
+                <h3 class="font-semibold">Contributing</h3>
+                <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                  Help improve LensCore
+                </p>
+              </a>
+            </div>
+          </section>
+
+          <!-- Help & Support -->
+          <section class="mt-12 pb-12 border-t border-slate-200 dark:border-slate-800 pt-12">
+            <h2 class="text-xl font-semibold">Need Help?</h2>
+            <p class="mt-3 text-slate-600 dark:text-slate-400">
+              If you encounter any issues or have questions:
+            </p>
+            <ul class="mt-4 space-y-2 text-slate-600 dark:text-slate-400">
+              <li>• Check our <a href="https://github.com/AccessTime/LensCore/issues" class="text-indigo-600 hover:underline">GitHub Issues</a></li>
+              <li>• Read the <a href="/pages/en/api.html" class="text-indigo-600 hover:underline">API Documentation</a></li>
+              <li>• Join our community discussions</li>
+            </ul>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      // Sidebar navigation active state
+      function updateActiveNavigation() {
+        const sections = document.querySelectorAll('section[id]');
+        const navLinks = document.querySelectorAll('aside nav a[href^="#"]');
+        
+        let currentSection = '';
+        const scrollPosition = window.scrollY + 100; // Offset for better UX
+        
+        sections.forEach(section => {
+          const sectionTop = section.offsetTop;
+          const sectionHeight = section.offsetHeight;
+          
+          if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+            currentSection = section.getAttribute('id');
+          }
+        });
+        
+        navLinks.forEach(link => {
+          link.classList.remove('text-indigo-600', 'font-medium');
+          link.classList.add('hover:text-indigo-600');
+          
+          if (link.getAttribute('href') === `#${currentSection}`) {
+            link.classList.add('text-indigo-600', 'font-medium');
+            link.classList.remove('hover:text-indigo-600');
+          }
+        });
+      }
+      
+      // Update on scroll
+      window.addEventListener('scroll', updateActiveNavigation);
+      
+      // Update on load
+      document.addEventListener('DOMContentLoaded', updateActiveNavigation);
+      
+      // Smooth scroll for navigation links
+      document.querySelectorAll('aside nav a[href^="#"]').forEach(link => {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          const targetId = this.getAttribute('href').substring(1);
+          const targetSection = document.getElementById(targetId);
+          
+          if (targetSection) {
+            const headerOffset = 80; // Height of sticky header
+            const elementPosition = targetSection.offsetTop;
+            const offsetPosition = elementPosition - headerOffset;
+            
+            window.scrollTo({
+              top: offsetPosition,
+              behavior: 'smooth'
+            });
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Accessibility • LensCore</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = { darkMode: 'class' };
+    </script>
+    <script>
+      function toggleTheme() {
+        const e = document.documentElement,
+          t = e.classList.contains('dark');
+        e.classList.toggle('dark', !t);
+        localStorage.setItem(
+          'theme',
+          e.classList.contains('dark') ? 'dark' : 'light'
+        );
+      }
+      (() => {
+        const e = localStorage.getItem('theme');
+        if (e) {
+          document.documentElement.classList.toggle('dark', e === 'dark');
+        } else {
+          const t =
+            window.matchMedia &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches;
+          document.documentElement.classList.toggle('dark', t);
+        }
+      })();
+    </script>
+    <style>
+      body {
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          sans-serif;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+    </style>
+  </head>
+  <body class="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">
+    <a
+      href="#content"
+      class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 px-3 py-2 rounded bg-indigo-600 text-white z-50"
+      >Skip to content</a
+    >
+
+    <!-- Top Header -->
+    <header
+      class="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
+    >
+      <div class="flex h-16 items-center px-4 sm:px-6 lg:px-8">
+        <a
+          href="/pages/en/index.html"
+          class="flex items-center gap-2 font-semibold text-lg"
+        >
+          <img
+            src="/public/img/logo.jpeg"
+            alt="Logo LensCore"
+            class="h-8 w-8 rounded"
+          />
+          <span>LensCore</span>
+        </a>
+
+        <nav class="hidden md:flex items-center gap-6 ml-8">
+          <a href="/pages/en/index.html" class="text-sm hover:text-indigo-600"
+            >Home</a
+          >
+          <a
+            href="/pages/en/getting-started.html"
+            class="text-sm hover:text-indigo-600"
+            >Documentation</a
+          >
+          <a href="/pages/en/api.html" class="text-sm hover:text-indigo-600"
+            >API</a
+          >
+        </nav>
+
+        <div class="flex items-center gap-3 ml-auto">
+          <a
+            href="/pages/id/accessibility.html"
+            class="px-3 py-1.5 text-sm rounded border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+            hreflang="id"
+            >ID</a
+          >
+          <button
+            type="button"
+            class="px-3 py-1.5 text-sm rounded bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
+            onclick="toggleTheme()"
+          >
+            Theme
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div class="flex">
+      <!-- Sidebar Navigation -->
+      <aside
+        class="hidden lg:block fixed top-16 left-0 bottom-0 w-64 border-r border-slate-200 dark:border-slate-800 overflow-y-auto bg-white dark:bg-slate-900 z-30"
+      >
+        <nav class="p-6 space-y-8">
+          <div>
+            <h3
+              class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3"
+            >
+              Accessibility
+            </h3>
+            <ul class="space-y-2">
+              <li>
+                <a
+                  href="#overview"
+                  class="block text-sm text-indigo-600 font-medium"
+                  >Overview</a
+                >
+              </li>
+              <li>
+                <a href="#wcag" class="block text-sm hover:text-indigo-600"
+                  >WCAG 2.1</a
+                >
+              </li>
+              <li>
+                <a href="#practices" class="block text-sm hover:text-indigo-600"
+                  >Best Practices</a
+                >
+              </li>
+              <li>
+                <a href="#features" class="block text-sm hover:text-indigo-600"
+                  >Features</a
+                >
+              </li>
+              <li>
+                <a href="#feedback" class="block text-sm hover:text-indigo-600"
+                  >Feedback</a
+                >
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h3
+              class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3"
+            >
+              Documentation
+            </h3>
+            <ul class="space-y-2">
+              <li>
+                <a
+                  href="/pages/en/getting-started.html"
+                  class="block text-sm hover:text-indigo-600"
+                  >Getting Started</a
+                >
+              </li>
+              <li>
+                <a
+                  href="/pages/en/cli.html"
+                  class="block text-sm hover:text-indigo-600"
+                  >CLI Usage</a
+                >
+              </li>
+              <li>
+                <a
+                  href="/pages/en/api.html"
+                  class="block text-sm hover:text-indigo-600"
+                  >API Reference</a
+                >
+              </li>
+              <li>
+                <a
+                  href="/pages/en/contributing.html"
+                  class="block text-sm hover:text-indigo-600"
+                  >Contributing</a
+                >
+              </li>
+            </ul>
+          </div>
+        </nav>
+      </aside>
+
+      <!-- Main Content -->
+      <main id="content" class="flex-1 lg:pl-64">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <section id="overview">
+            <h1 class="text-4xl font-bold tracking-tight">Accessibility</h1>
+            <p
+              class="mt-4 text-lg text-slate-600 dark:text-slate-400 leading-relaxed"
+            >
+              LensCore follows WCAG 2.1 AA principles to ensure that our
+              documentation and tools are accessible to everyone, including
+              people with disabilities. We're committed to providing an
+              inclusive experience for all users.
+            </p>
+          </section>
+
+          <section id="wcag" class="mt-12">
+            <h2 class="text-2xl font-bold">WCAG 2.1 Compliance</h2>
+            <p class="mt-4 text-slate-600 dark:text-slate-400">
+              The Web Content Accessibility Guidelines (WCAG) 2.1 provide a
+              shared standard for web content accessibility. LensCore adheres to
+              Level AA compliance, meeting the following key principles:
+            </p>
+
+            <div class="mt-8 grid gap-6 sm:grid-cols-2">
+              <div
+                class="p-6 rounded-lg border border-slate-200 dark:border-slate-700"
+              >
+                <h3 class="font-semibold text-lg">Perceivable</h3>
+                <p class="mt-3 text-sm text-slate-600 dark:text-slate-400">
+                  Information and user interface components must be presentable
+                  to users in ways they can perceive.
+                </p>
+                <ul
+                  class="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-400"
+                >
+                  <li>• Text alternatives for images</li>
+                  <li>• Sufficient color contrast</li>
+                  <li>• Resizable text</li>
+                  <li>• Adaptable content</li>
+                </ul>
+              </div>
+
+              <div
+                class="p-6 rounded-lg border border-slate-200 dark:border-slate-700"
+              >
+                <h3 class="font-semibold text-lg">Operable</h3>
+                <p class="mt-3 text-sm text-slate-600 dark:text-slate-400">
+                  User interface components and navigation must be operable by
+                  all users.
+                </p>
+                <ul
+                  class="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-400"
+                >
+                  <li>• Keyboard accessible</li>
+                  <li>• Sufficient time to read</li>
+                  <li>• No seizure-inducing content</li>
+                  <li>• Easy navigation</li>
+                </ul>
+              </div>
+
+              <div
+                class="p-6 rounded-lg border border-slate-200 dark:border-slate-700"
+              >
+                <h3 class="font-semibold text-lg">Understandable</h3>
+                <p class="mt-3 text-sm text-slate-600 dark:text-slate-400">
+                  Information and user interface operation must be
+                  understandable.
+                </p>
+                <ul
+                  class="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-400"
+                >
+                  <li>• Readable text</li>
+                  <li>• Predictable behavior</li>
+                  <li>• Input assistance</li>
+                  <li>• Error prevention</li>
+                </ul>
+              </div>
+
+              <div
+                class="p-6 rounded-lg border border-slate-200 dark:border-slate-700"
+              >
+                <h3 class="font-semibold text-lg">Robust</h3>
+                <p class="mt-3 text-sm text-slate-600 dark:text-slate-400">
+                  Content must be robust enough to be interpreted by a wide
+                  variety of user agents.
+                </p>
+                <ul
+                  class="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-400"
+                >
+                  <li>• Valid HTML markup</li>
+                  <li>• Proper ARIA labels</li>
+                  <li>• Compatible with assistive tech</li>
+                  <li>• Standards compliant</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <section id="practices" class="mt-12">
+            <h2 class="text-2xl font-bold">Our Accessibility Practices</h2>
+
+            <div class="mt-6 space-y-6">
+              <div
+                class="p-5 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800"
+              >
+                <h3 class="text-lg font-semibold">Semantic HTML</h3>
+                <p class="mt-2 text-slate-700 dark:text-slate-300">
+                  We use proper HTML5 semantic elements (header, nav, main,
+                  article, section, footer) and heading hierarchy (h1-h6) to
+                  provide meaningful structure for screen readers and assistive
+                  technologies.
+                </p>
+              </div>
+
+              <div
+                class="p-5 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800"
+              >
+                <h3 class="text-lg font-semibold">Keyboard Navigation</h3>
+                <p class="mt-2 text-slate-700 dark:text-slate-300">
+                  All interactive elements are keyboard accessible. Visible
+                  focus indicators show which element has focus. Users can
+                  navigate through the entire site using only the keyboard (Tab,
+                  Shift+Tab, Enter, Escape).
+                </p>
+              </div>
+
+              <div
+                class="p-5 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800"
+              >
+                <h3 class="text-lg font-semibold">Color Contrast</h3>
+                <p class="mt-2 text-slate-700 dark:text-slate-300">
+                  We maintain a minimum contrast ratio of 4.5:1 for normal text
+                  and 3:1 for large text, meeting WCAG AA standards. Both light
+                  and dark themes are tested for sufficient contrast.
+                </p>
+              </div>
+
+              <div
+                class="p-5 rounded-lg bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800"
+              >
+                <h3 class="text-lg font-semibold">Screen Reader Support</h3>
+                <p class="mt-2 text-slate-700 dark:text-slate-300">
+                  We use ARIA labels, roles, and properties where appropriate.
+                  Skip links allow users to bypass repetitive content. Alt text
+                  describes images meaningfully.
+                </p>
+              </div>
+
+              <div
+                class="p-5 rounded-lg bg-pink-50 dark:bg-pink-950/30 border border-pink-200 dark:border-pink-800"
+              >
+                <h3 class="text-lg font-semibold">Language Support</h3>
+                <p class="mt-2 text-slate-700 dark:text-slate-300">
+                  We provide proper language attributes (lang) for English and
+                  Indonesian content, enabling screen readers to use the correct
+                  pronunciation and voice.
+                </p>
+              </div>
+
+              <div
+                class="p-5 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800"
+              >
+                <h3 class="text-lg font-semibold">Responsive Design</h3>
+                <p class="mt-2 text-slate-700 dark:text-slate-300">
+                  Our documentation is fully responsive and works on all device
+                  sizes. Text can be resized up to 200% without loss of content
+                  or functionality.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section id="features" class="mt-12">
+            <h2 class="text-2xl font-bold">Accessibility Features</h2>
+
+            <div class="mt-6">
+              <ul class="space-y-4">
+                <li class="flex gap-3">
+                  <span
+                    class="text-indigo-600 dark:text-indigo-400 font-semibold"
+                    >✓</span
+                  >
+                  <div>
+                    <strong>Skip Navigation Links:</strong> Skip to main content
+                    links at the top of each page
+                  </div>
+                </li>
+                <li class="flex gap-3">
+                  <span
+                    class="text-indigo-600 dark:text-indigo-400 font-semibold"
+                    >✓</span
+                  >
+                  <div>
+                    <strong>Visible Focus Indicators:</strong> Clear visual
+                    indication of keyboard focus
+                  </div>
+                </li>
+                <li class="flex gap-3">
+                  <span
+                    class="text-indigo-600 dark:text-indigo-400 font-semibold"
+                    >✓</span
+                  >
+                  <div>
+                    <strong>Dark Mode Support:</strong> Automatically detects
+                    system preferences with manual toggle
+                  </div>
+                </li>
+                <li class="flex gap-3">
+                  <span
+                    class="text-indigo-600 dark:text-indigo-400 font-semibold"
+                    >✓</span
+                  >
+                  <div>
+                    <strong>Descriptive Link Text:</strong> Links clearly
+                    describe their destination
+                  </div>
+                </li>
+                <li class="flex gap-3">
+                  <span
+                    class="text-indigo-600 dark:text-indigo-400 font-semibold"
+                    >✓</span
+                  >
+                  <div>
+                    <strong>Logical Tab Order:</strong> Tab navigation follows
+                    visual layout
+                  </div>
+                </li>
+                <li class="flex gap-3">
+                  <span
+                    class="text-indigo-600 dark:text-indigo-400 font-semibold"
+                    >✓</span
+                  >
+                  <div>
+                    <strong>ARIA Labels:</strong> Appropriate ARIA attributes
+                    for better screen reader experience
+                  </div>
+                </li>
+                <li class="flex gap-3">
+                  <span
+                    class="text-indigo-600 dark:text-indigo-400 font-semibold"
+                    >✓</span
+                  >
+                  <div>
+                    <strong>Consistent Navigation:</strong> Predictable
+                    navigation structure across all pages
+                  </div>
+                </li>
+                <li class="flex gap-3">
+                  <span
+                    class="text-indigo-600 dark:text-indigo-400 font-semibold"
+                    >✓</span
+                  >
+                  <div>
+                    <strong>Bilingual Support:</strong> Content available in
+                    English and Indonesian
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </section>
+
+          <section
+            id="feedback"
+            class="mt-12 pb-12 border-t border-slate-200 dark:border-slate-800 pt-12"
+          >
+            <h2 class="text-2xl font-bold">Accessibility Feedback</h2>
+            <p class="mt-4 text-slate-600 dark:text-slate-400">
+              We're continuously working to improve the accessibility of
+              LensCore. If you encounter any accessibility barriers or have
+              suggestions for improvement, please let us know.
+            </p>
+
+            <div
+              class="mt-6 p-6 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700"
+            >
+              <h3 class="font-semibold text-lg">Report Accessibility Issues</h3>
+              <p class="mt-3 text-sm text-slate-600 dark:text-slate-400">
+                You can report accessibility issues through:
+              </p>
+              <ul
+                class="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-400"
+              >
+                <li>
+                  • GitHub Issues:
+                  <a
+                    href="https://github.com/AccessTime/LensCore/issues"
+                    class="text-indigo-600 hover:underline"
+                    >Report an issue</a
+                  >
+                </li>
+                <li>• Email: accessibility@accesstime.com</li>
+                <li>• Community Discussions</li>
+              </ul>
+              <p class="mt-4 text-sm text-slate-600 dark:text-slate-400">
+                Please include:
+              </p>
+              <ul
+                class="mt-2 space-y-1 text-sm text-slate-600 dark:text-slate-400"
+              >
+                <li>• Description of the issue</li>
+                <li>• Page URL where you encountered the issue</li>
+                <li>• Browser and assistive technology used</li>
+                <li>• Steps to reproduce (if applicable)</li>
+              </ul>
+            </div>
+
+            <p class="mt-6 text-slate-600 dark:text-slate-400">
+              Thank you for helping us make LensCore more accessible for
+              everyone! ♿
+            </p>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      // Sidebar navigation active state
+      function updateActiveNavigation() {
+        const sections = document.querySelectorAll('section[id]');
+        const navLinks = document.querySelectorAll('aside nav a[href^="#"]');
+
+        let currentSection = '';
+        const scrollPosition = window.scrollY + 100;
+
+        sections.forEach((section) => {
+          const sectionTop = section.offsetTop;
+          const sectionHeight = section.offsetHeight;
+
+          if (
+            scrollPosition >= sectionTop &&
+            scrollPosition < sectionTop + sectionHeight
+          ) {
+            currentSection = section.getAttribute('id');
+          }
+        });
+
+        navLinks.forEach((link) => {
+          link.classList.remove('text-indigo-600', 'font-medium');
+          link.classList.add('hover:text-indigo-600');
+
+          if (link.getAttribute('href') === `#${currentSection}`) {
+            link.classList.add('text-indigo-600', 'font-medium');
+            link.classList.remove('hover:text-indigo-600');
+          }
+        });
+      }
+
+      window.addEventListener('scroll', updateActiveNavigation);
+      document.addEventListener('DOMContentLoaded', updateActiveNavigation);
+
+      document.querySelectorAll('aside nav a[href^="#"]').forEach((link) => {
+        link.addEventListener('click', function (e) {
+          e.preventDefault();
+          const targetId = this.getAttribute('href').substring(1);
+          const targetSection = document.getElementById(targetId);
+
+          if (targetSection) {
+            const headerOffset = 80;
+            const elementPosition = targetSection.offsetTop;
+            const offsetPosition = elementPosition - headerOffset;
+
+            window.scrollTo({
+              top: offsetPosition,
+              behavior: 'smooth',
+            });
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

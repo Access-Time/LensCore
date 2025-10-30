@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Router } from 'express';
+import { Router, static as expressStatic } from 'express';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
@@ -205,6 +205,29 @@ router.get('/storage/screenshots/:filename', (req: any, res: any) => {
     res.sendFile(filePath);
   } catch {
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * Serve static documentation and assets
+ */
+router.use('/pages', expressStatic(path.join(process.cwd(), 'pages')));
+router.use('/public', expressStatic(path.join(process.cwd(), 'public')));
+
+/**
+ * Serve root index.html
+ */
+router.get('/', (_req: any, res: any) => {
+  try {
+    const indexPath = path.join(process.cwd(), 'index.html');
+    if (fs.existsSync(indexPath)) {
+      res.setHeader('Content-Type', 'text/html');
+      res.sendFile(indexPath);
+    } else {
+      res.status(404).send('index.html not found');
+    }
+  } catch {
+    res.status(500).send('Internal server error');
   }
 });
 
