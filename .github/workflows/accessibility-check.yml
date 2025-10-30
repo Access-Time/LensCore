@@ -62,6 +62,6 @@ jobs:
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
-              repo: context.repo.name,
+              repo: context.repo.repo,
               body: '✅ Accessibility check completed. Please review the logs for any violations.'
             })
