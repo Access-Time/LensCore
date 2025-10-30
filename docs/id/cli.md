@@ -64,6 +64,7 @@ lens-core setup
 ```
 
 **Opsi:**
+
 - `--port <port>`: Set port API (default: 3001)
 - `--ai`: Aktifkan fitur AI saat setup
 - `--openai-key <key>`: Set OpenAI API key
@@ -75,6 +76,7 @@ lens-core setup
 Kelola pengaturan konfigurasi LensCore.
 
 **Opsi:**
+
 - `-s, --set <key=value>`: Set nilai konfigurasi (contoh: docker.port=3003)
 - `-g, --get <key>`: Get nilai konfigurasi (contoh: docker.port)
 - `-l, --list`: Tampilkan semua pengaturan konfigurasi
@@ -102,6 +104,7 @@ lens-core config --set "openai.apiKey=your-key-here"
 Test aksesibilitas satu halaman.
 
 **Opsi:**
+
 - `--enable-ai`: Aktifkan analisis berbasis AI
 - `-k, --openai-key <key>`: OpenAI API key
 - `-c, --project-context <context>`: Konteks proyek (contoh: "react,tailwind")
@@ -144,6 +147,7 @@ lens-core test-multiple https://example.com https://google.com --web
 Crawl website dan temukan halaman.
 
 **Opsi:**
+
 - `-w, --web`: Generate laporan HTML
 - `-u, --max-urls <number>`: Maksimum URL untuk di-crawl
 - `-d, --max-depth <number>`: Kedalaman maksimum crawl
@@ -235,6 +239,7 @@ lens-core test https://example.com
 ```
 
 Mengembalikan JSON dengan:
+
 - Hasil test
 - Pelanggaran
 - Passes
@@ -248,6 +253,7 @@ lens-core test https://example.com --web
 ```
 
 Generate laporan HTML disimpan ke direktori `web/output/` dengan:
+
 - Representasi visual
 - Deskripsi pelanggaran detail
 - Preview screenshot
@@ -421,7 +427,7 @@ fi
 ---
 
 Untuk informasi lebih lanjut tentang fitur spesifik, lihat:
+
 - [Referensi API](/id/api) - Dokumentasi RESTful API
 - [Panduan Aksesibilitas](/id/accessibility) - Informasi kepatuhan WCAG
 - [Panduan Kontribusi](/id/contributing) - Cara berkontribusi ke LensCore
-

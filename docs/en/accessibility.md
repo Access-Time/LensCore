@@ -200,4 +200,3 @@ We welcome your feedback on the accessibility of LensCore. Please let us know if
 ---
 
 Thank you for helping us make LensCore more accessible for everyone! ♿
-

@@ -15,7 +15,7 @@ jobs:
   accessibility-check:
     runs-on: ubuntu-latest
     name: Check WCAG Compliance
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -38,14 +38,14 @@ jobs:
           echo $! > .preview-pid
           # Wait for server to be ready
           sleep 5
-        
+
       - name: Install axe-core
         run: npm install -g @axe-core/cli
 
       - name: Run accessibility tests
         run: |
           axe http://localhost:4173 --stdout || true
-          
+
       - name: Stop preview server
         if: always()
         run: |
@@ -65,4 +65,3 @@ jobs:
               repo: context.repo.name,
               body: '✅ Accessibility check completed. Please review the logs for any violations.'
             })
-

@@ -55,6 +55,7 @@ lens-core setup --port 3001
 ```
 
 This will:
+
 - Create configuration file at `~/.lenscore/config.json`
 - Set up Docker environment
 - Configure API port
@@ -109,6 +110,7 @@ lens-core setup
 ```
 
 This will guide you through:
+
 - Creating `lenscore.config.json`
 - Configuring accessibility test rules
 - Setting up AI features (optional)
@@ -132,6 +134,7 @@ lens-core build
 ```
 
 This command will:
+
 - Build Docker image
 - Start services in containers
 - Initialize the API server
@@ -143,6 +146,7 @@ lens-core status
 ```
 
 You should see:
+
 ```
 ✓ Docker daemon is running
 ✓ Container lenscore is running
@@ -158,6 +162,7 @@ lens-core test https://example.com
 ```
 
 This will:
+
 - Load the webpage
 - Run accessibility tests
 - Generate a report
@@ -370,4 +375,3 @@ npm update -g @accesstime/lenscore
 ---
 
 Ready to dive deeper? Check out the [CLI Documentation](/en/cli) for comprehensive command reference!
-

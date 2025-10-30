@@ -264,4 +264,3 @@ Dengan berkontribusi ke LensCore, Anda setuju bahwa kontribusi Anda akan dilisen
 ---
 
 Terima kasih telah berkontribusi ke LensCore! Upaya Anda membantu membuat testing aksesibilitas lebih baik untuk semua orang. 🎉
-

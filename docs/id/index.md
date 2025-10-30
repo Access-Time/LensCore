@@ -20,35 +20,35 @@ features:
   - icon: 🔍
     title: Testing Komprehensif
     details: Testing aksesibilitas otomatis dengan axe-core dan rekomendasi berbasis AI
-    
+
   - icon: 🕷️
     title: Crawling Cerdas
     details: Web crawling canggih dengan kedalaman, konkurensi, dan penemuan URL yang dapat dikonfigurasi
-    
+
   - icon: 🤖
     title: Analisis AI
     details: Integrasi OpenAI opsional untuk insight aksesibilitas kontekstual dan rekomendasi
-    
+
   - icon: 📊
     title: Laporan Detail
     details: Generate laporan HTML dan JSON komprehensif dengan screenshot dan insight yang actionable
-    
+
   - icon: ⚡
     title: Performa Tinggi
     details: Dibangun dengan TypeScript dan Puppeteer untuk testing yang cepat dan reliable dalam skala besar
-    
+
   - icon: 🌐
     title: Multi-Bahasa
     details: Dukungan penuh untuk dokumentasi dan interface dalam Bahasa Inggris dan Indonesia
-    
+
   - icon: 🐳
     title: Docker Ready
     details: Deployment mudah dengan dukungan Docker dan Docker Compose
-    
+
   - icon: 🔌
     title: API Fleksibel
     details: RESTful API dengan spesifikasi OpenAPI untuk integrasi yang mudah
-    
+
   - icon: ♿
     title: Sesuai WCAG
     details: Mengikuti standar WCAG 2.1 AA untuk testing aksesibilitas dan dokumentasi
@@ -101,4 +101,3 @@ LensCore menggabungkan testing aksesibilitas yang powerful dengan web crawling y
 - **GitHub**: [Laporkan issue](https://github.com/Access-Time/LensCore/issues) atau berkontribusi
 - **Dokumentasi**: Panduan komprehensif untuk semua fitur
 - **Lisensi**: MIT - Gratis untuk penggunaan personal dan komersial
-

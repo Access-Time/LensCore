@@ -93,7 +93,12 @@ export const openApiSpec = {
                   },
                   waitUntil: {
                     type: 'string',
-                    enum: ['load', 'domcontentloaded', 'networkidle0', 'networkidle2'],
+                    enum: [
+                      'load',
+                      'domcontentloaded',
+                      'networkidle0',
+                      'networkidle2',
+                    ],
                     description: 'Puppeteer navigation wait condition',
                     example: 'networkidle2',
                   },
@@ -200,7 +205,10 @@ export const openApiSpec = {
                     type: 'array',
                     items: { type: 'string', format: 'uri' },
                     description: 'Array of URLs to test',
-                    example: ['https://example.com', 'https://example.com/about'],
+                    example: [
+                      'https://example.com',
+                      'https://example.com/about',
+                    ],
                   },
                   includeScreenshot: {
                     type: 'boolean',
@@ -323,7 +331,8 @@ export const openApiSpec = {
     '/api/cache/stats': {
       get: {
         summary: 'Cache statistics',
-        description: 'Retrieve current cache statistics including hit rate, size, and entry count',
+        description:
+          'Retrieve current cache statistics including hit rate, size, and entry count',
         tags: ['Cache'],
         responses: {
           '200': {
@@ -348,7 +357,8 @@ export const openApiSpec = {
     '/api/cache/clear': {
       delete: {
         summary: 'Clear cache',
-        description: 'Clear all cached data. Use with caution in production environments.',
+        description:
+          'Clear all cached data. Use with caution in production environments.',
         tags: ['Cache'],
         responses: {
           '200': {
@@ -371,7 +381,8 @@ export const openApiSpec = {
     '/api/cache/warm': {
       post: {
         summary: 'Warm cache',
-        description: 'Pre-populate cache with frequently accessed data to improve performance',
+        description:
+          'Pre-populate cache with frequently accessed data to improve performance',
         tags: ['Cache'],
         responses: {
           '200': {
@@ -415,5 +426,3 @@ export const openApiSpec = {
     },
   ],
 };
-
-

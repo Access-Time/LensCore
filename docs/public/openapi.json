@@ -28,9 +28,7 @@
       "get": {
         "summary": "Health check endpoint",
         "description": "Returns the health status of the API server",
-        "tags": [
-          "System"
-        ],
+        "tags": ["System"],
         "responses": {
           "200": {
             "description": "Server is healthy and responding",
@@ -59,9 +57,7 @@
       "post": {
         "summary": "Crawl website",
         "description": "Crawl a website starting from the specified URL. Discovers and visits links according to configured depth and URL limits.",
-        "tags": [
-          "Crawling"
-        ],
+        "tags": ["Crawling"],
         "requestBody": {
           "required": true,
           "content": {
@@ -111,9 +107,7 @@
                     "example": "networkidle2"
                   }
                 },
-                "required": [
-                  "url"
-                ]
+                "required": ["url"]
               }
             }
           }
@@ -156,9 +150,7 @@
       "post": {
         "summary": "Test accessibility",
         "description": "Run accessibility tests on a single page using axe-core. Returns WCAG violations, passes, and incomplete tests with optional AI analysis.",
-        "tags": [
-          "Accessibility"
-        ],
+        "tags": ["Accessibility"],
         "requestBody": {
           "required": true,
           "content": {
@@ -184,9 +176,7 @@
                     "example": 30000
                   }
                 },
-                "required": [
-                  "url"
-                ]
+                "required": ["url"]
               }
             }
           }
@@ -232,9 +222,7 @@
       "post": {
         "summary": "Test multiple pages",
         "description": "Run accessibility tests on multiple pages. Returns aggregated results for all tested URLs.",
-        "tags": [
-          "Accessibility"
-        ],
+        "tags": ["Accessibility"],
         "requestBody": {
           "required": true,
           "content": {
@@ -266,9 +254,7 @@
                     "example": 30000
                   }
                 },
-                "required": [
-                  "urls"
-                ]
+                "required": ["urls"]
               }
             }
           }
@@ -316,9 +302,7 @@
       "post": {
         "summary": "Crawl and test",
         "description": "Combined operation that crawls a website and runs accessibility tests on all discovered pages. Returns comprehensive results for the entire site.",
-        "tags": [
-          "Combined"
-        ],
+        "tags": ["Combined"],
         "requestBody": {
           "required": true,
           "content": {
@@ -360,9 +344,7 @@
                     }
                   }
                 },
-                "required": [
-                  "url"
-                ]
+                "required": ["url"]
               }
             }
           }
@@ -415,9 +397,7 @@
       "get": {
         "summary": "Cache statistics",
         "description": "Retrieve current cache statistics including hit rate, size, and entry count",
-        "tags": [
-          "Cache"
-        ],
+        "tags": ["Cache"],
         "responses": {
           "200": {
             "description": "Cache statistics retrieved",
@@ -450,9 +430,7 @@
       "delete": {
         "summary": "Clear cache",
         "description": "Clear all cached data. Use with caution in production environments.",
-        "tags": [
-          "Cache"
-        ],
+        "tags": ["Cache"],
         "responses": {
           "200": {
             "description": "Cache cleared successfully",
@@ -479,9 +457,7 @@
       "post": {
         "summary": "Warm cache",
         "description": "Pre-populate cache with frequently accessed data to improve performance",
-        "tags": [
-          "Cache"
-        ],
+        "tags": ["Cache"],
         "responses": {
           "200": {
             "description": "Cache warming completed",

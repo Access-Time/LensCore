@@ -200,4 +200,3 @@ Kami menyambut umpan balik Anda tentang aksesibilitas LensCore. Silakan beritahu
 ---
 
 Terima kasih telah membantu kami membuat LensCore lebih mudah diakses untuk semua orang! ♿
-

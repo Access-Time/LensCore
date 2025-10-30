@@ -55,6 +55,7 @@ lens-core setup --port 3001
 ```
 
 Ini akan:
+
 - Membuat file konfigurasi di `~/.lenscore/config.json`
 - Setup environment Docker
 - Konfigurasi port API
@@ -109,6 +110,7 @@ lens-core setup
 ```
 
 Ini akan memandu Anda melalui:
+
 - Membuat `lenscore.config.json`
 - Konfigurasi aturan test aksesibilitas
 - Setup fitur AI (opsional)
@@ -132,6 +134,7 @@ lens-core build
 ```
 
 Perintah ini akan:
+
 - Build Docker image
 - Start services dalam container
 - Initialize API server
@@ -143,6 +146,7 @@ lens-core status
 ```
 
 Anda akan melihat:
+
 ```
 ✓ Docker daemon is running
 ✓ Container lenscore is running
@@ -158,6 +162,7 @@ lens-core test https://example.com
 ```
 
 Ini akan:
+
 - Load webpage
 - Jalankan test aksesibilitas
 - Generate laporan
@@ -370,4 +375,3 @@ npm update -g @accesstime/lenscore
 ---
 
 Siap untuk mendalami lebih lanjut? Lihat [Dokumentasi CLI](/id/cli) untuk referensi perintah yang komprehensif!
-

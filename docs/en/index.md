@@ -20,35 +20,35 @@ features:
   - icon: 🔍
     title: Comprehensive Testing
     details: Automated accessibility testing powered by axe-core with AI-enhanced recommendations
-    
+
   - icon: 🕷️
     title: Intelligent Crawling
     details: Advanced web crawling with configurable depth, concurrency, and smart URL discovery
-    
+
   - icon: 🤖
     title: AI-Powered Analysis
     details: Optional OpenAI integration for contextual accessibility insights and recommendations
-    
+
   - icon: 📊
     title: Detailed Reports
     details: Generate comprehensive HTML and JSON reports with screenshots and actionable insights
-    
+
   - icon: ⚡
     title: High Performance
     details: Built with TypeScript and Puppeteer for fast, reliable testing at scale
-    
+
   - icon: 🌐
     title: Multi-Language
     details: Full support for English and Indonesian documentation and interfaces
-    
+
   - icon: 🐳
     title: Docker Ready
     details: Easy deployment with Docker and Docker Compose support
-    
+
   - icon: 🔌
     title: Flexible API
     details: RESTful API with OpenAPI specification for easy integration
-    
+
   - icon: ♿
     title: WCAG Compliant
     details: Follows WCAG 2.1 AA standards for accessibility testing and documentation
@@ -80,7 +80,7 @@ lens-core test https://example.com
 LensCore combines powerful accessibility testing with intelligent web crawling to help you:
 
 - **Identify Accessibility Issues**: Automatically detect WCAG violations and get actionable recommendations
-- **Scale Your Testing**: Crawl entire websites and test multiple pages simultaneously  
+- **Scale Your Testing**: Crawl entire websites and test multiple pages simultaneously
 - **Get AI Insights**: Leverage OpenAI for contextual analysis and improvement suggestions
 - **Integrate Easily**: Use via CLI, API, or integrate into your CI/CD pipeline
 - **Save Time**: Automated testing and reporting reduce manual testing effort
@@ -101,4 +101,3 @@ LensCore combines powerful accessibility testing with intelligent web crawling t
 - **GitHub**: [Report issues](https://github.com/Access-Time/LensCore/issues) or contribute
 - **Documentation**: Comprehensive guides for all features
 - **License**: MIT - Free for personal and commercial use
-

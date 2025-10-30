@@ -17,6 +17,7 @@ http://localhost:3001/api/docs
 ```
 
 Ini menyediakan interface Swagger UI dimana Anda bisa:
+
 - Lihat semua endpoint yang tersedia
 - Coba API calls secara langsung
 - Lihat request/response schemas
@@ -117,10 +118,7 @@ Test aksesibilitas beberapa halaman secara bersamaan.
 
 ```json
 {
-  "urls": [
-    "https://example.com",
-    "https://example.com/about"
-  ],
+  "urls": ["https://example.com", "https://example.com/about"],
   "enableAI": false,
   "projectContext": "",
   "timeout": 30000,
@@ -247,10 +245,7 @@ Warm up cache dengan halaman yang sering diakses.
 
 ```json
 {
-  "urls": [
-    "https://example.com",
-    "https://example.com/about"
-  ]
+  "urls": ["https://example.com", "https://example.com/about"]
 }
 ```
 
@@ -318,8 +313,8 @@ const response = await fetch('http://localhost:3001/api/test', {
   body: JSON.stringify({
     url: 'https://example.com',
     enableAI: false,
-    tags: ['wcag2a', 'wcag2aa']
-  })
+    tags: ['wcag2a', 'wcag2aa'],
+  }),
 });
 
 const results = await response.json();
@@ -354,6 +349,7 @@ Download spesifikasi OpenAPI lengkap:
 Saat ini, LensCore tidak menyediakan SDK libraries resmi. Namun, Anda bisa dengan mudah mengintegrasikan dengan HTTP client library apa pun di bahasa pemrograman pilihan Anda.
 
 Pertimbangkan menggunakan tools seperti:
+
 - **OpenAPI Generator**: Generate client SDKs dari OpenAPI spec
 - **Swagger Codegen**: Opsi lain untuk generation SDK
 
@@ -368,7 +364,7 @@ Untuk masalah atau pertanyaan terkait API:
 ---
 
 Untuk informasi lebih lanjut, lihat:
+
 - [Panduan Memulai](/id/getting-started)
 - [Dokumentasi CLI](/id/cli)
 - [Panduan Kontribusi](/id/contributing)
-

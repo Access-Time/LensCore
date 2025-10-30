@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Build outputs
+dist/
+*.tsbuildinfo
+
+# VitePress
+docs/.vitepress/dist/
+docs/.vitepress/cache/
+
+# Generated files
+docs/public/openapi.json
+web/output/
+
+# Logs
+logs/
+*.log
+
+# Cache
+cache/
+.cache/
+.npm/
+.eslintcache
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Storage
+storage/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+

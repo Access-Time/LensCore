@@ -13,20 +13,19 @@ const props = defineProps<{
 
 onMounted(async () => {
   // Dynamically import SwaggerUIBundle
-  const SwaggerUIBundle = (await import('swagger-ui-dist/swagger-ui-bundle.js')).default;
-  
+  const SwaggerUIBundle = (await import('swagger-ui-dist/swagger-ui-bundle.js'))
+    .default;
+
   // Import Swagger UI CSS
   await import('swagger-ui-dist/swagger-ui.css');
-  
+
   // Initialize Swagger UI
   SwaggerUIBundle({
     url: props.spec,
     dom_id: '#swagger-ui',
     deepLinking: true,
-    presets: [
-      SwaggerUIBundle.presets.apis
-    ],
-    layout: "BaseLayout"
+    presets: [SwaggerUIBundle.presets.apis],
+    layout: 'BaseLayout',
   });
 });
 </script>
@@ -47,4 +46,3 @@ onMounted(async () => {
   margin: 2rem 0;
 }
 </style>
-

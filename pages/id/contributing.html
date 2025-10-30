@@ -39,7 +39,14 @@
     </script>
     <style>
       body {
-        font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          sans-serif;
       }
       html {
         scroll-behavior: smooth;
@@ -52,21 +59,38 @@
       class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 px-3 py-2 rounded bg-indigo-600 text-white z-50"
       >Loncat ke konten</a
     >
-    
+
     <!-- Top Header -->
-    <header class="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+    <header
+      class="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
+    >
       <div class="flex h-16 items-center px-4 sm:px-6 lg:px-8">
-        <a href="/pages/id/index.html" class="flex items-center gap-2 font-semibold text-lg">
-          <img src="/public/img/logo.jpeg" alt="Logo LensCore" class="h-8 w-8 rounded" />
+        <a
+          href="/pages/id/index.html"
+          class="flex items-center gap-2 font-semibold text-lg"
+        >
+          <img
+            src="/public/img/logo.jpeg"
+            alt="Logo LensCore"
+            class="h-8 w-8 rounded"
+          />
           <span>LensCore</span>
         </a>
-        
+
         <nav class="hidden md:flex items-center gap-6 ml-8">
-          <a href="/pages/id/index.html" class="text-sm hover:text-indigo-600">Beranda</a>
-          <a href="/pages/id/getting-started.html" class="text-sm hover:text-indigo-600">Dokumentasi</a>
-          <a href="/pages/id/api.html" class="text-sm hover:text-indigo-600">API</a>
+          <a href="/pages/id/index.html" class="text-sm hover:text-indigo-600"
+            >Beranda</a
+          >
+          <a
+            href="/pages/id/getting-started.html"
+            class="text-sm hover:text-indigo-600"
+            >Dokumentasi</a
+          >
+          <a href="/pages/id/api.html" class="text-sm hover:text-indigo-600"
+            >API</a
+          >
         </nav>
-        
+
         <div class="flex items-center gap-3 ml-auto">
           <a
             href="/pages/en/contributing.html"
@@ -87,47 +111,89 @@
 
     <div class="flex">
       <!-- Sidebar Navigation -->
-      <aside class="hidden lg:block fixed top-16 left-0 bottom-0 w-64 border-r border-slate-200 dark:border-slate-800 overflow-y-auto bg-white dark:bg-slate-900 z-30">
+      <aside
+        class="hidden lg:block fixed top-16 left-0 bottom-0 w-64 border-r border-slate-200 dark:border-slate-800 overflow-y-auto bg-white dark:bg-slate-900 z-30"
+      >
         <nav class="p-6 space-y-8">
           <div>
-            <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+            <h3
+              class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3"
+            >
               Kontribusi
             </h3>
             <ul class="space-y-2">
               <li>
-                <a href="#introduction" class="block text-sm text-indigo-600 font-medium">Pengenalan</a>
+                <a
+                  href="#introduction"
+                  class="block text-sm text-indigo-600 font-medium"
+                  >Pengenalan</a
+                >
               </li>
               <li>
-                <a href="#getting-started" class="block text-sm hover:text-indigo-600">Memulai</a>
+                <a
+                  href="#getting-started"
+                  class="block text-sm hover:text-indigo-600"
+                  >Memulai</a
+                >
               </li>
               <li>
-                <a href="#development" class="block text-sm hover:text-indigo-600">Pengembangan</a>
+                <a
+                  href="#development"
+                  class="block text-sm hover:text-indigo-600"
+                  >Pengembangan</a
+                >
               </li>
               <li>
-                <a href="#guidelines" class="block text-sm hover:text-indigo-600">Panduan</a>
+                <a
+                  href="#guidelines"
+                  class="block text-sm hover:text-indigo-600"
+                  >Panduan</a
+                >
               </li>
               <li>
-                <a href="#pull-requests" class="block text-sm hover:text-indigo-600">Pull Request</a>
+                <a
+                  href="#pull-requests"
+                  class="block text-sm hover:text-indigo-600"
+                  >Pull Request</a
+                >
               </li>
             </ul>
           </div>
-          
+
           <div>
-            <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+            <h3
+              class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3"
+            >
               Dokumentasi
             </h3>
             <ul class="space-y-2">
               <li>
-                <a href="/pages/id/getting-started.html" class="block text-sm hover:text-indigo-600">Memulai</a>
+                <a
+                  href="/pages/id/getting-started.html"
+                  class="block text-sm hover:text-indigo-600"
+                  >Memulai</a
+                >
               </li>
               <li>
-                <a href="/pages/id/cli.html" class="block text-sm hover:text-indigo-600">Penggunaan CLI</a>
+                <a
+                  href="/pages/id/cli.html"
+                  class="block text-sm hover:text-indigo-600"
+                  >Penggunaan CLI</a
+                >
               </li>
               <li>
-                <a href="/pages/id/api.html" class="block text-sm hover:text-indigo-600">Referensi API</a>
+                <a
+                  href="/pages/id/api.html"
+                  class="block text-sm hover:text-indigo-600"
+                  >Referensi API</a
+                >
               </li>
               <li>
-                <a href="/pages/id/accessibility.html" class="block text-sm hover:text-indigo-600">Aksesibilitas</a>
+                <a
+                  href="/pages/id/accessibility.html"
+                  class="block text-sm hover:text-indigo-600"
+                  >Aksesibilitas</a
+                >
               </li>
             </ul>
           </div>
@@ -138,15 +204,21 @@
       <main id="content" class="flex-1 lg:pl-64">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <section id="introduction">
-            <h1 class="text-4xl font-bold tracking-tight">Berkontribusi ke LensCore</h1>
-            <p class="mt-4 text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
-              Terima kasih atas ketertarikan Anda untuk berkontribusi ke LensCore! Kami menyambut 
-              kontribusi dari semua orang. Panduan ini akan membantu Anda memulai berkontribusi 
-              ke proyek ini.
+            <h1 class="text-4xl font-bold tracking-tight">
+              Berkontribusi ke LensCore
+            </h1>
+            <p
+              class="mt-4 text-lg text-slate-600 dark:text-slate-400 leading-relaxed"
+            >
+              Terima kasih atas ketertarikan Anda untuk berkontribusi ke
+              LensCore! Kami menyambut kontribusi dari semua orang. Panduan ini
+              akan membantu Anda memulai berkontribusi ke proyek ini.
             </p>
           </section>
 
-          <section class="mt-12 p-6 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800">
+          <section
+            class="mt-12 p-6 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800"
+          >
             <h2 class="text-xl font-semibold">Cara Berkontribusi</h2>
             <ul class="mt-4 space-y-2 text-slate-700 dark:text-slate-300">
               <li class="flex items-start gap-2">
@@ -174,22 +246,30 @@
 
           <section id="getting-started" class="mt-12">
             <h2 class="text-2xl font-bold">Memulai</h2>
-            
+
             <div class="mt-6">
               <h3 class="text-xl font-semibold">1. Fork Repository</h3>
               <p class="mt-2 text-slate-600 dark:text-slate-400">
                 Mulai dengan melakukan fork repository di GitHub:
               </p>
-              <div class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto">
-                <pre class="text-slate-100 text-sm"><code># Fork di GitHub, lalu clone fork Anda
+              <div
+                class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto"
+              >
+                <pre
+                  class="text-slate-100 text-sm"
+                ><code># Fork di GitHub, lalu clone fork Anda
 git clone https://github.com/USERNAME_ANDA/LensCore.git
 cd LensCore</code></pre>
               </div>
             </div>
 
             <div class="mt-8">
-              <h3 class="text-xl font-semibold">2. Setup Environment Development</h3>
-              <div class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto">
+              <h3 class="text-xl font-semibold">
+                2. Setup Environment Development
+              </h3>
+              <div
+                class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto"
+              >
                 <pre class="text-slate-100 text-sm"><code># Install dependencies
 make install
 
@@ -206,8 +286,12 @@ make dev</code></pre>
               <p class="mt-2 text-slate-600 dark:text-slate-400">
                 Buat branch baru untuk fitur atau bugfix Anda:
               </p>
-              <div class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto">
-                <pre class="text-slate-100 text-sm"><code>git checkout -b feature/nama-fitur-anda
+              <div
+                class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto"
+              >
+                <pre
+                  class="text-slate-100 text-sm"
+                ><code>git checkout -b feature/nama-fitur-anda
 # atau
 git checkout -b fix/nama-bugfix-anda</code></pre>
               </div>
@@ -216,12 +300,16 @@ git checkout -b fix/nama-bugfix-anda</code></pre>
 
           <section id="development" class="mt-12">
             <h2 class="text-2xl font-bold">Alur Kerja Development</h2>
-            
+
             <div class="mt-6 space-y-6">
               <div>
                 <h3 class="text-lg font-semibold">Menjalankan Test</h3>
-                <div class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto">
-                  <pre class="text-slate-100 text-sm"><code># Jalankan semua test
+                <div
+                  class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto"
+                >
+                  <pre
+                    class="text-slate-100 text-sm"
+                  ><code># Jalankan semua test
 make test
 
 # Jalankan test dalam mode watch
@@ -234,7 +322,9 @@ npm test -- path/to/test.ts</code></pre>
 
               <div>
                 <h3 class="text-lg font-semibold">Linting & Formatting</h3>
-                <div class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto">
+                <div
+                  class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto"
+                >
                   <pre class="text-slate-100 text-sm"><code># Jalankan linter
 make lint
 
@@ -248,8 +338,12 @@ make format</code></pre>
 
               <div>
                 <h3 class="text-lg font-semibold">Type Checking</h3>
-                <div class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto">
-                  <pre class="text-slate-100 text-sm"><code># Jalankan TypeScript type checking
+                <div
+                  class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto"
+                >
+                  <pre
+                    class="text-slate-100 text-sm"
+                  ><code># Jalankan TypeScript type checking
 make typecheck</code></pre>
                 </div>
               </div>
@@ -260,9 +354,13 @@ make typecheck</code></pre>
             <h2 class="text-2xl font-bold">Panduan Kontribusi</h2>
 
             <div class="mt-6 space-y-6">
-              <div class="p-5 rounded-lg border border-slate-200 dark:border-slate-700">
+              <div
+                class="p-5 rounded-lg border border-slate-200 dark:border-slate-700"
+              >
                 <h3 class="font-semibold text-lg">Gaya Kode</h3>
-                <ul class="mt-3 space-y-2 text-slate-600 dark:text-slate-400 text-sm">
+                <ul
+                  class="mt-3 space-y-2 text-slate-600 dark:text-slate-400 text-sm"
+                >
                   <li>• Ikuti gaya kode dan konvensi yang ada</li>
                   <li>• Gunakan TypeScript dengan strict type checking</li>
                   <li>• Tulis kode yang jelas dan self-documenting</li>
@@ -271,9 +369,13 @@ make typecheck</code></pre>
                 </ul>
               </div>
 
-              <div class="p-5 rounded-lg border border-slate-200 dark:border-slate-700">
+              <div
+                class="p-5 rounded-lg border border-slate-200 dark:border-slate-700"
+              >
                 <h3 class="font-semibold text-lg">Testing</h3>
-                <ul class="mt-3 space-y-2 text-slate-600 dark:text-slate-400 text-sm">
+                <ul
+                  class="mt-3 space-y-2 text-slate-600 dark:text-slate-400 text-sm"
+                >
                   <li>• Tulis test untuk fitur baru</li>
                   <li>• Pastikan test yang ada tetap pass</li>
                   <li>• Targetkan code coverage yang tinggi</li>
@@ -281,9 +383,13 @@ make typecheck</code></pre>
                 </ul>
               </div>
 
-              <div class="p-5 rounded-lg border border-slate-200 dark:border-slate-700">
+              <div
+                class="p-5 rounded-lg border border-slate-200 dark:border-slate-700"
+              >
                 <h3 class="font-semibold text-lg">Aksesibilitas</h3>
-                <ul class="mt-3 space-y-2 text-slate-600 dark:text-slate-400 text-sm">
+                <ul
+                  class="mt-3 space-y-2 text-slate-600 dark:text-slate-400 text-sm"
+                >
                   <li>• Ikuti panduan WCAG 2.1</li>
                   <li>• Pastikan navigasi keyboard berfungsi</li>
                   <li>• Sediakan ARIA label yang tepat</li>
@@ -292,9 +398,13 @@ make typecheck</code></pre>
                 </ul>
               </div>
 
-              <div class="p-5 rounded-lg border border-slate-200 dark:border-slate-700">
+              <div
+                class="p-5 rounded-lg border border-slate-200 dark:border-slate-700"
+              >
                 <h3 class="font-semibold text-lg">Dokumentasi</h3>
-                <ul class="mt-3 space-y-2 text-slate-600 dark:text-slate-400 text-sm">
+                <ul
+                  class="mt-3 space-y-2 text-slate-600 dark:text-slate-400 text-sm"
+                >
                   <li>• Update dokumentasi yang relevan</li>
                   <li>• Tambahkan JSDoc comment ke fungsi</li>
                   <li>• Update README jika diperlukan</li>
@@ -340,8 +450,12 @@ make typecheck</code></pre>
               <p class="mt-2 text-slate-600 dark:text-slate-400">
                 Gunakan pesan commit yang jelas dan deskriptif:
               </p>
-              <div class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto">
-                <pre class="text-slate-100 text-sm"><code>feat: tambah rule aksesibilitas baru untuk kontras warna
+              <div
+                class="mt-3 rounded-lg bg-slate-900 dark:bg-slate-950 p-4 overflow-x-auto"
+              >
+                <pre
+                  class="text-slate-100 text-sm"
+                ><code>feat: tambah rule aksesibilitas baru untuk kontras warna
 fix: perbaiki masalah crawling halaman nested
 docs: update dokumentasi API untuk endpoint baru
 test: tambah unit test untuk service aksesibilitas
@@ -355,34 +469,58 @@ refactor: tingkatkan struktur kode di AI processor</code></pre>
                 Sertakan hal berikut dalam deskripsi PR Anda:
               </p>
               <div class="mt-3 p-4 rounded-lg bg-slate-50 dark:bg-slate-800/50">
-                <ul class="space-y-2 text-slate-600 dark:text-slate-400 text-sm">
-                  <li>• <strong>Deskripsi:</strong> Apa yang dilakukan PR ini?</li>
-                  <li>• <strong>Issue Terkait:</strong> Link ke issue yang terkait</li>
-                  <li>• <strong>Jenis Perubahan:</strong> Bug fix, feature, dokumentasi, dll</li>
+                <ul
+                  class="space-y-2 text-slate-600 dark:text-slate-400 text-sm"
+                >
+                  <li>
+                    • <strong>Deskripsi:</strong> Apa yang dilakukan PR ini?
+                  </li>
+                  <li>
+                    • <strong>Issue Terkait:</strong> Link ke issue yang terkait
+                  </li>
+                  <li>
+                    • <strong>Jenis Perubahan:</strong> Bug fix, feature,
+                    dokumentasi, dll
+                  </li>
                   <li>• <strong>Testing:</strong> Bagaimana ini ditest?</li>
                   <li>• <strong>Screenshot:</strong> Jika ada</li>
-                  <li>• <strong>Checklist:</strong> Test pass, docs updated, dll</li>
+                  <li>
+                    • <strong>Checklist:</strong> Test pass, docs updated, dll
+                  </li>
                 </ul>
               </div>
             </div>
           </section>
 
-          <section class="mt-12 p-6 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
+          <section
+            class="mt-12 p-6 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800"
+          >
             <h2 class="text-xl font-semibold">Kode Etik</h2>
             <p class="mt-3 text-slate-700 dark:text-slate-300">
-              Kami berkomitmen untuk menyediakan lingkungan yang ramah dan inklusif. Harap bersikap 
-              hormat dan perhatian dalam interaksi Anda dengan kontributor lain. Kami mengharapkan 
-              semua kontributor mengikuti Kode Etik kami.
+              Kami berkomitmen untuk menyediakan lingkungan yang ramah dan
+              inklusif. Harap bersikap hormat dan perhatian dalam interaksi Anda
+              dengan kontributor lain. Kami mengharapkan semua kontributor
+              mengikuti Kode Etik kami.
             </p>
           </section>
 
-          <section class="mt-12 pb-12 border-t border-slate-200 dark:border-slate-800 pt-12">
+          <section
+            class="mt-12 pb-12 border-t border-slate-200 dark:border-slate-800 pt-12"
+          >
             <h2 class="text-xl font-semibold">Ada Pertanyaan?</h2>
             <p class="mt-3 text-slate-600 dark:text-slate-400">
-              Jika Anda memiliki pertanyaan tentang kontribusi, jangan ragu untuk:
+              Jika Anda memiliki pertanyaan tentang kontribusi, jangan ragu
+              untuk:
             </p>
             <ul class="mt-4 space-y-2 text-slate-600 dark:text-slate-400">
-              <li>• Buka issue di <a href="https://github.com/Access-Time/LensCore/issues" class="text-indigo-600 hover:underline">GitHub</a></li>
+              <li>
+                • Buka issue di
+                <a
+                  href="https://github.com/Access-Time/LensCore/issues"
+                  class="text-indigo-600 hover:underline"
+                  >GitHub</a
+                >
+              </li>
               <li>• Bergabung dengan diskusi komunitas kami</li>
               <li>• Hubungi maintainer</li>
             </ul>
@@ -399,47 +537,50 @@ refactor: tingkatkan struktur kode di AI processor</code></pre>
       function updateActiveNavigation() {
         const sections = document.querySelectorAll('section[id]');
         const navLinks = document.querySelectorAll('aside nav a[href^="#"]');
-        
+
         let currentSection = '';
         const scrollPosition = window.scrollY + 100;
-        
-        sections.forEach(section => {
+
+        sections.forEach((section) => {
           const sectionTop = section.offsetTop;
           const sectionHeight = section.offsetHeight;
-          
-          if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+
+          if (
+            scrollPosition >= sectionTop &&
+            scrollPosition < sectionTop + sectionHeight
+          ) {
             currentSection = section.getAttribute('id');
           }
         });
-        
-        navLinks.forEach(link => {
+
+        navLinks.forEach((link) => {
           link.classList.remove('text-indigo-600', 'font-medium');
           link.classList.add('hover:text-indigo-600');
-          
+
           if (link.getAttribute('href') === `#${currentSection}`) {
             link.classList.add('text-indigo-600', 'font-medium');
             link.classList.remove('hover:text-indigo-600');
           }
         });
       }
-      
+
       window.addEventListener('scroll', updateActiveNavigation);
       document.addEventListener('DOMContentLoaded', updateActiveNavigation);
-      
-      document.querySelectorAll('aside nav a[href^="#"]').forEach(link => {
-        link.addEventListener('click', function(e) {
+
+      document.querySelectorAll('aside nav a[href^="#"]').forEach((link) => {
+        link.addEventListener('click', function (e) {
           e.preventDefault();
           const targetId = this.getAttribute('href').substring(1);
           const targetSection = document.getElementById(targetId);
-          
+
           if (targetSection) {
             const headerOffset = 80;
             const elementPosition = targetSection.offsetTop;
             const offsetPosition = elementPosition - headerOffset;
-            
+
             window.scrollTo({
               top: offsetPosition,
-              behavior: 'smooth'
+              behavior: 'smooth',
             });
           }
         });

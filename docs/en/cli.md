@@ -64,6 +64,7 @@ lens-core setup
 ```
 
 **Options:**
+
 - `--port <port>`: Set API port (default: 3001)
 - `--ai`: Enable AI features during setup
 - `--openai-key <key>`: Set OpenAI API key
@@ -75,6 +76,7 @@ lens-core setup
 Manage LensCore configuration settings.
 
 **Options:**
+
 - `-s, --set <key=value>`: Set configuration value (e.g., docker.port=3003)
 - `-g, --get <key>`: Get configuration value (e.g., docker.port)
 - `-l, --list`: List all configuration settings
@@ -102,6 +104,7 @@ lens-core config --set "openai.apiKey=your-key-here"
 Test accessibility of a single page.
 
 **Options:**
+
 - `--enable-ai`: Enable AI-powered analysis
 - `-k, --openai-key <key>`: OpenAI API key
 - `-c, --project-context <context>`: Project context (e.g., "react,tailwind")
@@ -144,6 +147,7 @@ lens-core test-multiple https://example.com https://google.com --web
 Crawl website and discover pages.
 
 **Options:**
+
 - `-w, --web`: Generate HTML report
 - `-u, --max-urls <number>`: Maximum URLs to crawl
 - `-d, --max-depth <number>`: Maximum crawl depth
@@ -235,6 +239,7 @@ lens-core test https://example.com
 ```
 
 Returns JSON with:
+
 - Test results
 - Violations
 - Passes
@@ -248,6 +253,7 @@ lens-core test https://example.com --web
 ```
 
 Generates an HTML report saved to `web/output/` directory with:
+
 - Visual representation
 - Detailed violation descriptions
 - Screenshot previews
@@ -421,7 +427,7 @@ fi
 ---
 
 For more information about specific features, check out:
+
 - [API Reference](/en/api) - RESTful API documentation
 - [Accessibility Guide](/en/accessibility) - WCAG compliance information
 - [Contributing Guide](/en/contributing) - How to contribute to LensCore
-

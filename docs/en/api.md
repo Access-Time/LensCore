@@ -17,6 +17,7 @@ http://localhost:3001/api/docs
 ```
 
 This provides a Swagger UI interface where you can:
+
 - View all available endpoints
 - Try out API calls directly
 - See request/response schemas
@@ -117,10 +118,7 @@ Test accessibility of multiple pages simultaneously.
 
 ```json
 {
-  "urls": [
-    "https://example.com",
-    "https://example.com/about"
-  ],
+  "urls": ["https://example.com", "https://example.com/about"],
   "enableAI": false,
   "projectContext": "",
   "timeout": 30000,
@@ -247,10 +245,7 @@ Warm up the cache with frequently accessed pages.
 
 ```json
 {
-  "urls": [
-    "https://example.com",
-    "https://example.com/about"
-  ]
+  "urls": ["https://example.com", "https://example.com/about"]
 }
 ```
 
@@ -318,8 +313,8 @@ const response = await fetch('http://localhost:3001/api/test', {
   body: JSON.stringify({
     url: 'https://example.com',
     enableAI: false,
-    tags: ['wcag2a', 'wcag2aa']
-  })
+    tags: ['wcag2a', 'wcag2aa'],
+  }),
 });
 
 const results = await response.json();
@@ -354,6 +349,7 @@ Download the complete OpenAPI specification:
 Currently, LensCore does not provide official SDK libraries. However, you can easily integrate with any HTTP client library in your preferred programming language.
 
 Consider using tools like:
+
 - **OpenAPI Generator**: Generate client SDKs from the OpenAPI spec
 - **Swagger Codegen**: Another option for SDK generation
 
@@ -368,7 +364,7 @@ For API-related issues or questions:
 ---
 
 For more information, see:
+
 - [Getting Started Guide](/en/getting-started)
 - [CLI Documentation](/en/cli)
 - [Contributing Guide](/en/contributing)
-
