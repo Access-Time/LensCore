@@ -944,7 +944,7 @@ name: Accessibility – LensCore
 on:
   pull_request:
   push:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   lenscore:
@@ -978,6 +978,7 @@ Note: Replace `accesstimehq/LensCore@v0.1.21` with the appropriate tag/release o
 - `vercel-environment` (optional, default `preview`)
 
 Secrets for `mode=vercel`:
+
 - `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
 
 ### 3) Usage Modes
@@ -1038,6 +1039,7 @@ jobs:
 ### 5) Authentication for Protected Pages
 
 The CLI currently does not support custom headers/cookies flags directly. Possible workarounds:
+
 - Use Basic Auth in the URL: `https://user:pass@host/path`
 - Use a URL that includes an access token (e.g., query param) in the preview environment
 - Provide a public route specifically for testing

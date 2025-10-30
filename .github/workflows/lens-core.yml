@@ -4,63 +4,63 @@ on:
   workflow_call:
     inputs:
       mode:
-        description: "Deployment mode: vercel | nextjs | custom"
+        description: 'Deployment mode: vercel | nextjs | custom'
         required: true
         type: string
       url:
-        description: "Target URL to scan (if already deployed/known)"
+        description: 'Target URL to scan (if already deployed/known)'
         required: false
         type: string
       build-command:
-        description: "Build command for nextjs/custom"
+        description: 'Build command for nextjs/custom'
         required: false
         type: string
-        default: "npm run build"
+        default: 'npm run build'
       start-command:
-        description: "Start command for nextjs/custom"
+        description: 'Start command for nextjs/custom'
         required: false
         type: string
-        default: "npm start"
+        default: 'npm start'
       port:
-        description: "Local port the app listens to (nextjs/custom)"
+        description: 'Local port the app listens to (nextjs/custom)'
         required: false
         type: number
         default: 3000
       scan-depth:
-        description: "Max crawl depth"
+        description: 'Max crawl depth'
         required: false
         type: number
         default: 2
       max-urls:
-        description: "Max URLs to crawl"
+        description: 'Max URLs to crawl'
         required: false
         type: number
         default: 10
       timeout:
-        description: "Request timeout (ms)"
+        description: 'Request timeout (ms)'
         required: false
         type: number
         default: 15000
       use-web-report:
-        description: "Generate HTML report in addition to JSON"
+        description: 'Generate HTML report in addition to JSON'
         required: false
         type: boolean
         default: true
       fail-on-violations:
-        description: "Fail CI when violations > 0"
+        description: 'Fail CI when violations > 0'
         required: false
         type: boolean
         default: true
       vercel-project-path:
-        description: "Relative path to the Vercel project (for monorepo)"
+        description: 'Relative path to the Vercel project (for monorepo)'
         required: false
         type: string
-        default: "."
+        default: '.'
       vercel-environment:
-        description: "Vercel environment: preview | production"
+        description: 'Vercel environment: preview | production'
         required: false
         type: string
-        default: "preview"
+        default: 'preview'
     secrets:
       VERCEL_TOKEN:
         required: false
@@ -101,7 +101,7 @@ jobs:
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           working-directory: ${{ inputs.vercel-project-path }}
-          vercel-args: "--build-env NEXT_TELEMETRY_DISABLED=1"
+          vercel-args: '--build-env NEXT_TELEMETRY_DISABLED=1'
           scope: ${{ secrets.VERCEL_ORG_ID }}
 
       - name: Resolve target URL for Vercel
@@ -204,5 +204,3 @@ jobs:
           if [ -f app.pid ]; then
             kill $(cat app.pid) || true
           fi
-
-
