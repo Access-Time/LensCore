@@ -972,6 +972,7 @@ Secrets for `mode=vercel`:
 - `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
 
 Additional settings via GitHub Variables (Repository/Environment variables):
+
 - `BUILD_COMMAND` (default `npm run build`)
 - `START_COMMAND` (default `npm start`)
 - `PORT` (default `3000`)
