@@ -930,6 +930,137 @@ This project adheres to the [Contributor Covenant Code of Conduct](CODE_OF_CONDU
 
 ---
 
+## 🧪 GitHub Actions CI Template
+
+Use the reusable workflow in this repo to run automated accessibility scans with LensCore on PRs and other branches.
+
+### 1) Include the Reusable Workflow
+
+Add the following file in your project repository (the consumer repo, not this one):
+
+```yaml
+name: Accessibility – LensCore
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+jobs:
+  lenscore:
+    uses: accesstimehq/LensCore/.github/workflows/lens-core.yml@v0.1.21
+    with:
+      mode: nextjs # vercel | nextjs | custom
+      port: 3000
+      use-web-report: true
+      fail-on-violations: true
+    secrets:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+```
+
+Note: Replace `accesstimehq/LensCore@v0.1.21` with the appropriate tag/release of this repo.
+
+### 2) Supported Inputs
+
+- `mode` (required): `vercel` | `nextjs` | `custom`
+- `url` (optional): Target URL if already available (skips deploy/local start)
+- `build-command` (optional, default `npm run build`)
+- `start-command` (optional, default `npm start`)
+- `port` (optional, default `3000` for `nextjs`/`custom`)
+- `scan-depth` (optional, default `2`)
+- `max-urls` (optional, default `10`)
+- `timeout` (optional, default `15000` ms)
+- `use-web-report` (optional, default `true`): also generate HTML report
+- `fail-on-violations` (optional, default `true`): fail if violations > 0
+- `vercel-project-path` (optional, default `.`): project path (monorepo)
+- `vercel-environment` (optional, default `preview`)
+
+Secrets for `mode=vercel`:
+- `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
+
+### 3) Usage Modes
+
+#### a. Vercel
+
+The workflow deploys via Vercel and automatically picks the preview URL for scanning.
+
+```yaml
+jobs:
+  lenscore:
+    uses: accesstimehq/LensCore/.github/workflows/lens-core.yml@v0.1.21
+    with:
+      mode: vercel
+      vercel-project-path: .
+    secrets:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+```
+
+If you already have a URL (e.g., from another job), you can pass it via `url`.
+
+#### b. Next.js (Local Build & Start)
+
+```yaml
+jobs:
+  lenscore:
+    uses: accesstimehq/LensCore/.github/workflows/lens-core.yml@v0.1.21
+    with:
+      mode: nextjs
+      port: 3000
+      build-command: npm run build
+      start-command: npm start
+```
+
+The workflow will wait for `http://localhost:PORT` to be ready, then run `lens-core scan`.
+
+#### c. Custom (Generic npm Project)
+
+```yaml
+jobs:
+  lenscore:
+    uses: accesstimehq/LensCore/.github/workflows/lens-core.yml@v0.1.21
+    with:
+      mode: custom
+      port: 5173
+      build-command: npm run build
+      start-command: npm run preview
+```
+
+### 4) Outputs & Artifacts
+
+- JSON: saved as `lenscore-report.json` (CLI stdout)
+- HTML: when `use-web-report=true`, HTML files are generated in `~/.lenscore/web/output/` and uploaded as `lenscore-reports` artifact
+- CI fails when `fail-on-violations=true` and violations > 0 (calculated with `jq`)
+
+### 5) Authentication for Protected Pages
+
+The CLI currently does not support custom headers/cookies flags directly. Possible workarounds:
+- Use Basic Auth in the URL: `https://user:pass@host/path`
+- Use a URL that includes an access token (e.g., query param) in the preview environment
+- Provide a public route specifically for testing
+
+When header/cookie support is available in the CLI, it can be wired via additional inputs (to be documented).
+
+### 6) Advanced Example
+
+Scan a specific URL (e.g., a critical page) and limit the crawl:
+
+```yaml
+with:
+  mode: nextjs
+  url: http://localhost:3000/checkout
+  max-urls: 1
+  scan-depth: 1
+  timeout: 20000
+  use-web-report: true
+  fail-on-violations: true
+```
+
+---
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
