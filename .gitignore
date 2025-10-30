@@ -1,23 +1,75 @@
+# Dependencies
 node_modules/
+*.pnp
+.pnp.js
+
+# Build outputs
 dist/
+*.tsbuildinfo
+
+# Logs
 logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Cache directories
 cache/
-/storage/
+.npm
+.eslintcache
+.turbo
+
+# Environment variables
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+.env*.local
+
+# Testing
 coverage/
 .nyc_output/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+*.lcov
+
+# Storage (user-generated files)
+/storage/
+/storage/screenshots/
+
+# Web output (generated reports)
+web/output/
+
+# VitePress
+docs/.vitepress/dist
+docs/.vitepress/cache
+.temp
+.cache
+
+# OS files
 .DS_Store
+Thumbs.db
+
+# IDE / Editor
 .vscode/
 .idea/
+*.sublime-project
+*.sublime-workspace
 *.swp
 *.swo
 *~
-web/output/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Optional: Keep these commented if you want to track them
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
