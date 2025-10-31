@@ -101,15 +101,15 @@ export default defineConfig({
               text: 'CLI',
               items: [
                 { text: 'Overview', link: '/en/cli' },
-                { text: 'Commands', link: '/en/cli#commands' },
-                { text: 'Examples', link: '/en/cli#examples' },
+                { text: 'Commands', link: '/en/cli#commands-overview' },
+                { text: 'Examples', link: '/en/cli#real-world-examples' },
               ],
             },
             {
               text: 'API Reference',
               items: [
                 { text: 'Overview', link: '/en/api' },
-                { text: 'Endpoints', link: '/en/api#endpoints' },
+                { text: 'Endpoints', link: '/en/api#api-endpoints' },
               ],
             },
             {
@@ -158,10 +158,10 @@ export default defineConfig({
               text: 'Memulai',
               items: [
                 { text: 'Pengenalan', link: '/id/getting-started' },
-                { text: 'Instalasi', link: '/id/getting-started#installation' },
+                { text: 'Instalasi', link: '/id/getting-started#instalasi' },
                 {
                   text: 'Mulai Cepat',
-                  link: '/id/getting-started#quick-start',
+                  link: '/id/getting-started#mulai-cepat',
                 },
               ],
             },
@@ -169,15 +169,18 @@ export default defineConfig({
               text: 'CLI',
               items: [
                 { text: 'Ringkasan', link: '/id/cli' },
-                { text: 'Perintah', link: '/id/cli#commands' },
-                { text: 'Contoh', link: '/id/cli#examples' },
+                { text: 'Perintah', link: '/id/cli#ringkasan-perintah' },
+                {
+                  text: 'Contoh',
+                  link: '/id/cli#contoh-penggunaan-real-world',
+                },
               ],
             },
             {
               text: 'Referensi API',
               items: [
                 { text: 'Ringkasan', link: '/id/api' },
-                { text: 'Endpoints', link: '/id/api#endpoints' },
+                { text: 'Endpoints', link: '/id/api#endpoint-api' },
               ],
             },
             {

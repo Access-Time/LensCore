@@ -63,11 +63,33 @@
 
 .VPSidebar .VPSidebarItem .link {
   padding: 8px 12px;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
 /* Fix sidebar hover bug - ensure only hovered item gets highlight */
 .VPSidebar .VPSidebarItem .link:hover {
   background-color: var(--vp-c-default-soft);
+  cursor: pointer;
+}
+
+.VPSidebar .VPSidebarItem .link.active {
+  background-color: var(--vp-c-brand-soft);
+  color: var(--vp-c-brand);
+  cursor: pointer;
+}
+
+.VPSidebar .VPSidebarItem .link.active:hover {
+  background-color: var(--vp-c-brand-soft);
+  color: var(--vp-c-brand);
+  cursor: pointer;
+}
+
+/* Only highlight exact active link matching current hash */
+.VPSidebar .VPSidebarItem .link {
+  background-color: transparent;
 }
 
 .VPSidebar .VPSidebarItem .link.active {
@@ -75,18 +97,34 @@
   color: var(--vp-c-brand);
 }
 
-.VPSidebar .VPSidebarItem .link.active:hover {
-  background-color: var(--vp-c-brand-soft);
-  color: var(--vp-c-brand);
+/* Ensure non-active links don't have active styling even if parent is active */
+.VPSidebar .VPSidebarItem .link:not(.active) {
+  background-color: transparent !important;
 }
 
-/* Remove hover state from parent when child is active */
+.VPSidebar .VPSidebarItem .link:not(.active):hover {
+  background-color: var(--vp-c-default-soft);
+}
+
+/* Override Vitepress default behavior for parent highlighting */
 .VPSidebar .VPSidebarItem:has(.link.active) > .link:not(.active) {
-  background-color: transparent;
+  background-color: transparent !important;
+  color: inherit !important;
 }
 
 .VPSidebar .VPSidebarItem:has(.link.active) > .link:not(.active):hover {
-  background-color: var(--vp-c-default-soft);
+  background-color: var(--vp-c-default-soft) !important;
+}
+
+/* Ensure all sidebar items are clickable with proper cursor */
+.VPSidebar .VPSidebarItem,
+.VPSidebar .VPSidebarItem .link,
+.VPSidebar .VPSidebarItem .group-title {
+  cursor: pointer;
+}
+
+.VPSidebar .VPSidebarItem .group-title:hover {
+  color: var(--vp-c-brand);
 }
 
 /* Adjust content when sidebar is visible */
@@ -151,6 +189,14 @@
 .VPFlyout .text,
 .VPMenu .text {
   font-size: 15px;
+}
+
+/* Ensure nav links have proper cursor */
+.VPNav .VPLink,
+.VPNav .menu-text,
+.VPFlyout .text,
+.VPMenu .text {
+  cursor: pointer;
 }
 
 /* Skip link styles */
@@ -335,4 +381,20 @@ th {
 .vp-doc h5,
 .vp-doc h6 {
   max-width: 100%;
+}
+
+/* Smooth scroll for anchor links */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Anchor link scroll offset for fixed header */
+:target {
+  scroll-margin-top: calc(var(--vp-nav-height) + 20px);
+}
+
+.vp-doc h2,
+.vp-doc h3,
+.vp-doc h4 {
+  scroll-margin-top: calc(var(--vp-nav-height) + 20px);
 }
