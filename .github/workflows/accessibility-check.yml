@@ -1,4 +1,3 @@
-# Accessibility compliance check for documentation
 name: Accessibility Check
 
 on:
@@ -20,11 +19,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
@@ -34,25 +33,111 @@ jobs:
 
       - name: Start preview server
         run: |
-          npm run docs:preview &
-          echo $! > .preview-pid
-          # Wait for server to be ready
-          sleep 5
+          npm run docs:preview > /tmp/preview.log 2>&1 &
+          echo $! > /tmp/preview.pid
 
-      - name: Install axe-core
-        run: npm install -g @axe-core/cli
-
-      - name: Run accessibility tests
+      - name: Wait for server
         run: |
-          axe http://localhost:4173 --stdout || true
+          timeout=60
+          elapsed=0
+          while [ $elapsed -lt $timeout ]; do
+            if curl -f http://localhost:4173 > /dev/null 2>&1; then
+              echo "Server is ready"
+              exit 0
+            fi
+            sleep 2
+            elapsed=$((elapsed + 2))
+          done
+          echo "Server failed to start" >&2
+          exit 1
+
+      - name: Install LensCore CLI
+        run: npm install -g @accesstime/lenscore@latest
+
+      - name: Setup LensCore
+        run: |
+          mkdir -p ~/.lenscore
+          cat > ~/.lenscore/config.json << 'EOF'
+          {
+            "mode": "local",
+            "docker": {
+              "image": "lenscore:latest",
+              "port": 3001
+            },
+            "remote": {
+              "baseUrl": "http://localhost:3001"
+            }
+          }
+          EOF
+
+      - name: Start LensCore services
+        run: |
+          lens-core up || true
+          sleep 20
+          timeout=90
+          elapsed=0
+          while [ $elapsed -lt $timeout ]; do
+            if curl -f http://localhost:3001/api/health > /dev/null 2>&1; then
+              echo "LensCore is ready"
+              exit 0
+            fi
+            sleep 3
+            elapsed=$((elapsed + 3))
+          done
+          echo "LensCore health check failed" >&2
+
+      - name: Run accessibility scan
+        run: |
+          lens-core scan http://localhost:4173 \
+            -u 50 \
+            -d 3 \
+            -t 30000 \
+            > /tmp/scan-result.json 2>&1 || true
+
+      - name: Parse scan results
+        run: |
+          if [ -f /tmp/scan-result.json ]; then
+            python3 << 'PYEOF'
+          import json
+          import sys
+          import re
+
+          try:
+              with open('/tmp/scan-result.json', 'r') as f:
+                  content = f.read()
+              
+              json_match = re.search(r'\{[\s\S]*\}', content)
+              if json_match:
+                  data = json.loads(json_match.group())
+                  violations = sum(len(r.get('violations', [])) for r in data.get('accessibility', {}).get('results', []))
+                  
+                  if violations > 0:
+                      print(f"::error::Found {violations} accessibility violations")
+                      sys.exit(1)
+                  else:
+                      print("✅ No accessibility violations found")
+                      sys.exit(0)
+          except Exception as e:
+              print(f"::warning::Could not parse results: {e}")
+              sys.exit(0)
+          PYEOF
+          else
+            echo "::warning::Scan result file not found"
+          fi
 
       - name: Stop preview server
         if: always()
         run: |
-          if [ -f .preview-pid ]; then
-            kill $(cat .preview-pid) || true
-            rm .preview-pid
+          if [ -f /tmp/preview.pid ]; then
+            kill $(cat /tmp/preview.pid) 2>/dev/null || true
+            rm /tmp/preview.pid
           fi
+          pkill -f "vitepress preview" || true
+
+      - name: Stop LensCore services
+        if: always()
+        run: |
+          lens-core down || true
 
       - name: Comment PR with results
         if: github.event_name == 'pull_request'
@@ -63,5 +148,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '✅ Accessibility check completed. Please review the logs for any violations.'
+              body: '✅ Accessibility check completed. Review logs for detailed results.'
             })
