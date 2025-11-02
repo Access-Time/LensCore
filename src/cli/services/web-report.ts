@@ -45,6 +45,32 @@ export class WebReportService {
       );
     });
 
+    Handlebars.registerHelper('pageResultsForScan', (results: any[]) => {
+      return new Handlebars.SafeString(
+        HtmlGeneratorService.generatePageResultsForScan(results || [])
+      );
+    });
+
+    Handlebars.registerHelper('extractScreenshotPath', (url: string) => {
+      if (!url) return '';
+      if (url.startsWith('http://') || url.startsWith('https://')) {
+        return url;
+      }
+      if (url.startsWith('gs://')) {
+        const parts = url.split('/');
+        return `/storage/screenshots/${parts[parts.length - 1]}`;
+      }
+      if (url.includes('screenshots/')) {
+        const parts = url.split('screenshots/');
+        return `/storage/screenshots/${parts[parts.length - 1]}`;
+      }
+      if (url.includes('/')) {
+        const parts = url.split('/');
+        return `/storage/screenshots/${parts[parts.length - 1]}`;
+      }
+      return `/storage/screenshots/${url}`;
+    });
+
     Handlebars.registerHelper('testViolationsSection', (violations: any[]) => {
       return new Handlebars.SafeString(
         HtmlGeneratorService.generateTestViolationsSection(violations || [])
@@ -128,6 +154,7 @@ export class WebReportService {
       PASSED_CHECKS: testData.passes?.length || 0,
       VIOLATIONS: testData.violations?.length || 0,
       SCREENSHOT_STATUS: testData.screenshot ? 'Available' : 'Not available',
+      SCREENSHOT_URL: testData.screenshot || null,
       TEST_TIME: new Date().toLocaleString(),
       violations: testData.violations || [],
       passes: testData.passes || [],

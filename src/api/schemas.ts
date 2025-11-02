@@ -19,6 +19,7 @@ export const crawlRequestSchema = z.object({
     .optional(),
   headers: z.record(z.string()).optional(),
   rules: crawlRulesSchema.optional(),
+  skipCache: z.boolean().optional(),
 });
 
 export const accessibilityRequestSchema = z.object({
@@ -27,6 +28,7 @@ export const accessibilityRequestSchema = z.object({
   includeScreenshot: z.boolean().optional(),
   rules: z.array(z.string()).optional(),
   tags: z.array(z.string()).optional(),
+  skipCache: z.boolean().optional(),
 });
 
 export const combinedRequestSchema = z.object({

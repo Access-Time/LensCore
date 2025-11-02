@@ -45,6 +45,7 @@ export async function scanCommand(url: string, options: any) {
       enableAI: !!aiConfig,
       openaiKey: aiConfig?.apiKey,
       projectContext,
+      skipCache: options.skipCache || false,
       ...numericOptions,
     };
 
@@ -52,6 +53,18 @@ export async function scanCommand(url: string, options: any) {
     const result = await client.scan(scanOptions);
 
     spinner.succeed('Scan completed');
+
+    const totalTime = result.totalTime || 0;
+    const totalPages = result.crawl?.totalPages || 0;
+
+    if (totalTime < 1000 && totalPages > 0 && !options.skipCache) {
+      console.log(
+        chalk.yellow(
+          '\n⚠️  Scan completed very quickly - results may be from cache.'
+        )
+      );
+      console.log(chalk.gray('   Use --skip-cache to force a fresh scan.\n'));
+    }
 
     const webMode = options.web || false;
     const reportFilename = CommandUtils.displayScanResults(result, webMode);

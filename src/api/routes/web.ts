@@ -3,6 +3,7 @@ import { Router } from 'express';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
+import { env } from '../../utils/env';
 
 const router = Router();
 
@@ -37,6 +38,45 @@ function findWebOutputDir(): string {
   const foundPath = possiblePaths.find((p) => {
     try {
       return fs.existsSync(p);
+    } catch {
+      return false;
+    }
+  });
+
+  return foundPath || possiblePaths[0]!;
+}
+
+/**
+ * Find screenshots directory with multiple fallback paths
+ */
+function findScreenshotsDir(): string {
+  const possiblePaths = [
+    // User's home directory (preferred for global usage) - CLI default
+    path.join(os.homedir(), '.lenscore', 'storage', 'screenshots'),
+    // Current working directory with .lenscore
+    path.join(process.cwd(), '.lenscore', 'storage', 'screenshots'),
+    // Use STORAGE_PATH from env if set
+    env.STORAGE_PATH
+      ? path.join(path.resolve(env.STORAGE_PATH), 'screenshots')
+      : null,
+    // Standard storage path (default)
+    path.join(path.resolve(env.STORAGE_PATH || './storage'), 'screenshots'),
+    // Development mode - from source
+    path.join(process.cwd(), 'storage', 'screenshots'),
+    // Docker container - from app directory
+    path.join('/app', 'storage', 'screenshots'),
+  ].filter((p): p is string => p !== null);
+
+  // Find the first existing path that has files or use the first one
+  const foundPath = possiblePaths.find((p) => {
+    try {
+      if (fs.existsSync(p) && fs.statSync(p).isDirectory()) {
+        const files = fs.readdirSync(p);
+        if (files.length > 0) {
+          return true;
+        }
+      }
+      return false;
     } catch {
       return false;
     }
@@ -97,7 +137,7 @@ router.get('/storage/screenshots/:filename', (req: any, res: any) => {
       return res.status(400).json({ error: 'Invalid filename' });
     }
 
-    const screenshotsDir = path.join(process.cwd(), 'storage', 'screenshots');
+    const screenshotsDir = findScreenshotsDir();
     const filePath = path.join(screenshotsDir, filename);
 
     if (!fs.existsSync(filePath)) {

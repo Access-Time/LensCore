@@ -50,24 +50,35 @@ export class AccessibilityService {
   }
 
   async testAccessibility(
-    request: AccessibilityRequest
+    request: AccessibilityRequest & { skipCache?: boolean }
   ): Promise<AccessibilityResult> {
     const cacheKey = this.generateCacheKey(request);
+    const skipCache = request.skipCache === true;
 
-    try {
-      const cachedResult = await this.cacheService.get({
-        ruleId: cacheKey,
-        projectContext: {},
-      });
+    if (!skipCache) {
+      try {
+        const cachedResult = await this.cacheService.get({
+          ruleId: cacheKey,
+          projectContext: {},
+        });
 
-      if (cachedResult) {
-        logger.info('Cache hit for accessibility result', { url: request.url });
-        return cachedResult.value as AccessibilityResult;
+        if (cachedResult) {
+          logger.info('Cache hit for accessibility result', {
+            url: request.url,
+          });
+          return cachedResult.value as AccessibilityResult;
+        }
+
+        logger.info('Cache miss for accessibility result', {
+          url: request.url,
+        });
+      } catch (error) {
+        logger.warn('Cache error during accessibility test', { error });
       }
-
-      logger.info('Cache miss for accessibility result', { url: request.url });
-    } catch (error) {
-      logger.warn('Cache error during accessibility test', { error });
+    } else {
+      logger.info('Cache skipped for accessibility result', {
+        url: request.url,
+      });
     }
 
     const timeout = request.timeout || parseInt(env.AXE_TIMEOUT);
@@ -149,9 +160,28 @@ export class AccessibilityService {
               tempPath,
               screenshotKey
             );
-            await fs.unlink(tempPath);
+
+            const fileExists = await fs
+              .access(screenshotUrl)
+              .then(() => true)
+              .catch(() => false);
+            if (!fileExists) {
+              logger.error('Screenshot file not found after upload', {
+                screenshotUrl,
+                screenshotKey,
+              });
+              screenshotUrl = undefined;
+            } else {
+              logger.info('Screenshot saved successfully', {
+                screenshotUrl,
+                screenshotKey,
+              });
+            }
+
+            await fs.unlink(tempPath).catch(() => {});
           } catch (error) {
-            logger.error('Screenshot error:', { error });
+            logger.error('Screenshot error:', { error, url: request.url });
+            screenshotUrl = undefined;
           }
         }
 

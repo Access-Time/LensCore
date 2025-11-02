@@ -23,10 +23,14 @@ export const combinedHandler = async (
       ...(request.crawlOptions || {}),
     });
 
+    const skipCache =
+      req.body.skipCache === true ||
+      (request.testOptions as any)?.skipCache === true;
     const testRequests: AccessibilityRequest[] = crawlResult.pages.map(
       (page) => ({
         url: page.url,
         includeScreenshot: true,
+        skipCache,
         ...(request.testOptions || {}),
       })
     );

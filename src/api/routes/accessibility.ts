@@ -87,6 +87,10 @@ export const testMultipleHandler = async (
 
     if (Array.isArray(req.body)) {
       requests = z.array(accessibilityRequestSchema).parse(req.body);
+      const firstRequest = req.body[0];
+      enableAI = firstRequest?.enableAI === true;
+      aiApiKey = firstRequest?.aiApiKey || env.OPENAI_API_KEY;
+      projectContext = firstRequest?.projectContext || {};
     } else {
       const bodySchema = z.object({
         requests: z.array(accessibilityRequestSchema),
@@ -108,6 +112,15 @@ export const testMultipleHandler = async (
       enableAI = parsedBody.enableAI === true;
       aiApiKey = parsedBody.aiApiKey || env.OPENAI_API_KEY;
       projectContext = parsedBody.projectContext || {};
+    }
+
+    if (enableAI && !aiApiKey) {
+      res.status(400).json({
+        error: 'AI API key is required when enableAI is true',
+        message:
+          'Please provide aiApiKey in request body or set OPENAI_API_KEY environment variable',
+      });
+      return;
     }
 
     const testResult = await accessibilityService.testMultiplePages(requests);

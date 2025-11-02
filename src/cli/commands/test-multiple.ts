@@ -47,6 +47,7 @@ export async function testMultipleCommand(urls: string[], options: any) {
       openaiKey: aiConfig?.apiKey,
       projectContext,
       includeScreenshot: options.screenshot !== false,
+      skipCache: options.skipCache || false,
       rules: CommandUtils.parseCommaSeparated(options.rules),
       tags: CommandUtils.parseCommaSeparated(options.tags),
       ...numericOptions,

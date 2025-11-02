@@ -8,6 +8,7 @@ import { testCommand } from './cli/commands/test.js';
 import { testMultipleCommand } from './cli/commands/test-multiple.js';
 import { healthCommand } from './cli/commands/health.js';
 import { configCommand } from './cli/commands/config.js';
+import { cacheClearCommand, cacheStatsCommand } from './cli/commands/cache.js';
 import { GlobalErrorHandler } from './cli/services/error-handler.js';
 import { readFileSync } from 'fs';
 import { join } from 'path';
@@ -67,6 +68,7 @@ program
     'Page load condition',
     'domcontentloaded'
   )
+  .option('--skip-cache', 'Bypass cache and force fresh crawl')
   .action(crawlCommand);
 
 program
@@ -83,6 +85,7 @@ program
   .option('-r, --rules <rules>', 'Specific axe-core rules (comma-separated)')
   .option('-g, --tags <tags>', 'WCAG tags (comma-separated)')
   .option('--no-screenshot', 'Disable screenshot capture')
+  .option('--skip-cache', 'Bypass cache and force fresh test')
   .action(testCommand);
 
 program
@@ -99,6 +102,7 @@ program
   .option('-r, --rules <rules>', 'Specific axe-core rules (comma-separated)')
   .option('-g, --tags <tags>', 'WCAG tags (comma-separated)')
   .option('--no-screenshot', 'Disable screenshot capture')
+  .option('--skip-cache', 'Bypass cache and force fresh test')
   .action(testMultipleCommand);
 
 program
@@ -115,6 +119,7 @@ program
   .option('-d, --max-depth <number>', 'Maximum crawl depth', '2')
   .option('-t, --timeout <number>', 'Request timeout in milliseconds', '15000')
   .option('-j, --concurrency <number>', 'Number of concurrent requests', '3')
+  .option('--skip-cache', 'Bypass cache and force fresh scan')
   .action(scanCommand);
 
 // ============================================================================
@@ -125,6 +130,16 @@ program
   .command('health')
   .description('Check LensCore health status')
   .action(healthCommand);
+
+program
+  .command('cache:clear')
+  .description('Clear all cached data')
+  .action(cacheClearCommand);
+
+program
+  .command('cache:stats')
+  .description('Show cache statistics')
+  .action(cacheStatsCommand);
 
 program
   .command('build')

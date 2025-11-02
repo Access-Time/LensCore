@@ -84,6 +84,7 @@ export class LensCoreClient {
           enableAI: options.enableAI,
           aiApiKey: options.openaiKey,
           projectContext: options.projectContext,
+          skipCache: options.skipCache || false,
         }),
       });
 
@@ -123,6 +124,7 @@ export class LensCoreClient {
             enableAI: options.enableAI,
             aiApiKey: options.openaiKey,
             projectContext: options.projectContext,
+            skipCache: options.skipCache || false,
           }),
         },
         3,
@@ -160,6 +162,7 @@ export class LensCoreClient {
             enableAI: options.enableAI,
             aiApiKey: options.openaiKey,
             projectContext: options.projectContext,
+            skipCache: options.skipCache || false,
             crawlOptions: {
               maxUrls: options.maxUrls || 10,
               concurrency: options.concurrency || 3,
@@ -169,6 +172,7 @@ export class LensCoreClient {
             testOptions: {
               includeScreenshot: true,
               timeout: options.timeout || 15000,
+              skipCache: options.skipCache || false,
             },
           }),
         }
@@ -210,6 +214,7 @@ export class LensCoreClient {
               enableAI: options.enableAI,
               aiApiKey: options.openaiKey,
               projectContext: options.projectContext,
+              skipCache: options.skipCache || false,
             }))
           ),
         }
@@ -238,5 +243,37 @@ export class LensCoreClient {
     }
 
     return response.json();
+  }
+
+  async clearCache(): Promise<any> {
+    const response = await this.fetchWithRetry(
+      `${this.baseUrl}/api/cache/clear`,
+      {
+        method: 'DELETE',
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`HTTP ${response.status}: ${errorText}`);
+    }
+
+    return await response.json();
+  }
+
+  async getCacheStats(): Promise<any> {
+    const response = await this.fetchWithRetry(
+      `${this.baseUrl}/api/cache/stats`,
+      {
+        method: 'GET',
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`HTTP ${response.status}: ${errorText}`);
+    }
+
+    return await response.json();
   }
 }

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import Handlebars from 'handlebars';
-import { marked } from 'marked';
+import marked from 'marked';
 
 export class HtmlGeneratorService {
   private static escapeHtml(text: string): string {
@@ -183,6 +183,11 @@ export class HtmlGeneratorService {
             </div>
           </div>
           ${
+            violation.nodes && violation.nodes.length > 0
+              ? this.generateCollapsibleCode(violation.nodes, 'problem')
+              : ''
+          }
+          ${
             violation.userStory
               ? `
             <div class="ai-explanation" style="margin-top: 0.75rem;">
@@ -203,15 +208,10 @@ export class HtmlGeneratorService {
               : ''
           }
           ${
-            violation.nodes && violation.nodes.length > 0
-              ? this.generateCollapsibleCode(violation.nodes, 'problem')
-              : ''
-          }
-          ${
             violation.aiRemediation
               ? `
-            <div class="ai-remediation" style="margin-top: 1rem;">
-              <h5 class="ai-remediation-title">AI Remediation</h5>
+            <div class="ai-remediation" style="margin-top: 0.75rem;">
+              <h5 class="ai-remediation-title">Solution</h5>
               <div class="ai-remediation-text">${this.markdownToHtml(violation.aiRemediation)}</div>
             </div>
           `
@@ -251,6 +251,11 @@ export class HtmlGeneratorService {
             </div>
           </div>
           ${
+            violation.nodes && violation.nodes.length > 0
+              ? this.generateCollapsibleCode(violation.nodes, 'problem')
+              : ''
+          }
+          ${
             violation.userStory
               ? `
             <div class="ai-explanation" style="margin-top: 0.75rem;">
@@ -271,15 +276,10 @@ export class HtmlGeneratorService {
               : ''
           }
           ${
-            violation.nodes && violation.nodes.length > 0
-              ? this.generateCollapsibleCode(violation.nodes, 'problem')
-              : ''
-          }
-          ${
             violation.aiRemediation
               ? `
-            <div class="ai-remediation" style="margin-top: 1rem;">
-              <h5 class="ai-remediation-title">AI Remediation</h5>
+            <div class="ai-remediation" style="margin-top: 0.75rem;">
+              <h5 class="ai-remediation-title">Solution</h5>
               <div class="ai-remediation-text">${this.markdownToHtml(violation.aiRemediation)}</div>
             </div>
           `
@@ -289,6 +289,190 @@ export class HtmlGeneratorService {
       </div>
     `
       )
+      .join('');
+  }
+
+  static extractScreenshotPath(screenshotUrl: string): string {
+    if (!screenshotUrl) return '';
+    if (
+      screenshotUrl.startsWith('http://') ||
+      screenshotUrl.startsWith('https://')
+    ) {
+      return screenshotUrl;
+    }
+    if (screenshotUrl.startsWith('gs://')) {
+      const parts = screenshotUrl.split('/');
+      return `/storage/screenshots/${parts[parts.length - 1]}`;
+    }
+    if (screenshotUrl.includes('screenshots/')) {
+      const parts = screenshotUrl.split('screenshots/');
+      const fileName = parts[parts.length - 1];
+      if (fileName && fileName !== screenshotUrl) {
+        return `/storage/screenshots/${fileName}`;
+      }
+    }
+    if (screenshotUrl.includes('screenshots\\')) {
+      const parts = screenshotUrl.split('screenshots\\');
+      const fileName = parts[parts.length - 1];
+      if (fileName && fileName !== screenshotUrl) {
+        return `/storage/screenshots/${fileName}`;
+      }
+    }
+    const fileName = screenshotUrl.split(/[/\\]/).pop() || screenshotUrl;
+    if (fileName && fileName.endsWith('.png')) {
+      return `/storage/screenshots/${fileName}`;
+    }
+    return `/storage/screenshots/${screenshotUrl}`;
+  }
+
+  private static generateScreenshotSection(
+    imgPath: string,
+    url: string
+  ): string {
+    return `
+      <div style="margin-bottom: 1.5rem;">
+        <h4 style="font-size: 1rem; font-weight: 500; color: #111827; margin-bottom: 0.75rem;">Screenshot</h4>
+        <div style="border: 1px solid #e5e7eb; border-radius: 0.5rem; overflow: hidden; background: #f9fafb;">
+          <div style="max-height: 800px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #f3f4f6;">
+            <img 
+              src="${imgPath}" 
+              alt="Screenshot of ${this.escapeHtml(url)}" 
+              style="max-width: 100%; max-height: 800px; height: auto; width: auto; display: block; object-fit: contain; cursor: pointer;"
+              onclick="window.open('${imgPath}', '_blank')"
+            />
+          </div>
+          <div style="padding: 0.75rem; border-top: 1px solid #e5e7eb; background: white;">
+            <a href="${imgPath}" target="_blank" style="font-size: 0.875rem; color: #3b82f6; text-decoration: none;">Open full size</a>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  static generatePageResultsForScan(results: any[]): string {
+    if (!results || results.length === 0) {
+      return '<div style="text-align: center; color: #6b7280; padding: 2rem;">No accessibility results found</div>';
+    }
+
+    return results
+      .map((result, index) => {
+        const imgPath = result.screenshot
+          ? this.extractScreenshotPath(result.screenshot)
+          : null;
+        return `
+      <div class="card" style="margin-bottom: 2rem;">
+        <div style="border-bottom: 1px solid #e5e7eb; padding-bottom: 1rem; margin-bottom: 1.5rem;">
+          <h3 style="font-size: 1.25rem; font-weight: 600; color: #111827; margin-bottom: 0.5rem;">
+            Page ${index + 1}
+          </h3>
+          <a href="${this.escapeHtml(result.url)}" target="_blank" style="font-size: 0.875rem; color: #3b82f6; word-break: break-all;">
+            ${this.escapeHtml(result.url)}
+          </a>
+          <div style="display: flex; gap: 1rem; margin-top: 0.75rem;">
+            <div style="font-size: 0.875rem; color: #6b7280;">
+              Violations: <span style="font-weight: 500; color: ${result.violations?.length > 0 ? '#f59e0b' : '#10b981'}">${result.violations?.length || 0}</span>
+            </div>
+            <div style="font-size: 0.875rem; color: #6b7280;">
+              Passed: <span style="font-weight: 500; color: #10b981">${result.passes?.length || 0}</span>
+            </div>
+          </div>
+        </div>
+
+        ${imgPath ? this.generateScreenshotSection(imgPath, result.url) : ''}
+
+        ${
+          result.violations && result.violations.length > 0
+            ? `
+        <div style="margin-bottom: 1.5rem;">
+          <h4 style="font-size: 1rem; font-weight: 500; color: #111827; margin-bottom: 0.75rem;">
+            Violations (${result.violations.length})
+          </h4>
+          <div>
+            ${result.violations
+              .map(
+                (violation: any) => `
+              <div style="border: 1px solid rgba(245, 158, 11, 0.2); background: rgba(245, 158, 11, 0.05); border-radius: 0.5rem; padding: 1rem; margin-bottom: 0.75rem;">
+                <h5 style="font-size: 0.875rem; font-weight: 500; color: #111827; margin-bottom: 0.25rem;">${this.escapeHtml(violation.id)}</h5>
+                <p style="font-size: 0.8125rem; color: #6b7280; margin-bottom: 0.5rem;">${this.escapeHtml(violation.description)}</p>
+                <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                  <span style="display: inline-flex; align-items: center; padding: 0.25rem 0.5rem; border-radius: 9999px; background: rgba(245, 158, 11, 0.2); color: #f59e0b; font-size: 0.75rem;">
+                    ${violation.impact || 'unknown'} impact
+                  </span>
+                  <a href="${this.escapeHtml(violation.helpUrl)}" target="_blank" style="font-size: 0.75rem; color: #3b82f6;">
+                    Help: ${this.escapeHtml(violation.help)}
+                  </a>
+                </div>
+                ${
+                  violation.nodes && violation.nodes.length > 0
+                    ? this.generateCollapsibleCode(violation.nodes, 'problem')
+                    : ''
+                }
+                ${
+                  violation.aiExplanation
+                    ? `
+                <div style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(59, 130, 246, 0.05); border-radius: 0.5rem; border-left: 3px solid #3b82f6;">
+                  <div style="font-size: 0.75rem; font-weight: 500; color: #3b82f6; margin-bottom: 0.25rem;">AI Explanation</div>
+                  <div style="font-size: 0.8125rem; color: #111827;">${this.markdownToHtml(violation.aiExplanation)}</div>
+                </div>
+                `
+                    : ''
+                }
+                ${
+                  violation.aiRemediation
+                    ? `
+                <div style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(16, 185, 129, 0.05); border-radius: 0.5rem; border-left: 3px solid #10b981;">
+                  <div style="font-size: 0.75rem; font-weight: 500; color: #10b981; margin-bottom: 0.25rem;">Solution</div>
+                  <div style="font-size: 0.8125rem; color: #111827;">${this.markdownToHtml(violation.aiRemediation)}</div>
+                </div>
+                `
+                    : ''
+                }
+              </div>
+            `
+              )
+              .join('')}
+          </div>
+        </div>
+        `
+            : ''
+        }
+
+        ${
+          result.passes && result.passes.length > 0
+            ? `
+        <div style="margin-bottom: 1.5rem;">
+          <h4 style="font-size: 1rem; font-weight: 500; color: #111827; margin-bottom: 0.75rem;">
+            Passed Checks (${result.passes.length})
+          </h4>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem;">
+            ${result.passes
+              .slice(0, 12)
+              .map(
+                (pass: any) => `
+              <div style="border: 1px solid rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.05); border-radius: 0.5rem; padding: 0.75rem;">
+                <div style="font-size: 0.8125rem; font-weight: 500; color: #111827; margin-bottom: 0.25rem;">${this.escapeHtml(pass.id)}</div>
+                <div style="font-size: 0.75rem; color: #6b7280;">${this.escapeHtml(pass.description || '')}</div>
+              </div>
+            `
+              )
+              .join('')}
+            ${
+              result.passes.length > 12
+                ? `
+            <div style="border: 1px solid #e5e7eb; background: #f9fafb; border-radius: 0.5rem; padding: 0.75rem; text-align: center; display: flex; align-items: center; justify-content: center;">
+              <span style="font-size: 0.75rem; color: #6b7280;">+${result.passes.length - 12} more</span>
+            </div>
+            `
+                : ''
+            }
+          </div>
+        </div>
+        `
+            : ''
+        }
+      </div>
+    `;
+      })
       .join('');
   }
 
@@ -374,13 +558,21 @@ export class HtmlGeneratorService {
         </div>
 
         ${
+          result.screenshot
+            ? (() => {
+                const imgPath = this.extractScreenshotPath(result.screenshot);
+                return this.generateScreenshotSection(imgPath, result.url);
+              })()
+            : ''
+        }
+
+        ${
           result.violations && result.violations.length > 0
             ? `
           <div style="margin-bottom: 1rem;">
             <h4 style="font-size: 0.875rem; font-weight: 500; color: #111827; margin-bottom: 0.5rem;">Violations (${result.violations.length})</h4>
             <div>
               ${result.violations
-                .slice(0, 3)
                 .map(
                   (violation: any) => `
                 <div class="violation">
@@ -389,19 +581,45 @@ export class HtmlGeneratorService {
                   <div style="margin-top: 0.25rem;">
                     <span class="violation-impact">${violation.impact || 'unknown'} impact</span>
                   </div>
+                  ${
+                    violation.nodes && violation.nodes.length > 0
+                      ? this.generateCollapsibleCode(violation.nodes, 'problem')
+                      : ''
+                  }
+                  ${
+                    violation.userStory
+                      ? `
+                    <div class="ai-explanation" style="margin-top: 0.75rem;">
+                      <h5 class="ai-explanation-title">User Story</h5>
+                      <div class="ai-explanation-text">${this.escapeHtml(violation.userStory)}</div>
+                    </div>
+                  `
+                      : ''
+                  }
+                  ${
+                    violation.aiExplanation
+                      ? `
+                    <div class="ai-explanation" style="margin-top: 0.75rem;">
+                      <h5 class="ai-explanation-title">AI Explanation</h5>
+                      <div class="ai-explanation-text">${this.markdownToHtml(violation.aiExplanation)}</div>
+                    </div>
+                  `
+                      : ''
+                  }
+                  ${
+                    violation.aiRemediation
+                      ? `
+                    <div class="ai-remediation" style="margin-top: 0.75rem;">
+                      <h5 class="ai-remediation-title">Solution</h5>
+                      <div class="ai-remediation-text">${this.markdownToHtml(violation.aiRemediation)}</div>
+                    </div>
+                  `
+                      : ''
+                  }
                 </div>
               `
                 )
                 .join('')}
-              ${
-                result.violations.length > 3
-                  ? `
-                <div style="text-align: center; padding: 0.5rem;">
-                  <span style="font-size: 0.875rem; color: #6b7280;">... and ${result.violations.length - 3} more violations</span>
-                </div>
-              `
-                  : ''
-              }
             </div>
           </div>
         `
@@ -438,19 +656,6 @@ export class HtmlGeneratorService {
               `
                   : ''
               }
-            </div>
-          </div>
-        `
-            : ''
-        }
-
-        ${
-          result.screenshot
-            ? `
-          <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;">
-            <h4 style="font-size: 0.875rem; font-weight: 500; color: #111827; margin-bottom: 0.5rem;">Screenshot</h4>
-            <div style="font-size: 0.875rem; color: #6b7280;">
-              <a href="/${result.screenshot}" target="_blank" class="link">View Screenshot</a>
             </div>
           </div>
         `
