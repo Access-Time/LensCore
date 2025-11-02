@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import fs from 'fs';
 import path from 'path';
+import Handlebars from 'handlebars';
 import { PathResolverService } from './utils/path-resolver';
 import { DataProcessorService } from './utils/data-processor';
 import { HtmlGeneratorService } from './utils/html-generator';
@@ -9,6 +10,8 @@ import { FileService } from './utils/file-service';
 export class WebReportService {
   private templatesDir: string;
   private outputDir: string;
+  private static helpersRegistered = false;
+  private static templateCache = new Map<string, HandlebarsTemplateDelegate>();
 
   constructor() {
     this.templatesDir = PathResolverService.findTemplatesDirectory();
@@ -17,147 +20,141 @@ export class WebReportService {
     if (!fs.existsSync(this.outputDir)) {
       fs.mkdirSync(this.outputDir, { recursive: true });
     }
+
+    WebReportService.ensureHelpersRegistered();
+  }
+
+  private static ensureHelpersRegistered(): void {
+    if (this.helpersRegistered) return;
+
+    Handlebars.registerHelper('crawlTableRows', (pages: any[]) => {
+      return new Handlebars.SafeString(
+        HtmlGeneratorService.generateCrawlTableRows(pages || [])
+      );
+    });
+
+    Handlebars.registerHelper('violationsSection', (results: any[]) => {
+      return new Handlebars.SafeString(
+        HtmlGeneratorService.generateViolationsSection(results || [])
+      );
+    });
+
+    Handlebars.registerHelper('passedChecksSection', (results: any[]) => {
+      return new Handlebars.SafeString(
+        HtmlGeneratorService.generatePassedChecksSection(results || [])
+      );
+    });
+
+    Handlebars.registerHelper('testViolationsSection', (violations: any[]) => {
+      return new Handlebars.SafeString(
+        HtmlGeneratorService.generateTestViolationsSection(violations || [])
+      );
+    });
+
+    Handlebars.registerHelper('testPassedChecksSection', (passes: any[]) => {
+      return new Handlebars.SafeString(
+        HtmlGeneratorService.generateTestPassedChecksSection(passes || [])
+      );
+    });
+
+    Handlebars.registerHelper('pageResults', (results: any[]) => {
+      return new Handlebars.SafeString(
+        HtmlGeneratorService.generatePageResults(results || [])
+      );
+    });
+
+    this.helpersRegistered = true;
+  }
+
+  private getCompiledTemplate(
+    templateName: string
+  ): HandlebarsTemplateDelegate {
+    const cacheKey = templateName;
+
+    if (WebReportService.templateCache.has(cacheKey)) {
+      return WebReportService.templateCache.get(cacheKey)!;
+    }
+
+    const templatePath = path.join(this.templatesDir, templateName);
+    const templateSource = fs.readFileSync(templatePath, 'utf8');
+    const compiled = Handlebars.compile(templateSource);
+
+    WebReportService.templateCache.set(cacheKey, compiled);
+    return compiled;
+  }
+
+  private generateReport(
+    templateName: string,
+    data: any,
+    outputPrefix: string
+  ): string {
+    const template = this.getCompiledTemplate(templateName);
+    const html = template(data);
+    return FileService.saveHtmlFile(html, outputPrefix, this.outputDir);
   }
 
   generateScanReport(scanData: any): string {
-    const templatePath = path.join(this.templatesDir, 'scan-results.html');
-    const template = fs.readFileSync(templatePath, 'utf8');
+    const data = {
+      TOTAL_PAGES: scanData.crawl?.totalPages || 0,
+      PASSED_CHECKS: DataProcessorService.getTotalPassedChecks(scanData),
+      VIOLATIONS: DataProcessorService.getTotalViolations(scanData),
+      SCAN_TIME_MS: scanData.totalTime || 0,
+      SCAN_TIME: new Date().toLocaleString(),
+      crawlPages: scanData.crawl?.pages || [],
+      accessibilityResults: scanData.accessibility?.results || [],
+    };
 
-    let html = template;
-
-    const totalPages = String(scanData.crawl?.totalPages || 0);
-    const passedChecks = String(
-      DataProcessorService.getTotalPassedChecks(scanData)
-    );
-    const violations = String(
-      DataProcessorService.getTotalViolations(scanData)
-    );
-    const scanTimeMs = String(scanData.totalTime || 0);
-    const scanTime = new Date().toLocaleString();
-
-    html = html.replace(/\{\{TOTAL_PAGES\}\}/g, totalPages);
-    html = html.replace(/\{\{PASSED_CHECKS\}\}/g, passedChecks);
-    html = html.replace(/\{\{VIOLATIONS\}\}/g, violations);
-    html = html.replace(/\{\{SCAN_TIME_MS\}\}/g, scanTimeMs);
-    html = html.replace(/\{\{SCAN_TIME\}\}/g, scanTime);
-
-    html = html.replace(
-      /\{\{CRAWL_TABLE_ROWS\}\}/g,
-      HtmlGeneratorService.generateCrawlTableRows(scanData.crawl?.pages || [])
-    );
-
-    html = html.replace(
-      /\{\{VIOLATIONS_SECTION\}\}/g,
-      HtmlGeneratorService.generateViolationsSection(
-        scanData.accessibility?.results || []
-      )
-    );
-
-    html = html.replace(
-      /\{\{PASSED_CHECKS_SECTION\}\}/g,
-      HtmlGeneratorService.generatePassedChecksSection(
-        scanData.accessibility?.results || []
-      )
-    );
-
-    return FileService.saveHtmlFile(html, 'scan', this.outputDir);
+    return this.generateReport('scan-results.html', data, 'scan');
   }
 
   generateCrawlReport(crawlData: any): string {
-    const templatePath = path.join(this.templatesDir, 'crawl-results.html');
-    const template = fs.readFileSync(templatePath, 'utf8');
+    const data = {
+      TOTAL_PAGES: crawlData.totalPages || 0,
+      SUCCESSFUL_PAGES: DataProcessorService.getSuccessfulPages(
+        crawlData.pages || []
+      ),
+      CRAWL_TIME_MS: crawlData.crawlTime || 0,
+      CRAWL_TIME: new Date().toLocaleString(),
+      pages: crawlData.pages || [],
+    };
 
-    let html = template;
-
-    const totalPages = String(crawlData.totalPages || 0);
-    const successfulPages = String(
-      DataProcessorService.getSuccessfulPages(crawlData.pages || [])
-    );
-    const crawlTimeMs = String(crawlData.crawlTime || 0);
-    const crawlTime = new Date().toLocaleString();
-
-    html = html.replace(/\{\{TOTAL_PAGES\}\}/g, totalPages);
-    html = html.replace(/\{\{SUCCESSFUL_PAGES\}\}/g, successfulPages);
-    html = html.replace(/\{\{CRAWL_TIME_MS\}\}/g, crawlTimeMs);
-    html = html.replace(/\{\{CRAWL_TIME\}\}/g, crawlTime);
-
-    html = html.replace(
-      /\{\{CRAWL_TABLE_ROWS\}\}/g,
-      HtmlGeneratorService.generateCrawlTableRows(crawlData.pages || [])
-    );
-
-    return FileService.saveHtmlFile(html, 'crawl', this.outputDir);
+    return this.generateReport('crawl-results.html', data, 'crawl');
   }
 
   generateTestReport(testData: any, testUrl: string): string {
-    const templatePath = path.join(this.templatesDir, 'test-results.html');
-    const template = fs.readFileSync(templatePath, 'utf8');
+    const data = {
+      TEST_URL: testUrl,
+      SCORE: testData.score || 'N/A',
+      PASSED_CHECKS: testData.passes?.length || 0,
+      VIOLATIONS: testData.violations?.length || 0,
+      SCREENSHOT_STATUS: testData.screenshot ? 'Available' : 'Not available',
+      TEST_TIME: new Date().toLocaleString(),
+      violations: testData.violations || [],
+      passes: testData.passes || [],
+    };
 
-    let html = template;
-
-    const score = String(testData.score || 'N/A');
-    const passedChecks = String(testData.passes?.length || 0);
-    const violations = String(testData.violations?.length || 0);
-    const screenshotStatus = testData.screenshot
-      ? 'Available'
-      : 'Not available';
-    const testTime = new Date().toLocaleString();
-
-    html = html.replace(/\{\{TEST_URL\}\}/g, testUrl);
-    html = html.replace(/\{\{SCORE\}\}/g, score);
-    html = html.replace(/\{\{PASSED_CHECKS\}\}/g, passedChecks);
-    html = html.replace(/\{\{VIOLATIONS\}\}/g, violations);
-    html = html.replace(/\{\{SCREENSHOT_STATUS\}\}/g, screenshotStatus);
-    html = html.replace(/\{\{TEST_TIME\}\}/g, testTime);
-
-    html = html.replace(
-      /\{\{VIOLATIONS_SECTION\}\}/g,
-      HtmlGeneratorService.generateTestViolationsSection(
-        testData.violations || []
-      )
-    );
-
-    html = html.replace(
-      /\{\{PASSED_CHECKS_SECTION\}\}/g,
-      HtmlGeneratorService.generateTestPassedChecksSection(
-        testData.passes || []
-      )
-    );
-
-    return FileService.saveHtmlFile(html, 'test', this.outputDir);
+    return this.generateReport('test-results.html', data, 'test');
   }
 
   generateTestMultipleReport(testData: any): string {
-    const templatePath = path.join(
-      this.templatesDir,
-      'test-multiple-results.html'
+    const data = {
+      TOTAL_PAGES: testData.totalPages || 0,
+      TOTAL_PASSED: DataProcessorService.getTotalPassedChecksMultiple(
+        testData.results || []
+      ),
+      TOTAL_VIOLATIONS: DataProcessorService.getTotalViolationsMultiple(
+        testData.results || []
+      ),
+      TEST_TIME_MS: testData.testTime || 0,
+      TEST_TIME: new Date().toLocaleString(),
+      results: testData.results || [],
+    };
+
+    return this.generateReport(
+      'test-multiple-results.html',
+      data,
+      'test-multiple'
     );
-    const template = fs.readFileSync(templatePath, 'utf8');
-
-    let html = template;
-
-    const totalPages = String(testData.totalPages || 0);
-    const totalPassed = String(
-      DataProcessorService.getTotalPassedChecksMultiple(testData.results || [])
-    );
-    const totalViolations = String(
-      DataProcessorService.getTotalViolationsMultiple(testData.results || [])
-    );
-    const testTimeMs = String(testData.testTime || 0);
-    const testTime = new Date().toLocaleString();
-
-    html = html.replace(/\{\{TOTAL_PAGES\}\}/g, totalPages);
-    html = html.replace(/\{\{TOTAL_PASSED\}\}/g, totalPassed);
-    html = html.replace(/\{\{TOTAL_VIOLATIONS\}\}/g, totalViolations);
-    html = html.replace(/\{\{TEST_TIME_MS\}\}/g, testTimeMs);
-    html = html.replace(/\{\{TEST_TIME\}\}/g, testTime);
-
-    html = html.replace(
-      /\{\{PAGE_RESULTS\}\}/g,
-      HtmlGeneratorService.generatePageResults(testData.results || [])
-    );
-
-    return FileService.saveHtmlFile(html, 'test-multiple', this.outputDir);
   }
 
   getWebUrl(filename: string, port: number): string {

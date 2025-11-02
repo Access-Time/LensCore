@@ -72,11 +72,7 @@ export class AIProcessor {
         const processedIssue: AIProcessedIssue = { ...issue };
 
         try {
-          const userStory = await this.userStoryService.generateUserStoryWithAI(
-            issue,
-            apiKey,
-            projectContext
-          );
+          const userStory = await this.userStoryService.getUserStory(issue.id);
           if (userStory) {
             processedIssue.userStory = userStory;
           }

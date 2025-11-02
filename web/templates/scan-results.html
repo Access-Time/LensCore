@@ -411,7 +411,7 @@
             </tr>
           </thead>
           <tbody>
-            {{CRAWL_TABLE_ROWS}}
+            {{{crawlTableRows crawlPages}}}
           </tbody>
         </table>
       </div>
@@ -432,7 +432,7 @@
           >
             Violations
           </h3>
-          <div>{{VIOLATIONS_SECTION}}</div>
+          <div>{{{violationsSection accessibilityResults}}}</div>
         </div>
 
         <!-- Passed Checks -->
@@ -447,7 +447,7 @@
           >
             Passed Checks
           </h3>
-          <div>{{PASSED_CHECKS_SECTION}}</div>
+          <div>{{{passedChecksSection accessibilityResults}}}</div>
         </div>
       </div>
 

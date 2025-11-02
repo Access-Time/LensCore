@@ -180,53 +180,6 @@ CMD ["npm", "start"]`;
         'build:cli': 'tsc -p tsconfig.cli.json',
       };
 
-      packageJsonContent.dependencies = {
-        ...packageJsonContent.dependencies,
-        '@google-cloud/storage': '^7.7.0',
-        '@types/inquirer': '^9.0.9',
-        '@types/ioredis': '^4.28.10',
-        'aws-sdk': '^2.1490.0',
-        'axe-core': '^4.8.2',
-        chalk: '^4.1.2',
-        cheerio: '^1.0.0',
-        commander: '^11.1.0',
-        cors: '^2.8.5',
-        dotenv: '^16.3.1',
-        express: '^4.18.2',
-        helmet: '^7.1.0',
-        inquirer: '^12.10.0',
-        ioredis: '^5.8.1',
-        openai: '^6.5.0',
-        ora: '^5.4.1',
-        puppeteer: '^24.15.0',
-        sharp: '^0.33.0',
-        uuid: '^9.0.1',
-        winston: '^3.11.0',
-        zod: '^3.22.4',
-      };
-
-      packageJsonContent.devDependencies = {
-        ...packageJsonContent.devDependencies,
-        '@types/cors': '^2.8.17',
-        '@types/express': '^4.17.21',
-        '@types/jest': '^29.5.8',
-        '@types/multer': '^1.4.11',
-        '@types/node': '^20.10.5',
-        '@types/supertest': '^2.0.16',
-        '@types/uuid': '^9.0.8',
-        '@typescript-eslint/eslint-plugin': '^8.15.0',
-        '@typescript-eslint/parser': '^8.15.0',
-        eslint: '^9.15.0',
-        globals: '^13.24.0',
-        jest: '^29.7.0',
-        nodemon: '^3.0.2',
-        prettier: '^3.1.1',
-        supertest: '^7.1.3',
-        'ts-jest': '^29.1.1',
-        tsx: '^4.6.2',
-        typescript: '^5.3.3',
-      };
-
       return packageJsonContent;
     } catch {
       return this.getDefaultPackageJson();
@@ -255,9 +208,11 @@ CMD ["npm", "start"]`;
         cors: '^2.8.5',
         dotenv: '^16.3.1',
         express: '^4.18.2',
+        handlebars: '^4.7.8',
         helmet: '^7.1.0',
         inquirer: '^12.10.0',
         ioredis: '^5.8.1',
+        marked: '^16.4.1',
         openai: '^6.5.0',
         ora: '^5.4.1',
         puppeteer: '^24.15.0',
@@ -269,7 +224,9 @@ CMD ["npm", "start"]`;
       devDependencies: {
         '@types/cors': '^2.8.17',
         '@types/express': '^4.17.21',
+        '@types/handlebars': '^4.0.40',
         '@types/jest': '^29.5.8',
+        '@types/marked': '^5.0.2',
         '@types/multer': '^1.4.11',
         '@types/node': '^20.10.5',
         '@types/supertest': '^2.0.16',

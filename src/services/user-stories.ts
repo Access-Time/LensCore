@@ -1,10 +1,6 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import logger from '../utils/logger';
-import { createOpenAIService, isAIEnabled } from '../utils/openai';
-import { OpenAIMessage } from './openai';
-import { AccessibilityIssue } from '../types/ai';
-import { z } from 'zod';
 
 interface RulesData {
   [ruleId: string]: {
@@ -93,111 +89,7 @@ export class UserStoryService {
     return stories.length > 0;
   }
 
-  private getRuleData(ruleId: string) {
+  getRuleData(ruleId: string) {
     return this.rulesData[ruleId];
-  }
-
-  async generateUserStoryWithAI(
-    issue: AccessibilityIssue,
-    apiKey?: string,
-    projectContext?: {
-      framework?: string;
-      cssFramework?: string;
-      language?: string;
-      buildTool?: string;
-      additionalContext?: string;
-    }
-  ): Promise<string | null> {
-    if (!isAIEnabled(apiKey)) {
-      return this.getUserStory(issue.id);
-    }
-
-    try {
-      const ruleData = this.getRuleData(issue.id);
-      if (!ruleData) {
-        return this.getUserStory(issue.id);
-      }
-
-      const openaiService = createOpenAIService(apiKey || '');
-      if (!openaiService) {
-        return this.getUserStory(issue.id);
-      }
-
-      const format = z.object({
-        userStory: z.string(),
-      });
-
-      const prompt = this.buildUserStoryPrompt(issue, ruleData, projectContext);
-      const messages: OpenAIMessage[] = [
-        {
-          role: 'system',
-          content: `You are a friendly accessibility expert. Create a user story from the perspective of a user affected by this particular accessibility issue. Use simple language and make it relatable. Focus on how this issue impacts real users in their daily activities.`,
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ];
-
-      const response = await openaiService.generateResponse(messages);
-      const parsed = format.parse(JSON.parse(response.content));
-
-      return parsed.userStory;
-    } catch (error) {
-      logger.warn('Failed to generate user story with AI', {
-        issueId: issue.id,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      });
-      return this.getUserStory(issue.id);
-    }
-  }
-
-  private buildUserStoryPrompt(
-    issue: AccessibilityIssue,
-    ruleData: RulesData[string],
-    projectContext?: {
-      framework?: string;
-      cssFramework?: string;
-      language?: string;
-      buildTool?: string;
-      additionalContext?: string;
-    }
-  ): string {
-    const htmlContexts =
-      issue.nodes
-        ?.map(
-          (node, idx) =>
-            `HTML Example ${idx + 1}:\nSelector: ${node.target.join(' ')}\nCode: ${node.html}\n${node.failureSummary ? `Issue: ${node.failureSummary}` : ''}`
-        )
-        .join('\n\n') || '';
-
-    const context = projectContext
-      ? Object.entries(projectContext)
-          .filter(([_, value]) => value)
-          .map(([key, value]) => `${key}: ${value}`)
-          .join(', ')
-      : '';
-
-    return `Create a user story for this accessibility violation:
-
-Rule: ${ruleData.title}
-Summary: ${ruleData.summary}
-Description: ${ruleData.description}
-Severity: ${ruleData.severity}
-Type: ${ruleData.type}
-
-Related WCAG Guidelines: ${ruleData.wcag.map((g) => `(${g.level}) ${g.name}`).join(', ')}
-
-Violation Details:
-ID: ${issue.id}
-Impact: ${issue.impact}
-Help: ${issue.help}
-
-${context ? `Project Context: ${context}\n` : ''}
-${htmlContexts ? `Problematic Code:\n${htmlContexts}\n` : ''}
-
-${ruleData.user_stories.length > 0 ? `Example user stories from this rule:\n${ruleData.user_stories.slice(0, 3).join('\n\n')}` : ''}
-
-Create a specific, relatable user story (1-2 sentences) from the perspective of someone affected by THIS PARTICULAR violation on the page. Make it personal and show how this specific issue impacts their ability to use the website.`;
   }
 }

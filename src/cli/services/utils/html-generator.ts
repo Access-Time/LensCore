@@ -1,14 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import Handlebars from 'handlebars';
+import { marked } from 'marked';
+
 export class HtmlGeneratorService {
   private static escapeHtml(text: string): string {
-    const map: Record<string, string> = {
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#039;',
-    };
-    return text.replace(/[&<>"']/g, (m) => map[m] || m);
+    return Handlebars.escapeExpression(text);
   }
 
   private static formatHtml(htmlString: string): string {
@@ -75,29 +71,7 @@ export class HtmlGeneratorService {
 
   private static markdownToHtml(text: string): string {
     if (!text) return '';
-
-    let html = this.escapeHtml(text);
-
-    const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
-    html = html.replace(codeBlockRegex, (_, lang, code) => {
-      const trimmedCode = code.trim();
-      const formatted = this.formatHtml(trimmedCode);
-      const escapedCode = formatted;
-      return `<pre><code class="language-${lang || 'text'}" style="display: block; background: #1f2937; color: #f9fafb; border: 1px solid #374151; border-radius: 0.5rem; padding: 1rem; overflow-x: auto; font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace; font-size: 0.875rem; line-height: 1.6; margin: 0.75rem 0; white-space: pre; word-spacing: normal; tab-size: 2;">${escapedCode}</code></pre>`;
-    });
-
-    const inlineCodeRegex = /`([^`]+)`/g;
-    html = html.replace(inlineCodeRegex, (_, code) => {
-      const escapedCode = this.escapeHtml(code);
-      return `<code style="background: #f3f4f6; padding: 0.125rem 0.375rem; border-radius: 0.25rem; font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace; font-size: 0.875em;">${escapedCode}</code>`;
-    });
-
-    const boldRegex = /\*\*(.+?)\*\*/g;
-    html = html.replace(boldRegex, '<strong>$1</strong>');
-
-    html = html.replace(/\n/g, '<br>');
-
-    return html;
+    return marked.parse(text) as string;
   }
 
   private static generateCollapsibleCode(
