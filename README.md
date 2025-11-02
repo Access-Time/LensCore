@@ -53,7 +53,7 @@
 1. **Clone the repository:**
 
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/Access-Time/LensCore.git
    cd LensCore
    ```
 
@@ -932,129 +932,117 @@ This project adheres to the [Contributor Covenant Code of Conduct](CODE_OF_CONDU
 
 ## 🧪 GitHub Actions CI Template
 
-Use the reusable workflow in this repo to run automated accessibility scans with LensCore on PRs and other branches.
+Use this reusable workflow to run automated accessibility testing with LensCore on your web projects.
 
-### 1) Include the Reusable Workflow
+### Quick Start
 
-Add the following file in your project repository (the consumer repo, not this one):
+Create a `.github/workflows/accessibility.yml` file in your project repository:
 
 ```yaml
-name: Accessibility – LensCore
+name: Accessibility Check
 
 on:
   pull_request:
-  push:
     branches: [main]
 
 jobs:
-  lenscore:
-    uses: accesstimehq/LensCore/.github/workflows/lens-core.yml@v0.1.21
-    with:
-      mode: nextjs # vercel | nextjs | custom
-      port: 3000
-      use-web-report: true
-      fail-on-violations: true
-    secrets:
-      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-```
-
-Note: Replace `accesstimehq/LensCore@v0.1.21` with the appropriate tag/release of this repo.
-
-### 2) Supported Inputs
-
-- `mode` (required, choice): `vercel` | `nextjs` | `custom`
-- `url` (optional): Target URL if already available (skips deploy/local start)
-
-Secrets for `mode=vercel`:
-
-- `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
-
-Additional settings via GitHub Variables (Repository/Environment variables):
-
-- `BUILD_COMMAND` (default `npm run build`)
-- `START_COMMAND` (default `npm start`)
-- `PORT` (default `3000`)
-- `SCAN_DEPTH` (default `2`)
-- `MAX_URLS` (default `10`)
-- `TIMEOUT` (default `15000`)
-- `USE_WEB_REPORT` (`true`/`false`, default `true`)
-- `FAIL_ON_VIOLATIONS` (`true`/`false`, default `true`)
-- `VERCEL_PROJECT_PATH` (default `.`)
-- `VERCEL_ENVIRONMENT` (`preview`|`production`, default `preview`)
-
-### 3) Usage Modes
-
-#### a. Vercel
-
-The workflow deploys via Vercel and automatically picks the preview URL for scanning.
-
-```yaml
-jobs:
-  lenscore:
-    uses: accesstimehq/LensCore/.github/workflows/lens-core.yml@v0.1.21
-    with:
-      mode: vercel
-    secrets:
-      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-```
-
-If you already have a URL (e.g., from another job), you can pass it via `url`.
-
-#### b. Next.js (Local Build & Start)
-
-```yaml
-jobs:
-  lenscore:
-    uses: accesstimehq/LensCore/.github/workflows/lens-core.yml@v0.1.21
+  accessibility:
+    uses: Access-Time/LensCore/.github/workflows/lens-core.yml@main
     with:
       mode: nextjs
-    # Configure variables in GitHub → Settings → Variables
+      url: ''
 ```
 
-The workflow will wait for `http://localhost:PORT` to be ready, then run `lens-core scan`.
+**Note:** Replace `Access-Time/LensCore@main` with the appropriate branch/tag/commit SHA if needed.
 
-#### c. Custom (Generic npm Project)
+### Inputs
+
+- `mode` (required): `vercel` | `nextjs` | `custom`
+- `url` (optional): Target URL to scan (auto-detect if empty)
+
+### Secrets (Vercel Mode Only)
+
+Add these in repository Settings → Secrets and variables → Actions:
+
+- `VERCEL_TOKEN`: Token from Vercel dashboard
+- `VERCEL_ORG_ID`: Organization ID from Vercel
+- `VERCEL_PROJECT_ID`: Project ID from Vercel
+
+### Usage Examples
+
+#### Mode: Next.js
 
 ```yaml
 jobs:
-  lenscore:
-    uses: accesstimehq/LensCore/.github/workflows/lens-core.yml@v0.1.21
+  accessibility:
+    uses: Access-Time/LensCore/.github/workflows/lens-core.yml@main
     with:
-      mode: custom
-    # Configure variables in GitHub → Settings → Variables
+      mode: nextjs
+      url: ''
 ```
 
-### 4) Outputs & Artifacts
+The workflow will:
 
-- JSON: saved as `lenscore-report.json` (CLI stdout)
-- HTML: when `use-web-report=true`, HTML files are generated in `~/.lenscore/web/output/` and uploaded as `lenscore-reports` artifact
-- CI fails when `fail-on-violations=true` and violations > 0 (calculated with `jq`)
+- Run `npm run build`
+- Run `npm start` (port 3000)
+- Scan `http://localhost:3000`
 
-### 5) Authentication for Protected Pages
-
-The CLI currently does not support custom headers/cookies flags directly. Possible workarounds:
-
-- Use Basic Auth in the URL: `https://user:pass@host/path`
-- Use a URL that includes an access token (e.g., query param) in the preview environment
-- Provide a public route specifically for testing
-
-When header/cookie support is available in the CLI, it can be wired via additional inputs (to be documented).
-
-### 6) Advanced Example
-
-Scan a specific URL (e.g., a critical page) and limit the crawl:
+#### Mode: Vercel
 
 ```yaml
-with:
-  mode: nextjs
-  url: http://localhost:3000/checkout
-# and set variables:
-# MAX_URLS=1, SCAN_DEPTH=1, TIMEOUT=20000, USE_WEB_REPORT=true, FAIL_ON_VIOLATIONS=true
+jobs:
+  accessibility:
+    uses: Access-Time/LensCore/.github/workflows/lens-core.yml@main
+    with:
+      mode: vercel
+      url: ''
+    secrets:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 ```
+
+The workflow will:
+
+- Deploy to Vercel preview
+- Automatically get preview URL
+- Scan the preview URL
+
+#### Mode: Custom
+
+```yaml
+jobs:
+  accessibility:
+    uses: Access-Time/LensCore/.github/workflows/lens-core.yml@main
+    with:
+      mode: custom
+      url: 'http://localhost:5173'
+```
+
+For other npm projects (Vite, Remix, etc.). To modify default values (build command, port, etc.), edit the workflow file directly or fork the workflow.
+
+### Default Values
+
+Default values that can be modified in the workflow file:
+
+- `MAX_URLS=10` (maximum URLs to scan)
+- `SCAN_DEPTH=2` (crawl depth)
+- `TIMEOUT=15000` (timeout in ms)
+- Build: `npm run build`
+- Start: `npm start`
+- Port: `3000`
+
+### Output
+
+After the workflow runs:
+
+- **JSON Report**: `lenscore-report.json` file uploaded as artifact
+- **HTML Report**: HTML files uploaded as `lenscore-accessibility-report` artifact
+- **CI Status**:
+  - ✅ **PASS** if no violations found
+  - ❌ **FAIL** if violations detected
+
+Reports can be downloaded from GitHub Actions → Artifacts.
 
 ---
 
