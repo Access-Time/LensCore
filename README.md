@@ -36,6 +36,7 @@
 - [Configuration](#️-configuration)
 - [API Documentation](#-api-documentation)
 - [AI Integration](#-ai-integration)
+- [Contributing](#-contributing)
 - [Code of Conduct](#code-of-conduct)
 - [License](#-license)
 
@@ -912,6 +913,14 @@ curl -X POST http://localhost:3001/api/combined \
     }
   }'
 ```
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Whether you're fixing bugs, adding features, or improving documentation, your help makes LensCore better.
+
+See our [Contributing Guide](CONTRIBUTING.md) for details on how to get started.
 
 ---
 
