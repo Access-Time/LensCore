@@ -24,8 +24,7 @@ export const combinedHandler = async (
     });
 
     const skipCache =
-      req.body.skipCache === true ||
-      (request.testOptions?.skipCache === true);
+      req.body.skipCache === true || request.testOptions?.skipCache === true;
     const testRequests: AccessibilityRequest[] = crawlResult.pages.map(
       (page) => ({
         url: page.url,
