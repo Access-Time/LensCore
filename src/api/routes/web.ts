@@ -47,6 +47,39 @@ function findWebOutputDir(): string {
 }
 
 /**
+ * Find styles directory with multiple fallback paths
+ */
+function findStylesDir(): string {
+  const possiblePaths = [
+    path.join(os.homedir(), '.lenscore', 'web', 'styles'),
+    path.join(process.cwd(), '.lenscore', 'web', 'styles'),
+    path.join(process.cwd(), 'web', 'styles'),
+    path.join('/app', 'web', 'styles'),
+  ];
+
+  try {
+    const globalPath = path.join(
+      path.dirname(require.resolve('@accesstime/lenscore')),
+      'web',
+      'styles'
+    );
+    possiblePaths.unshift(globalPath);
+  } catch {
+    // Package not found, skip this path
+  }
+
+  const foundPath = possiblePaths.find((p) => {
+    try {
+      return fs.existsSync(p);
+    } catch {
+      return false;
+    }
+  });
+
+  return foundPath || possiblePaths[0]!;
+}
+
+/**
  * Find screenshots directory with multiple fallback paths
  */
 function findScreenshotsDir(): string {
@@ -113,6 +146,28 @@ router.get('/web/:filename', (req: any, res: any) => {
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
+
+    res.sendFile(filePath);
+  } catch {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * Serve CSS styles
+ * GET /styles/report.css
+ */
+router.get('/styles/report.css', (_req: any, res: any) => {
+  try {
+    const stylesDir = findStylesDir();
+    const filePath = path.join(stylesDir, 'report.css');
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'CSS file not found' });
+    }
+
+    res.setHeader('Content-Type', 'text/css');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
 
     res.sendFile(filePath);
   } catch {

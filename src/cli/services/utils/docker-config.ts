@@ -314,9 +314,40 @@ CMD ["npm", "start"]`;
       await fs.access(webDir);
       await this.copyDirectory(webDir, destWebDir);
       console.log(`✅ Copied web templates from ${webDir} to ${destWebDir}`);
+
+      const stylesDir = path.join(destWebDir, 'styles');
+      const stylesSource = path.join(webDir, 'styles');
+      if (
+        !(await fs
+          .access(stylesDir)
+          .then(() => true)
+          .catch(() => false))
+      ) {
+        try {
+          await fs.access(stylesSource);
+          await fs.mkdir(stylesDir, { recursive: true });
+          await this.copyDirectory(stylesSource, stylesDir);
+          console.log(
+            `✅ Copied web styles from ${stylesSource} to ${stylesDir}`
+          );
+        } catch {
+          await this.createFallbackStyles(stylesDir);
+        }
+      } else {
+        const reportCssPath = path.join(stylesDir, 'report.css');
+        if (
+          !(await fs
+            .access(reportCssPath)
+            .then(() => true)
+            .catch(() => false))
+        ) {
+          await this.createFallbackStyles(stylesDir);
+        }
+      }
     } catch (error) {
       console.warn(`⚠️  Could not copy web templates: ${error}`);
       await this.createFallbackTemplates(destWebDir);
+      await this.createFallbackStyles(path.join(destWebDir, 'styles'));
     }
 
     const outputDir = path.join(destWebDir, 'output');
@@ -365,6 +396,147 @@ CMD ["npm", "start"]`;
     } catch (error) {
       console.error(`❌ Failed to create fallback templates: ${error}`);
     }
+  }
+
+  private async createFallbackStyles(stylesDir: string): Promise<void> {
+    try {
+      await fs.mkdir(stylesDir, { recursive: true });
+
+      const stylesFile = path.join(stylesDir, 'report.css');
+      const stylesContent = await this.getReportStyles();
+
+      await fs.writeFile(stylesFile, stylesContent, 'utf8');
+      console.log(`✅ Created fallback styles in ${stylesDir}`);
+    } catch (error) {
+      console.error(`❌ Failed to create fallback styles: ${error}`);
+    }
+  }
+
+  private async getReportStyles(): Promise<string> {
+    try {
+      const packageDir = await this.findPackageDirectory();
+      const stylesPath = path.join(packageDir, 'web', 'styles', 'report.css');
+      return await fs.readFile(stylesPath, 'utf8');
+    } catch {
+      return this.getBasicReportStyles();
+    }
+  }
+
+  private getBasicReportStyles(): string {
+    return `/* LensCore Report Styles - Fallback */
+.report-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.report-card {
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.screenshot-section {
+  margin-bottom: 1.5rem;
+}
+
+.screenshot-container {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background: #f9fafb;
+}
+
+.screenshot-image {
+  max-width: 100%;
+  max-height: 800px;
+  height: auto;
+  width: auto;
+  display: block;
+  object-fit: contain;
+  cursor: pointer;
+}
+
+.violation-item {
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  background: rgba(245, 158, 11, 0.05);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.code-collapsible {
+  margin-top: 1rem;
+  border-radius: 0.375rem;
+  overflow: hidden;
+}
+
+.code-collapsible.problem {
+  background: #fef3c7;
+  border-left: 4px solid #f59e0b;
+}
+
+.code-collapsible.solution {
+  background: #d1fae5;
+  border-left: 4px solid #10b981;
+}
+
+.ai-section {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+}
+
+.ai-explanation {
+  background: rgba(59, 130, 246, 0.05);
+  border-left: 3px solid #3b82f6;
+}
+
+.ai-remediation {
+  background: rgba(16, 185, 129, 0.05);
+  border-left: 3px solid #10b981;
+}
+
+.passed-checks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
+}
+
+.passed-check-item {
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  background: rgba(16, 185, 129, 0.05);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-gray {
+  color: #6b7280;
+}
+
+.mt-1 {
+  margin-top: 0.5rem;
+}
+
+.mb-1 {
+  margin-bottom: 1rem;
+}
+
+details summary::-webkit-details-marker {
+  display: none;
+}
+
+details summary::-moz-list-bullet {
+  list-style: none;
+}
+`;
   }
 
   private getScanTemplate(): string {

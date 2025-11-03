@@ -70,4 +70,37 @@ export class PathResolverService {
     console.log(`📁 Using output directory: ${outputDir}`);
     return outputDir;
   }
+
+  static findStylesDirectory(): string {
+    const possiblePaths = [
+      path.join(
+        path.dirname(require.resolve('@accesstime/lenscore')),
+        'web',
+        'styles'
+      ),
+      path.join(process.cwd(), 'web', 'styles'),
+      path.join(os.homedir(), '.lenscore', 'web', 'styles'),
+      path.join(process.cwd(), '.lenscore', 'web', 'styles'),
+      path.join(__dirname, '../../../../web/styles'),
+      path.join(
+        path.dirname(require.resolve('@accesstime/lenscore')),
+        '../web/styles'
+      ),
+    ];
+
+    const foundPath = possiblePaths.find((p) => {
+      try {
+        return fs.existsSync(p) && fs.statSync(p).isDirectory();
+      } catch {
+        return false;
+      }
+    });
+
+    if (foundPath) {
+      return foundPath;
+    }
+
+    const fallbackPath = path.join(os.homedir(), '.lenscore', 'web', 'styles');
+    return fallbackPath;
+  }
 }

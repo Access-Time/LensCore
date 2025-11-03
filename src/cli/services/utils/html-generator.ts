@@ -81,43 +81,36 @@ export class HtmlGeneratorService {
     const isProblem = type === 'problem';
     const icon = isProblem ? '⚠️' : '✅';
     const title = isProblem ? 'Problematic Code Detected' : 'AI Remediation';
-    const bgColor = isProblem ? '#fef3c7' : '#d1fae5';
-    const borderColor = isProblem ? '#f59e0b' : '#10b981';
-    const textColor = isProblem ? '#78350f' : '#065f46';
+    const className = isProblem ? 'problem' : 'solution';
 
     return `
-      <details style="margin-top: 1rem; background: ${bgColor}; border-left: 4px solid ${borderColor}; border-radius: 0.375rem; overflow: hidden;">
-        <summary style="padding: 1rem; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-size: 0.875rem; font-weight: 600; color: ${textColor}; list-style: none; user-select: none; word-break: break-word;">
+      <details class="code-collapsible ${className}">
+        <summary class="code-collapsible-summary">
           <span>${icon} ${title}</span>
-          <span style="transition: transform 0.3s ease; flex-shrink: 0; margin-left: 0.5rem;">▼</span>
+          <span class="code-collapsible-arrow">▼</span>
         </summary>
-        <div style="padding: 0 1rem 1rem 1rem; word-break: break-word; overflow-wrap: break-word;">
+        <div class="code-collapsible-content">
           ${nodes
             .map(
               (node: any, idx: number) => `
-            <div style="margin-bottom: ${idx < nodes.length - 1 ? '1rem' : '0'};">
-              ${node.target ? `<div style="font-size: 0.75rem; color: ${isProblem ? '#92400e' : '#065f46'}; font-family: monospace; margin-bottom: 0.25rem; word-break: break-word;">Target: ${node.target.join(' > ')}</div>` : ''}
-              <div style="background: #1f2937; color: #f9fafb; padding: 0.75rem; border-radius: 0.375rem; overflow-x: auto; font-size: 0.875rem; font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace; line-height: 1.5; max-width: 100%;">
-                <pre style="margin: 0; white-space: pre; word-spacing: normal; tab-size: 2; word-wrap: break-word; overflow-x: auto;">${this.escapeHtml(this.formatHtml(node.html))}</pre>
+            <div class="code-node" ${idx < nodes.length - 1 ? '' : 'style="margin-bottom: 0;"'}>
+              ${node.target ? `<div class="code-target">Target: ${this.escapeHtml(node.target.join(' > '))}</div>` : ''}
+              <div class="code-block">
+                <pre>${this.escapeHtml(this.formatHtml(node.html))}</pre>
               </div>
-              ${node.failureSummary ? `<div style="margin-top: 0.5rem; font-size: 0.75rem; color: ${isProblem ? '#92400e' : '#065f46'}; word-break: break-word;">${this.escapeHtml(node.failureSummary)}</div>` : ''}
+              ${node.failureSummary ? `<div class="code-failure-summary">${this.escapeHtml(node.failureSummary)}</div>` : ''}
             </div>
           `
             )
             .join('')}
         </div>
       </details>
-      <style>
-        details summary::-webkit-details-marker { display: none; }
-        details summary::-moz-list-bullet { list-style: none; }
-        details[open] summary span:last-child { transform: rotate(-90deg); }
-      </style>
     `;
   }
 
   static generateCrawlTableRows(pages: any[]): string {
     if (!pages || pages.length === 0) {
-      return '<tr><td colspan="6" style="text-align: center; color: #6b7280;">No pages found</td></tr>';
+      return '<tr><td colspan="6" class="text-center text-gray">No pages found</td></tr>';
     }
 
     return pages
@@ -125,13 +118,13 @@ export class HtmlGeneratorService {
         (page, index) => `
       <tr>
         <td>${index + 1}</td>
-        <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+        <td class="table-url-cell">
           <a href="${page.url}" target="_blank" class="link" title="${page.url}">
             ${page.url}
           </a>
         </td>
-        <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${page.title || '-'}">${page.title || '-'}</td>
-        <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${page.description || '-'}">${page.description || '-'}</td>
+        <td class="table-title-cell" title="${page.title || '-'}">${page.title || '-'}</td>
+        <td class="table-desc-cell" title="${page.description || '-'}">${page.description || '-'}</td>
         <td>
           <span class="badge ${page.statusCode === 200 ? 'green' : 'red'}">
             ${page.statusCode || '-'}
@@ -160,7 +153,7 @@ export class HtmlGeneratorService {
     if (allViolations.length === 0) {
       return `
         <div class="success">
-          <div class="success-icon" style="color: #10b981;">🎉</div>
+          <div class="success-icon">🎉</div>
           <h3 class="success-title">No violations found!</h3>
           <p class="success-desc">Great job! Your website passed all accessibility checks.</p>
         </div>
@@ -174,11 +167,11 @@ export class HtmlGeneratorService {
         <div>
           <h4 class="violation-title">${violation.id}</h4>
           <p class="violation-desc">${violation.description}</p>
-          <div style="margin-top: 0.5rem;">
-            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; word-break: break-word;">
-              <span class="violation-impact" style="flex-shrink: 0;">${violation.impact || 'unknown'} impact</span>
-              <div style="font-size: 0.75rem; color: #6b7280; word-break: break-all; overflow-wrap: anywhere; min-width: 0;">
-                URL: <a href="${violation.url}" target="_blank" class="link" style="word-break: break-all; overflow-wrap: anywhere; display: inline;">${violation.url}</a>
+          <div class="mt-1">
+            <div class="violation-item-meta">
+              <span class="violation-impact">${violation.impact || 'unknown'} impact</span>
+              <div class="violation-url">
+                URL: <a href="${violation.url}" target="_blank" class="violation-url-link">${violation.url}</a>
               </div>
             </div>
           </div>
@@ -190,9 +183,9 @@ export class HtmlGeneratorService {
           ${
             violation.userStory
               ? `
-            <div class="ai-explanation" style="margin-top: 0.75rem;">
-              <h5 class="ai-explanation-title">User Story</h5>
-              <div class="ai-explanation-text">${this.escapeHtml(violation.userStory)}</div>
+            <div class="ai-explanation ai-section">
+              <h5 class="ai-section-title">User Story</h5>
+              <div class="ai-section-text">${this.escapeHtml(violation.userStory)}</div>
             </div>
           `
               : ''
@@ -200,9 +193,9 @@ export class HtmlGeneratorService {
           ${
             violation.aiExplanation
               ? `
-            <div class="ai-explanation" style="margin-top: 0.75rem;">
-              <h5 class="ai-explanation-title">AI Explanation</h5>
-              <div class="ai-explanation-text">${this.markdownToHtml(violation.aiExplanation)}</div>
+            <div class="ai-explanation ai-section">
+              <h5 class="ai-section-title">AI Explanation</h5>
+              <div class="ai-section-text">${this.markdownToHtml(violation.aiExplanation)}</div>
             </div>
           `
               : ''
@@ -210,9 +203,9 @@ export class HtmlGeneratorService {
           ${
             violation.aiRemediation
               ? `
-            <div class="ai-remediation" style="margin-top: 0.75rem;">
-              <h5 class="ai-remediation-title">Solution</h5>
-              <div class="ai-remediation-text">${this.markdownToHtml(violation.aiRemediation)}</div>
+            <div class="ai-remediation ai-section">
+              <h5 class="ai-section-title">Solution</h5>
+              <div class="ai-section-text">${this.markdownToHtml(violation.aiRemediation)}</div>
             </div>
           `
               : ''
@@ -228,7 +221,7 @@ export class HtmlGeneratorService {
     if (!violations || violations.length === 0) {
       return `
         <div class="success">
-          <div class="success-icon" style="color: #10b981;">🎉</div>
+          <div class="success-icon">🎉</div>
           <h3 class="success-title">No violations found!</h3>
           <p class="success-desc">Great job! This page passed all accessibility checks.</p>
         </div>
@@ -242,11 +235,11 @@ export class HtmlGeneratorService {
         <div>
           <h4 class="violation-title">${violation.id}</h4>
           <p class="violation-desc">${violation.description}</p>
-          <div style="margin-top: 0.5rem;">
-            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; word-break: break-word;">
-              <span class="violation-impact" style="flex-shrink: 0;">${violation.impact || 'unknown'} impact</span>
-              <div style="font-size: 0.75rem; color: #6b7280; word-break: break-all; overflow-wrap: anywhere; min-width: 0;">
-                Help: <a href="${violation.helpUrl}" target="_blank" class="link" style="word-break: break-all; overflow-wrap: anywhere; display: inline;">${violation.help}</a>
+          <div class="mt-1">
+            <div class="violation-item-meta">
+              <span class="violation-impact">${violation.impact || 'unknown'} impact</span>
+              <div class="violation-url">
+                Help: <a href="${violation.helpUrl}" target="_blank" class="violation-url-link">${violation.help}</a>
               </div>
             </div>
           </div>
@@ -258,9 +251,9 @@ export class HtmlGeneratorService {
           ${
             violation.userStory
               ? `
-            <div class="ai-explanation" style="margin-top: 0.75rem;">
-              <h5 class="ai-explanation-title">User Story</h5>
-              <div class="ai-explanation-text">${this.escapeHtml(violation.userStory)}</div>
+            <div class="ai-explanation ai-section">
+              <h5 class="ai-section-title">User Story</h5>
+              <div class="ai-section-text">${this.escapeHtml(violation.userStory)}</div>
             </div>
           `
               : ''
@@ -268,9 +261,9 @@ export class HtmlGeneratorService {
           ${
             violation.aiExplanation
               ? `
-            <div class="ai-explanation" style="margin-top: 0.75rem;">
-              <h5 class="ai-explanation-title">AI Explanation</h5>
-              <div class="ai-explanation-text">${this.markdownToHtml(violation.aiExplanation)}</div>
+            <div class="ai-explanation ai-section">
+              <h5 class="ai-section-title">AI Explanation</h5>
+              <div class="ai-section-text">${this.markdownToHtml(violation.aiExplanation)}</div>
             </div>
           `
               : ''
@@ -278,9 +271,9 @@ export class HtmlGeneratorService {
           ${
             violation.aiRemediation
               ? `
-            <div class="ai-remediation" style="margin-top: 0.75rem;">
-              <h5 class="ai-remediation-title">Solution</h5>
-              <div class="ai-remediation-text">${this.markdownToHtml(violation.aiRemediation)}</div>
+            <div class="ai-remediation ai-section">
+              <h5 class="ai-section-title">Solution</h5>
+              <div class="ai-section-text">${this.markdownToHtml(violation.aiRemediation)}</div>
             </div>
           `
               : ''
@@ -330,19 +323,19 @@ export class HtmlGeneratorService {
     url: string
   ): string {
     return `
-      <div style="margin-bottom: 1.5rem;">
-        <h4 style="font-size: 1rem; font-weight: 500; color: #111827; margin-bottom: 0.75rem;">Screenshot</h4>
-        <div style="border: 1px solid #e5e7eb; border-radius: 0.5rem; overflow: hidden; background: #f9fafb;">
-          <div style="max-height: 800px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #f3f4f6;">
+      <div class="screenshot-section">
+        <h4 class="screenshot-title">Screenshot</h4>
+        <div class="screenshot-container">
+          <div class="screenshot-wrapper">
             <img 
               src="${imgPath}" 
               alt="Screenshot of ${this.escapeHtml(url)}" 
-              style="max-width: 100%; max-height: 800px; height: auto; width: auto; display: block; object-fit: contain; cursor: pointer;"
+              class="screenshot-image"
               onclick="window.open('${imgPath}', '_blank')"
             />
           </div>
-          <div style="padding: 0.75rem; border-top: 1px solid #e5e7eb; background: white;">
-            <a href="${imgPath}" target="_blank" style="font-size: 0.875rem; color: #3b82f6; text-decoration: none;">Open full size</a>
+          <div class="screenshot-footer">
+            <a href="${imgPath}" target="_blank" class="screenshot-link">Open full size</a>
           </div>
         </div>
       </div>
@@ -351,7 +344,7 @@ export class HtmlGeneratorService {
 
   static generatePageResultsForScan(results: any[]): string {
     if (!results || results.length === 0) {
-      return '<div style="text-align: center; color: #6b7280; padding: 2rem;">No accessibility results found</div>';
+      return '<div class="empty-state">No accessibility results found</div>';
     }
 
     return results
@@ -360,20 +353,20 @@ export class HtmlGeneratorService {
           ? this.extractScreenshotPath(result.screenshot)
           : null;
         return `
-      <div class="card" style="margin-bottom: 2rem;">
-        <div style="border-bottom: 1px solid #e5e7eb; padding-bottom: 1rem; margin-bottom: 1.5rem;">
-          <h3 style="font-size: 1.25rem; font-weight: 600; color: #111827; margin-bottom: 0.5rem;">
+      <div class="report-card">
+        <div class="report-card-header">
+          <h3 class="report-card-title">
             Page ${index + 1}
           </h3>
-          <a href="${this.escapeHtml(result.url)}" target="_blank" style="font-size: 0.875rem; color: #3b82f6; word-break: break-all;">
+          <a href="${this.escapeHtml(result.url)}" target="_blank" class="report-card-url">
             ${this.escapeHtml(result.url)}
           </a>
-          <div style="display: flex; gap: 1rem; margin-top: 0.75rem;">
-            <div style="font-size: 0.875rem; color: #6b7280;">
-              Violations: <span style="font-weight: 500; color: ${result.violations?.length > 0 ? '#f59e0b' : '#10b981'}">${result.violations?.length || 0}</span>
+          <div class="report-card-stats">
+            <div class="report-card-stat">
+              Violations: <span class="report-card-stat-value ${result.violations?.length > 0 ? 'warning' : 'success'}">${result.violations?.length || 0}</span>
             </div>
-            <div style="font-size: 0.875rem; color: #6b7280;">
-              Passed: <span style="font-weight: 500; color: #10b981">${result.passes?.length || 0}</span>
+            <div class="report-card-stat">
+              Passed: <span class="report-card-stat-value success">${result.passes?.length || 0}</span>
             </div>
           </div>
         </div>
@@ -383,22 +376,20 @@ export class HtmlGeneratorService {
         ${
           result.violations && result.violations.length > 0
             ? `
-        <div style="margin-bottom: 1.5rem;">
-          <h4 style="font-size: 1rem; font-weight: 500; color: #111827; margin-bottom: 0.75rem;">
+        <div class="violations-section">
+          <h4 class="violations-title">
             Violations (${result.violations.length})
           </h4>
           <div>
             ${result.violations
               .map(
                 (violation: any) => `
-              <div style="border: 1px solid rgba(245, 158, 11, 0.2); background: rgba(245, 158, 11, 0.05); border-radius: 0.5rem; padding: 1rem; margin-bottom: 0.75rem;">
-                <h5 style="font-size: 0.875rem; font-weight: 500; color: #111827; margin-bottom: 0.25rem;">${this.escapeHtml(violation.id)}</h5>
-                <p style="font-size: 0.8125rem; color: #6b7280; margin-bottom: 0.5rem;">${this.escapeHtml(violation.description)}</p>
-                <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-                  <span style="display: inline-flex; align-items: center; padding: 0.25rem 0.5rem; border-radius: 9999px; background: rgba(245, 158, 11, 0.2); color: #f59e0b; font-size: 0.75rem;">
-                    ${violation.impact || 'unknown'} impact
-                  </span>
-                  <a href="${this.escapeHtml(violation.helpUrl)}" target="_blank" style="font-size: 0.75rem; color: #3b82f6;">
+              <div class="violation-item">
+                <h5 class="violation-item-id">${this.escapeHtml(violation.id)}</h5>
+                <p class="violation-item-desc">${this.escapeHtml(violation.description)}</p>
+                <div class="violation-item-meta">
+                  <span class="violation-impact">${violation.impact || 'unknown'} impact</span>
+                  <a href="${this.escapeHtml(violation.helpUrl)}" target="_blank" class="violation-help">
                     Help: ${this.escapeHtml(violation.help)}
                   </a>
                 </div>
@@ -410,9 +401,9 @@ export class HtmlGeneratorService {
                 ${
                   violation.aiExplanation
                     ? `
-                <div style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(59, 130, 246, 0.05); border-radius: 0.5rem; border-left: 3px solid #3b82f6;">
-                  <div style="font-size: 0.75rem; font-weight: 500; color: #3b82f6; margin-bottom: 0.25rem;">AI Explanation</div>
-                  <div style="font-size: 0.8125rem; color: #111827;">${this.markdownToHtml(violation.aiExplanation)}</div>
+                <div class="ai-explanation ai-section">
+                  <h5 class="ai-section-title">AI Explanation</h5>
+                  <div class="ai-section-text">${this.markdownToHtml(violation.aiExplanation)}</div>
                 </div>
                 `
                     : ''
@@ -420,9 +411,9 @@ export class HtmlGeneratorService {
                 ${
                   violation.aiRemediation
                     ? `
-                <div style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(16, 185, 129, 0.05); border-radius: 0.5rem; border-left: 3px solid #10b981;">
-                  <div style="font-size: 0.75rem; font-weight: 500; color: #10b981; margin-bottom: 0.25rem;">Solution</div>
-                  <div style="font-size: 0.8125rem; color: #111827;">${this.markdownToHtml(violation.aiRemediation)}</div>
+                <div class="ai-remediation ai-section">
+                  <h5 class="ai-section-title">Solution</h5>
+                  <div class="ai-section-text">${this.markdownToHtml(violation.aiRemediation)}</div>
                 </div>
                 `
                     : ''
@@ -440,18 +431,18 @@ export class HtmlGeneratorService {
         ${
           result.passes && result.passes.length > 0
             ? `
-        <div style="margin-bottom: 1.5rem;">
-          <h4 style="font-size: 1rem; font-weight: 500; color: #111827; margin-bottom: 0.75rem;">
+        <div class="passed-checks-section">
+          <h4 class="passed-checks-title">
             Passed Checks (${result.passes.length})
           </h4>
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem;">
+          <div class="passed-checks-grid">
             ${result.passes
               .slice(0, 12)
               .map(
                 (pass: any) => `
-              <div style="border: 1px solid rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.05); border-radius: 0.5rem; padding: 0.75rem;">
-                <div style="font-size: 0.8125rem; font-weight: 500; color: #111827; margin-bottom: 0.25rem;">${this.escapeHtml(pass.id)}</div>
-                <div style="font-size: 0.75rem; color: #6b7280;">${this.escapeHtml(pass.description || '')}</div>
+              <div class="passed-check-item">
+                <div class="passed-check-id">${this.escapeHtml(pass.id)}</div>
+                <div class="passed-check-desc">${this.escapeHtml(pass.description || '')}</div>
               </div>
             `
               )
@@ -459,8 +450,8 @@ export class HtmlGeneratorService {
             ${
               result.passes.length > 12
                 ? `
-            <div style="border: 1px solid #e5e7eb; background: #f9fafb; border-radius: 0.5rem; padding: 0.75rem; text-align: center; display: flex; align-items: center; justify-content: center;">
-              <span style="font-size: 0.75rem; color: #6b7280;">+${result.passes.length - 12} more</span>
+            <div class="passed-check-more">
+              <span class="passed-check-more-text">+${result.passes.length - 12} more</span>
             </div>
             `
                 : ''
@@ -491,13 +482,13 @@ export class HtmlGeneratorService {
     }
 
     return `
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+      <div class="passed-checks-grid">
         ${allPassed
           .map(
             (pass) => `
-          <div style="border: 1px solid rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.05); border-radius: 0.5rem; padding: 0.75rem;">
-            <h4 style="font-size: 0.875rem; font-weight: 500; color: #111827; margin-bottom: 0.25rem;">${pass.id}</h4>
-            <p style="font-size: 0.75rem; color: #6b7280;">${pass.description}</p>
+          <div class="passed-check-item">
+            <h4 class="passed-check-id">${pass.id}</h4>
+            <p class="passed-check-desc">${pass.description}</p>
           </div>
         `
           )
@@ -512,13 +503,13 @@ export class HtmlGeneratorService {
     }
 
     return `
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+      <div class="passed-checks-grid">
         ${passes
           .map(
             (pass) => `
-          <div style="border: 1px solid rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.05); border-radius: 0.5rem; padding: 0.75rem;">
-            <h4 style="font-size: 0.875rem; font-weight: 500; color: #111827; margin-bottom: 0.25rem;">${pass.id}</h4>
-            <p style="font-size: 0.75rem; color: #6b7280;">${pass.description}</p>
+          <div class="passed-check-item">
+            <h4 class="passed-check-id">${pass.id}</h4>
+            <p class="passed-check-desc">${pass.description}</p>
           </div>
         `
           )
@@ -529,7 +520,7 @@ export class HtmlGeneratorService {
 
   static generatePageResults(results: any[]): string {
     if (!results || results.length === 0) {
-      return '<div class="page-result"><p style="text-align: center; color: #6b7280;">No test results found</p></div>';
+      return '<div class="page-result"><p class="text-center text-gray">No test results found</p></div>';
     }
 
     return results
@@ -569,8 +560,8 @@ export class HtmlGeneratorService {
         ${
           result.violations && result.violations.length > 0
             ? `
-          <div style="margin-bottom: 1rem;">
-            <h4 style="font-size: 0.875rem; font-weight: 500; color: #111827; margin-bottom: 0.5rem;">Violations (${result.violations.length})</h4>
+          <div class="violations-section mb-1">
+            <h4 class="violations-title">Violations (${result.violations.length})</h4>
             <div>
               ${result.violations
                 .map(
@@ -578,7 +569,7 @@ export class HtmlGeneratorService {
                 <div class="violation">
                   <h5 class="violation-title">${violation.id}</h5>
                   <p class="violation-desc">${violation.description}</p>
-                  <div style="margin-top: 0.25rem;">
+                  <div class="mt-1">
                     <span class="violation-impact">${violation.impact || 'unknown'} impact</span>
                   </div>
                   ${
@@ -589,9 +580,9 @@ export class HtmlGeneratorService {
                   ${
                     violation.userStory
                       ? `
-                    <div class="ai-explanation" style="margin-top: 0.75rem;">
-                      <h5 class="ai-explanation-title">User Story</h5>
-                      <div class="ai-explanation-text">${this.escapeHtml(violation.userStory)}</div>
+                    <div class="ai-explanation ai-section">
+                      <h5 class="ai-section-title">User Story</h5>
+                      <div class="ai-section-text">${this.escapeHtml(violation.userStory)}</div>
                     </div>
                   `
                       : ''
@@ -599,9 +590,9 @@ export class HtmlGeneratorService {
                   ${
                     violation.aiExplanation
                       ? `
-                    <div class="ai-explanation" style="margin-top: 0.75rem;">
-                      <h5 class="ai-explanation-title">AI Explanation</h5>
-                      <div class="ai-explanation-text">${this.markdownToHtml(violation.aiExplanation)}</div>
+                    <div class="ai-explanation ai-section">
+                      <h5 class="ai-section-title">AI Explanation</h5>
+                      <div class="ai-section-text">${this.markdownToHtml(violation.aiExplanation)}</div>
                     </div>
                   `
                       : ''
@@ -609,9 +600,9 @@ export class HtmlGeneratorService {
                   ${
                     violation.aiRemediation
                       ? `
-                    <div class="ai-remediation" style="margin-top: 0.75rem;">
-                      <h5 class="ai-remediation-title">Solution</h5>
-                      <div class="ai-remediation-text">${this.markdownToHtml(violation.aiRemediation)}</div>
+                    <div class="ai-remediation ai-section">
+                      <h5 class="ai-section-title">Solution</h5>
+                      <div class="ai-section-text">${this.markdownToHtml(violation.aiRemediation)}</div>
                     </div>
                   `
                       : ''
@@ -634,15 +625,15 @@ export class HtmlGeneratorService {
         ${
           result.passes && result.passes.length > 0
             ? `
-          <div>
-            <h4 style="font-size: 0.875rem; font-weight: 500; color: #111827; margin-bottom: 0.5rem;">Passed Checks (${result.passes.length})</h4>
-            <div class="checks-grid">
+          <div class="passed-checks-section">
+            <h4 class="passed-checks-title">Passed Checks (${result.passes.length})</h4>
+            <div class="passed-checks-grid">
               ${result.passes
                 .slice(0, 8)
                 .map(
                   (pass: any) => `
-                <div class="passed-check">
-                  <h5 class="passed-check-title">${pass.id}</h5>
+                <div class="passed-check-item">
+                  <h5 class="passed-check-id">${pass.id}</h5>
                 </div>
               `
                 )
@@ -650,8 +641,8 @@ export class HtmlGeneratorService {
               ${
                 result.passes.length > 8
                   ? `
-                <div class="more-indicator">
-                  <span class="more-text">+${result.passes.length - 8} more</span>
+                <div class="passed-check-more">
+                  <span class="passed-check-more-text">+${result.passes.length - 8} more</span>
                 </div>
               `
                   : ''
