@@ -335,37 +335,22 @@ th {
   position: fixed;
   top: calc(var(--vp-nav-height) + 32px);
   right: 32px;
-  width: 224px;
+  width: 280px;
   max-height: calc(100vh - var(--vp-nav-height) - 64px);
   overflow-y: auto;
 }
 
-.VPDocAside .outline-title,
-.VPDocAside .outline-marker,
-.VPDocAside > .outline-title,
-.VPDocAside .outline-title > span,
-.VPDocAside .outline-title > div {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: block;
-  max-width: 100%;
-}
-
-.VPDocAside .outline-item,
-.VPDocAside .outline-item > a,
-.VPDocAside .outline-item > span {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: inline-block;
-  max-width: 100%;
+@media (max-width: 1599px) {
+  .VPDocAside {
+    right: 24px;
+    width: 240px;
+  }
 }
 
 @media (max-width: 1439px) {
   .VPDocAside {
     right: 16px;
-    width: 200px;
+    width: 220px;
   }
 
   .VPDocAside .outline-title,
