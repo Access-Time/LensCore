@@ -30,7 +30,7 @@ export class DockerConfigService {
       this.dockerComposePath = packageComposePath;
       return this.dockerComposePath;
     } catch {
-      //
+      // Package not found or docker-compose.yml not found, continue to next option
     }
 
     const homeDir = os.homedir();
@@ -247,11 +247,20 @@ CMD ["npm", "start"]`;
   }
 
   private async findPackageDirectory(): Promise<string> {
-    const possiblePackageDirs = [
+    const possiblePackageDirs: string[] = [
       path.resolve(__filename, '../../../../'),
-      path.resolve(require.resolve('@accesstime/lenscore'), '../..'),
-      path.dirname(require.resolve('@accesstime/lenscore')),
     ];
+
+    // Try to add global install paths if available
+    try {
+      const packagePath = require.resolve('@accesstime/lenscore');
+      possiblePackageDirs.push(
+        path.resolve(packagePath, '../..'),
+        path.dirname(packagePath)
+      );
+    } catch {
+      // Package not found, skip this path (development mode)
+    }
 
     for (const dir of possiblePackageDirs) {
       try {
@@ -304,12 +313,22 @@ CMD ["npm", "start"]`;
     }
   }
 
+  private async fileExists(filePath: string): Promise<boolean> {
+    try {
+      await fs.access(filePath);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   private async copyWebTemplates(
     packageDir: string,
     lenscoreDir: string
   ): Promise<void> {
     const webDir = path.join(packageDir, 'web');
     const destWebDir = path.join(lenscoreDir, 'web');
+
     try {
       await fs.access(webDir);
       await this.copyDirectory(webDir, destWebDir);
@@ -317,30 +336,16 @@ CMD ["npm", "start"]`;
 
       const stylesDir = path.join(destWebDir, 'styles');
       const stylesSource = path.join(webDir, 'styles');
-      if (
-        !(await fs
-          .access(stylesDir)
-          .then(() => true)
-          .catch(() => false))
-      ) {
-        try {
-          await fs.access(stylesSource);
+      const reportCssPath = path.join(stylesDir, 'report.css');
+
+      if (!(await this.fileExists(reportCssPath))) {
+        if (await this.fileExists(stylesSource)) {
           await fs.mkdir(stylesDir, { recursive: true });
           await this.copyDirectory(stylesSource, stylesDir);
           console.log(
             `✅ Copied web styles from ${stylesSource} to ${stylesDir}`
           );
-        } catch {
-          await this.createFallbackStyles(stylesDir);
-        }
-      } else {
-        const reportCssPath = path.join(stylesDir, 'report.css');
-        if (
-          !(await fs
-            .access(reportCssPath)
-            .then(() => true)
-            .catch(() => false))
-        ) {
+        } else {
           await this.createFallbackStyles(stylesDir);
         }
       }
@@ -402,141 +407,29 @@ CMD ["npm", "start"]`;
     try {
       await fs.mkdir(stylesDir, { recursive: true });
 
-      const stylesFile = path.join(stylesDir, 'report.css');
-      const stylesContent = await this.getReportStyles();
-
-      await fs.writeFile(stylesFile, stylesContent, 'utf8');
-      console.log(`✅ Created fallback styles in ${stylesDir}`);
-    } catch (error) {
-      console.error(`❌ Failed to create fallback styles: ${error}`);
-    }
-  }
-
-  private async getReportStyles(): Promise<string> {
-    try {
       const packageDir = await this.findPackageDirectory();
-      const stylesPath = path.join(packageDir, 'web', 'styles', 'report.css');
-      return await fs.readFile(stylesPath, 'utf8');
-    } catch {
-      return this.getBasicReportStyles();
+      const stylesSourcePath = path.join(
+        packageDir,
+        'web',
+        'styles',
+        'report.css'
+      );
+      const stylesDestPath = path.join(stylesDir, 'report.css');
+
+      try {
+        await fs.access(stylesSourcePath);
+        await fs.copyFile(stylesSourcePath, stylesDestPath);
+        console.log(
+          `✅ Copied CSS file from ${stylesSourcePath} to ${stylesDestPath}`
+        );
+      } catch {
+        console.warn(
+          `⚠️  CSS file not found at ${stylesSourcePath}, skipping fallback styles creation`
+        );
+      }
+    } catch (error) {
+      console.warn(`⚠️  Failed to create fallback styles: ${error}`);
     }
-  }
-
-  private getBasicReportStyles(): string {
-    return `/* LensCore Report Styles - Fallback */
-.report-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem 1rem;
-}
-
-.report-card {
-  background: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e5e7eb;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.screenshot-section {
-  margin-bottom: 1.5rem;
-}
-
-.screenshot-container {
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  overflow: hidden;
-  background: #f9fafb;
-}
-
-.screenshot-image {
-  max-width: 100%;
-  max-height: 800px;
-  height: auto;
-  width: auto;
-  display: block;
-  object-fit: contain;
-  cursor: pointer;
-}
-
-.violation-item {
-  border: 1px solid rgba(245, 158, 11, 0.2);
-  background: rgba(245, 158, 11, 0.05);
-  border-radius: 0.5rem;
-  padding: 1rem;
-  margin-bottom: 0.75rem;
-}
-
-.code-collapsible {
-  margin-top: 1rem;
-  border-radius: 0.375rem;
-  overflow: hidden;
-}
-
-.code-collapsible.problem {
-  background: #fef3c7;
-  border-left: 4px solid #f59e0b;
-}
-
-.code-collapsible.solution {
-  background: #d1fae5;
-  border-left: 4px solid #10b981;
-}
-
-.ai-section {
-  margin-top: 0.75rem;
-  padding: 0.75rem;
-  border-radius: 0.5rem;
-}
-
-.ai-explanation {
-  background: rgba(59, 130, 246, 0.05);
-  border-left: 3px solid #3b82f6;
-}
-
-.ai-remediation {
-  background: rgba(16, 185, 129, 0.05);
-  border-left: 3px solid #10b981;
-}
-
-.passed-checks-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 0.75rem;
-}
-
-.passed-check-item {
-  border: 1px solid rgba(16, 185, 129, 0.2);
-  background: rgba(16, 185, 129, 0.05);
-  border-radius: 0.5rem;
-  padding: 0.75rem;
-}
-
-.text-center {
-  text-align: center;
-}
-
-.text-gray {
-  color: #6b7280;
-}
-
-.mt-1 {
-  margin-top: 0.5rem;
-}
-
-.mb-1 {
-  margin-bottom: 1rem;
-}
-
-details summary::-webkit-details-marker {
-  display: none;
-}
-
-details summary::-moz-list-bullet {
-  list-style: none;
-}
-`;
   }
 
   private getScanTemplate(): string {
@@ -546,38 +439,52 @@ details summary::-moz-list-bullet {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LensCore Scan Results</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .header { background: #f0f0f0; padding: 20px; border-radius: 5px; }
-        .stats { display: flex; gap: 20px; margin: 20px 0; }
-        .stat { background: #e9ecef; padding: 15px; border-radius: 5px; flex: 1; }
-        .violations { background: #f8d7da; padding: 15px; border-radius: 5px; margin: 10px 0; }
-        .passed { background: #d4edda; padding: 15px; border-radius: 5px; margin: 10px 0; }
-    </style>
+    <link rel="stylesheet" href="/styles/report.css" />
 </head>
 <body>
+    <div class="container">
+        <div class="card">
     <div class="header">
-        <h1>🔍 LensCore Scan Results</h1>
-        <p>Scan completed at: {{SCAN_TIME}}</p>
+                <div>
+                    <h1 class="title">🔍 LensCore Scan Results</h1>
+                    <p class="subtitle">Scan completed at: {{SCAN_TIME}}</p>
+                </div>
+            </div>
     </div>
     
-    <div class="stats">
+        <div class="grid">
+            <div class="card">
         <div class="stat">
-            <h3>Total Pages</h3>
-            <p>{{TOTAL_PAGES}}</p>
+                    <div class="stat-icon blue">📄</div>
+                    <div>
+                        <div class="stat-label">Total Pages</div>
+                        <div class="stat-value">{{TOTAL_PAGES}}</div>
+                    </div>
+                </div>
         </div>
+            <div class="card">
         <div class="stat">
-            <h3>Passed Checks</h3>
-            <p>{{PASSED_CHECKS}}</p>
+                    <div class="stat-icon green">✅</div>
+                    <div>
+                        <div class="stat-label">Passed Checks</div>
+                        <div class="stat-value">{{PASSED_CHECKS}}</div>
+                    </div>
+                </div>
         </div>
+            <div class="card">
         <div class="stat">
-            <h3>Violations</h3>
-            <p>{{VIOLATIONS}}</p>
+                    <div class="stat-icon yellow">⚠️</div>
+                    <div>
+                        <div class="stat-label">Violations</div>
+                        <div class="stat-value">{{VIOLATIONS}}</div>
+                    </div>
+                </div>
         </div>
     </div>
 
     {{VIOLATIONS_SECTION}}
     {{PASSED_CHECKS_SECTION}}
+    </div>
 </body>
 </html>`;
   }
@@ -589,22 +496,24 @@ details summary::-moz-list-bullet {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LensCore Crawl Results</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .header { background: #f0f0f0; padding: 20px; border-radius: 5px; }
-        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-    </style>
+    <link rel="stylesheet" href="/styles/report.css" />
 </head>
 <body>
+    <div class="container">
+        <div class="card">
     <div class="header">
-        <h1>🕷️ LensCore Crawl Results</h1>
-        <p>Crawl completed at: {{CRAWL_TIME}}</p>
+                <div>
+                    <h1 class="title">🕷️ LensCore Crawl Results</h1>
+                    <p class="subtitle">Crawl completed at: {{CRAWL_TIME}}</p>
+                </div>
+            </div>
     </div>
     
-    <h2>Discovered Pages</h2>
+        <div class="card">
+            <h2 class="section-title">Discovered Pages</h2>
     {{CRAWL_TABLE_ROWS}}
+        </div>
+    </div>
 </body>
 </html>`;
   }
@@ -616,21 +525,22 @@ details summary::-moz-list-bullet {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LensCore Test Results</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .header { background: #f0f0f0; padding: 20px; border-radius: 5px; }
-        .violations { background: #f8d7da; padding: 15px; border-radius: 5px; margin: 10px 0; }
-        .passed { background: #d4edda; padding: 15px; border-radius: 5px; margin: 10px 0; }
-    </style>
+    <link rel="stylesheet" href="/styles/report.css" />
 </head>
 <body>
+    <div class="container">
+        <div class="card">
     <div class="header">
-        <h1>♿ LensCore Test Results</h1>
-        <p>Test completed at: {{TEST_TIME}}</p>
+                <div>
+                    <h1 class="title">♿ LensCore Test Results</h1>
+                    <p class="subtitle">Test completed at: {{TEST_TIME}}</p>
+                </div>
+            </div>
     </div>
     
     {{VIOLATIONS_SECTION}}
     {{PASSED_CHECKS_SECTION}}
+    </div>
 </body>
 </html>`;
   }
@@ -642,19 +552,21 @@ details summary::-moz-list-bullet {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LensCore Multiple Test Results</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .header { background: #f0f0f0; padding: 20px; border-radius: 5px; }
-        .url-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
-    </style>
+    <link rel="stylesheet" href="/styles/report.css" />
 </head>
 <body>
+    <div class="container">
+        <div class="card">
     <div class="header">
-        <h1>♿ LensCore Multiple Test Results</h1>
-        <p>Tests completed at: {{TEST_TIME}}</p>
+                <div>
+                    <h1 class="title">♿ LensCore Multiple Test Results</h1>
+                    <p class="subtitle">Tests completed at: {{TEST_TIME}}</p>
+                </div>
+            </div>
     </div>
     
     {{MULTIPLE_TEST_SECTIONS}}
+    </div>
 </body>
 </html>`;
   }

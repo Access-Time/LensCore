@@ -67,6 +67,7 @@ export const combinedHandler = async (
 
         return {
           ...result,
+          screenshot: result.screenshot,
           violations: aiResult.issues,
           aiEnabled: aiResult.enabled,
           aiError: aiResult.error,

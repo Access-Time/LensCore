@@ -1,6 +1,6 @@
 {
   "name": "@accesstime/lenscore",
-  "version": "0.1.58",
+  "version": "0.1.67",
   "description": "Open-source accessibility testing and web crawling platform",
   "main": "dist/index.js",
   "bin": {
@@ -11,6 +11,8 @@
     "build": "tsc",
     "build:cli": "tsc -p tsconfig.cli.json",
     "start": "node dist/index.js",
+    "cli": "tsx src/cli.ts",
+    "cli:build": "npm run build:cli && node dist/cli.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",

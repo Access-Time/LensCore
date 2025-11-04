@@ -161,18 +161,28 @@ export class AccessibilityService {
               screenshotKey
             );
 
-            const fileExists = await fs
-              .access(screenshotUrl)
-              .then(() => true)
-              .catch(() => false);
-            if (!fileExists) {
-              logger.error('Screenshot file not found after upload', {
-                screenshotUrl,
-                screenshotKey,
-              });
-              screenshotUrl = undefined;
-            } else {
-              logger.info('Screenshot saved successfully', {
+            try {
+              const fileExists = await fs
+                .access(screenshotUrl)
+                .then(() => true)
+                .catch(() => false);
+              if (fileExists) {
+                logger.info('Screenshot saved successfully', {
+                  screenshotUrl,
+                  screenshotKey,
+                });
+              } else {
+                logger.warn(
+                  'Screenshot file validation failed, but keeping URL',
+                  {
+                    screenshotUrl,
+                    screenshotKey,
+                  }
+                );
+              }
+            } catch (error) {
+              logger.warn('Screenshot validation error, but keeping URL', {
+                error,
                 screenshotUrl,
                 screenshotKey,
               });
