@@ -159,7 +159,6 @@ CMD ["npm", "start"]`;
       await this.copyWebTemplates(packageDir, lenscoreDir);
     } catch (error) {
       console.warn(`⚠️  Package setup warning: ${error}`);
-      await this.createFallbackTemplates(path.join(lenscoreDir, 'web'));
     }
   }
 
@@ -345,14 +344,10 @@ CMD ["npm", "start"]`;
           console.log(
             `✅ Copied web styles from ${stylesSource} to ${stylesDir}`
           );
-        } else {
-          await this.createFallbackStyles(stylesDir);
         }
       }
     } catch (error) {
       console.warn(`⚠️  Could not copy web templates: ${error}`);
-      await this.createFallbackTemplates(destWebDir);
-      await this.createFallbackStyles(path.join(destWebDir, 'styles'));
     }
 
     const outputDir = path.join(destWebDir, 'output');
@@ -378,196 +373,5 @@ CMD ["npm", "start"]`;
         await fs.copyFile(srcPath, destPath);
       }
     }
-  }
-
-  private async createFallbackTemplates(webDir: string): Promise<void> {
-    try {
-      const templatesDir = path.join(webDir, 'templates');
-      await fs.mkdir(templatesDir, { recursive: true });
-
-      const templates = {
-        'scan-results.html': this.getScanTemplate(),
-        'crawl-results.html': this.getCrawlTemplate(),
-        'test-results.html': this.getTestTemplate(),
-        'test-multiple-results.html': this.getTestMultipleTemplate(),
-      };
-
-      for (const [filename, content] of Object.entries(templates)) {
-        const filePath = path.join(templatesDir, filename);
-        await fs.writeFile(filePath, content, 'utf8');
-      }
-
-      console.log(`✅ Created fallback templates in ${templatesDir}`);
-    } catch (error) {
-      console.error(`❌ Failed to create fallback templates: ${error}`);
-    }
-  }
-
-  private async createFallbackStyles(stylesDir: string): Promise<void> {
-    try {
-      await fs.mkdir(stylesDir, { recursive: true });
-
-      const packageDir = await this.findPackageDirectory();
-      const stylesSourcePath = path.join(
-        packageDir,
-        'web',
-        'styles',
-        'report.css'
-      );
-      const stylesDestPath = path.join(stylesDir, 'report.css');
-
-      try {
-        await fs.access(stylesSourcePath);
-        await fs.copyFile(stylesSourcePath, stylesDestPath);
-        console.log(
-          `✅ Copied CSS file from ${stylesSourcePath} to ${stylesDestPath}`
-        );
-      } catch {
-        console.warn(
-          `⚠️  CSS file not found at ${stylesSourcePath}, skipping fallback styles creation`
-        );
-      }
-    } catch (error) {
-      console.warn(`⚠️  Failed to create fallback styles: ${error}`);
-    }
-  }
-
-  private getScanTemplate(): string {
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LensCore Scan Results</title>
-    <link rel="stylesheet" href="/styles/report.css" />
-</head>
-<body>
-    <div class="container">
-        <div class="card">
-    <div class="header">
-                <div>
-                    <h1 class="title">🔍 LensCore Scan Results</h1>
-                    <p class="subtitle">Scan completed at: {{SCAN_TIME}}</p>
-                </div>
-            </div>
-    </div>
-    
-        <div class="grid">
-            <div class="card">
-        <div class="stat">
-                    <div class="stat-icon blue">📄</div>
-                    <div>
-                        <div class="stat-label">Total Pages</div>
-                        <div class="stat-value">{{TOTAL_PAGES}}</div>
-                    </div>
-                </div>
-        </div>
-            <div class="card">
-        <div class="stat">
-                    <div class="stat-icon green">✅</div>
-                    <div>
-                        <div class="stat-label">Passed Checks</div>
-                        <div class="stat-value">{{PASSED_CHECKS}}</div>
-                    </div>
-                </div>
-        </div>
-            <div class="card">
-        <div class="stat">
-                    <div class="stat-icon yellow">⚠️</div>
-                    <div>
-                        <div class="stat-label">Violations</div>
-                        <div class="stat-value">{{VIOLATIONS}}</div>
-                    </div>
-                </div>
-        </div>
-    </div>
-
-    {{VIOLATIONS_SECTION}}
-    {{PASSED_CHECKS_SECTION}}
-    </div>
-</body>
-</html>`;
-  }
-
-  private getCrawlTemplate(): string {
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LensCore Crawl Results</title>
-    <link rel="stylesheet" href="/styles/report.css" />
-</head>
-<body>
-    <div class="container">
-        <div class="card">
-    <div class="header">
-                <div>
-                    <h1 class="title">🕷️ LensCore Crawl Results</h1>
-                    <p class="subtitle">Crawl completed at: {{CRAWL_TIME}}</p>
-                </div>
-            </div>
-    </div>
-    
-        <div class="card">
-            <h2 class="section-title">Discovered Pages</h2>
-    {{CRAWL_TABLE_ROWS}}
-        </div>
-    </div>
-</body>
-</html>`;
-  }
-
-  private getTestTemplate(): string {
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LensCore Test Results</title>
-    <link rel="stylesheet" href="/styles/report.css" />
-</head>
-<body>
-    <div class="container">
-        <div class="card">
-    <div class="header">
-                <div>
-                    <h1 class="title">♿ LensCore Test Results</h1>
-                    <p class="subtitle">Test completed at: {{TEST_TIME}}</p>
-                </div>
-            </div>
-    </div>
-    
-    {{VIOLATIONS_SECTION}}
-    {{PASSED_CHECKS_SECTION}}
-    </div>
-</body>
-</html>`;
-  }
-
-  private getTestMultipleTemplate(): string {
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LensCore Multiple Test Results</title>
-    <link rel="stylesheet" href="/styles/report.css" />
-</head>
-<body>
-    <div class="container">
-        <div class="card">
-    <div class="header">
-                <div>
-                    <h1 class="title">♿ LensCore Multiple Test Results</h1>
-                    <p class="subtitle">Tests completed at: {{TEST_TIME}}</p>
-                </div>
-            </div>
-    </div>
-    
-    {{MULTIPLE_TEST_SECTIONS}}
-    </div>
-</body>
-</html>`;
   }
 }

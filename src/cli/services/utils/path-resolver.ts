@@ -37,16 +37,7 @@ export class PathResolverService {
       return foundPath;
     }
 
-    console.warn(
-      '⚠️  No template directory found, creating fallback templates'
-    );
-    const fallbackPath = path.join(
-      os.homedir(),
-      '.lenscore',
-      'web',
-      'templates'
-    );
-    return fallbackPath;
+    throw new Error('No template directory found');
   }
 
   static findOutputDirectory(): string {
@@ -110,7 +101,6 @@ export class PathResolverService {
       return foundPath;
     }
 
-    const fallbackPath = path.join(os.homedir(), '.lenscore', 'web', 'styles');
-    return fallbackPath;
+    throw new Error('No styles directory found');
   }
 }

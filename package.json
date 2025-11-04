@@ -1,6 +1,6 @@
 {
   "name": "@accesstime/lenscore",
-  "version": "0.1.67",
+  "version": "0.1.68",
   "description": "Open-source accessibility testing and web crawling platform",
   "main": "dist/index.js",
   "bin": {
