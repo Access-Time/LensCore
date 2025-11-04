@@ -3,21 +3,25 @@ name: LensCore Accessibility CI
 on:
   workflow_call:
     inputs:
-      mode:
-        description: 'Deployment mode (vercel | nextjs | custom)'
+      url:
+        description: 'Target URL to scan'
         required: true
         type: string
-      url:
-        description: 'Target URL to scan (optional, auto-resolved if not provided)'
+      max_urls:
+        description: 'Maximum number of URLs to scan'
         required: false
-        type: string
-    secrets:
-      VERCEL_TOKEN:
+        type: number
+        default: 10
+      scan_depth:
+        description: 'Depth of crawling'
         required: false
-      VERCEL_ORG_ID:
+        type: number
+        default: 2
+      timeout:
+        description: 'Timeout for each page scan in milliseconds'
         required: false
-      VERCEL_PROJECT_ID:
-        required: false
+        type: number
+        default: 15000
 
 jobs:
   accessibility:
@@ -43,88 +47,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y jq curl
 
-      - name: Validate inputs
-        run: |
-          case "${{ inputs.mode }}" in
-            vercel|nextjs|custom)
-              echo "Mode validated: ${{ inputs.mode }}"
-              ;;
-            *)
-              echo "Invalid mode: ${{ inputs.mode }}. Allowed values: vercel, nextjs, custom" >&2
-              exit 1
-              ;;
-          esac
-
-      - name: Install Vercel CLI
-        if: ${{ inputs.mode == 'vercel' }}
-        run: npm install -g vercel@latest
-
-      - name: Deploy with Vercel
-        if: ${{ inputs.mode == 'vercel' }}
-        id: vercel_deploy
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        run: |
-          set -euo pipefail
-          vercel pull --yes --token "$VERCEL_TOKEN" --environment=preview || true
-          vercel build --token "$VERCEL_TOKEN" || true
-          DEPLOY_OUTPUT=$(vercel deploy --prebuilt --token "$VERCEL_TOKEN" 2>&1)
-          PREVIEW_URL=$(echo "$DEPLOY_OUTPUT" | grep -oP 'https://[^\s]+\.vercel\.app' | head -n1 || echo "")
-          if [ -z "$PREVIEW_URL" ]; then
-            PREVIEW_URL="${{ inputs.url }}"
-          fi
-          if [ -z "$PREVIEW_URL" ]; then
-            echo "Failed to obtain preview URL" >&2
-            exit 1
-          fi
-          echo "preview_url=$PREVIEW_URL" >> $GITHUB_OUTPUT
-          echo "Deployed to: $PREVIEW_URL"
-
-      - name: Build application
-        if: ${{ inputs.mode == 'nextjs' || inputs.mode == 'custom' }}
-        run: npm run build
-        continue-on-error: false
-
-      - name: Start application
-        if: ${{ inputs.mode == 'nextjs' || inputs.mode == 'custom' }}
-        run: |
-          npm start > /tmp/app.log 2>&1 &
-          echo $! > /tmp/app.pid
-        continue-on-error: false
-
-      - name: Wait for application
-        if: ${{ inputs.mode == 'nextjs' || inputs.mode == 'custom' }}
-        run: |
-          timeout=300
-          elapsed=0
-          port=3000
-          while [ $elapsed -lt $timeout ]; do
-            if curl -f http://localhost:$port > /dev/null 2>&1; then
-              echo "Application is ready"
-              exit 0
-            fi
-            sleep 5
-            elapsed=$((elapsed + 5))
-          done
-          echo "Application failed to start" >&2
-          exit 1
-
       - name: Resolve target URL
         id: resolve_url
         run: |
-          if [ "${{ inputs.mode }}" == "vercel" ]; then
-            TARGET_URL="${{ steps.vercel_deploy.outputs.preview_url }}"
-          elif [ "${{ inputs.mode }}" == "nextjs" ] || [ "${{ inputs.mode }}" == "custom" ]; then
-            if [ -n "${{ inputs.url }}" ]; then
-              TARGET_URL="${{ inputs.url }}"
-            else
-              TARGET_URL="http://localhost:3000"
-            fi
-          else
-            TARGET_URL="${{ inputs.url }}"
-          fi
+          TARGET_URL="${{ inputs.url }}"
           if [ -z "$TARGET_URL" ]; then
             echo "Target URL is required" >&2
             exit 1
@@ -185,14 +111,11 @@ jobs:
           TARGET_URL: ${{ steps.resolve_url.outputs.target_url }}
         run: |
           set -euo pipefail
-          MAX_URLS=10
-          SCAN_DEPTH=2
-          TIMEOUT=15000
           echo "Scanning: $TARGET_URL"
           lens-core scan "$TARGET_URL" \
-            -u "$MAX_URLS" \
-            -d "$SCAN_DEPTH" \
-            -t "$TIMEOUT" \
+            -u "${{ inputs.max_urls }}" \
+            -d "${{ inputs.scan_depth }}" \
+            -t "${{ inputs.timeout }}" \
             > /tmp/scan-output.txt 2>&1 || true
           python3 << 'PYEOF'
           import json
@@ -224,13 +147,10 @@ jobs:
         env:
           TARGET_URL: ${{ steps.resolve_url.outputs.target_url }}
         run: |
-          MAX_URLS=10
-          SCAN_DEPTH=2
-          TIMEOUT=15000
           lens-core scan "$TARGET_URL" \
-            -u "$MAX_URLS" \
-            -d "$SCAN_DEPTH" \
-            -t "$TIMEOUT" \
+            -u "${{ inputs.max_urls }}" \
+            -d "${{ inputs.scan_depth }}" \
+            -t "${{ inputs.timeout }}" \
             --web || true
 
       - name: Upload scan artifacts
@@ -259,14 +179,6 @@ jobs:
             exit 1
           fi
           echo "No violations found"
-
-      - name: Stop application
-        if: ${{ always() && (inputs.mode == 'nextjs' || inputs.mode == 'custom') }}
-        run: |
-          if [ -f /tmp/app.pid ]; then
-            kill $(cat /tmp/app.pid) 2>/dev/null || true
-          fi
-          pkill -f "npm start" || true
 
       - name: Stop LensCore services
         if: ${{ always() }}

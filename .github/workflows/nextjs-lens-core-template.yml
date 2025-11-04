@@ -1,0 +1,225 @@
+name: LensCore Accessibility CI - Next.js
+
+on:
+  workflow_call:
+    inputs:
+      url:
+        description: 'Target URL to scan (default: http://localhost:3000)'
+        required: false
+        type: string
+        default: 'http://localhost:3000'
+      port:
+        description: 'Port where Next.js application will run'
+        required: false
+        type: number
+        default: 3000
+      max_urls:
+        description: 'Maximum number of URLs to scan'
+        required: false
+        type: number
+        default: 10
+      scan_depth:
+        description: 'Depth of crawling'
+        required: false
+        type: number
+        default: 2
+      timeout:
+        description: 'Timeout for each page scan in milliseconds'
+        required: false
+        type: number
+        default: 15000
+
+jobs:
+  accessibility:
+    name: Run LensCore Accessibility Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq curl
+
+      - name: Build application
+        run: npm run build
+        continue-on-error: false
+
+      - name: Start application
+        run: |
+          npm start > /tmp/app.log 2>&1 &
+          echo $! > /tmp/app.pid
+        continue-on-error: false
+
+      - name: Wait for application
+        run: |
+          timeout=300
+          elapsed=0
+          port=${{ inputs.port }}
+          while [ $elapsed -lt $timeout ]; do
+            if curl -f http://localhost:$port > /dev/null 2>&1; then
+              echo "Application is ready"
+              exit 0
+            fi
+            sleep 5
+            elapsed=$((elapsed + 5))
+          done
+          echo "Application failed to start" >&2
+          exit 1
+
+      - name: Resolve target URL
+        id: resolve_url
+        run: |
+          TARGET_URL="${{ inputs.url }}"
+          if [ -z "$TARGET_URL" ]; then
+            TARGET_URL="http://localhost:${{ inputs.port }}"
+          fi
+          echo "target_url=$TARGET_URL" >> $GITHUB_OUTPUT
+          echo "Target URL: $TARGET_URL"
+
+      - name: Install LensCore CLI
+        run: npm install -g @accesstime/lenscore@latest
+
+      - name: Setup LensCore configuration
+        run: |
+          mkdir -p ~/.lenscore
+          cat > ~/.lenscore/config.json << 'EOF'
+          {
+            "mode": "local",
+            "docker": {
+              "image": "lenscore:latest",
+              "port": 3001
+            },
+            "remote": {
+              "baseUrl": "http://localhost:3001"
+            },
+            "openai": {
+              "apiKey": "",
+              "model": "gpt-3.5-turbo",
+              "enabled": false
+            }
+          }
+          EOF
+
+      - name: Start LensCore Docker services
+        run: |
+          echo "Starting LensCore services..."
+          lens-core up || true
+          sleep 30
+          timeout=120
+          elapsed=0
+          while [ $elapsed -lt $timeout ]; do
+            if curl -f http://localhost:3001/api/health > /dev/null 2>&1; then
+              echo "LensCore is ready"
+              exit 0
+            fi
+            echo "Waiting for LensCore... ($elapsed/$timeout seconds)"
+            sleep 5
+            elapsed=$((elapsed + 5))
+          done
+          echo "LensCore health check failed" >&2
+          docker ps -a || true
+          if [ -f ~/.lenscore/docker-compose.yml ]; then
+            docker-compose -f ~/.lenscore/docker-compose.yml logs --tail=50 || true
+          fi
+          exit 1
+
+      - name: Run accessibility scan
+        id: scan
+        env:
+          TARGET_URL: ${{ steps.resolve_url.outputs.target_url }}
+        run: |
+          set -euo pipefail
+          echo "Scanning: $TARGET_URL"
+          lens-core scan "$TARGET_URL" \
+            -u "${{ inputs.max_urls }}" \
+            -d "${{ inputs.scan_depth }}" \
+            -t "${{ inputs.timeout }}" \
+            > /tmp/scan-output.txt 2>&1 || true
+          python3 << 'PYEOF'
+          import json
+          import sys
+          import re
+
+          with open('/tmp/scan-output.txt', 'r') as f:
+              content = f.read()
+
+          json_match = re.search(r'\{[\s\S]*\}', content)
+          if json_match:
+              try:
+                  json_data = json.loads(json_match.group())
+                  with open('lenscore-report.json', 'w') as out:
+                      json.dump(json_data, out, indent=2)
+                  sys.exit(0)
+              except:
+                  pass
+
+          with open('lenscore-report.json', 'w') as out:
+              json.dump({"accessibility": {"results": []}}, out, indent=2)
+          PYEOF
+          if [ ! -f lenscore-report.json ]; then
+            echo '{"accessibility": {"results": []}}' > lenscore-report.json
+          fi
+          echo "Scan completed. Report generated: lenscore-report.json"
+
+      - name: Generate HTML report
+        env:
+          TARGET_URL: ${{ steps.resolve_url.outputs.target_url }}
+        run: |
+          lens-core scan "$TARGET_URL" \
+            -u "${{ inputs.max_urls }}" \
+            -d "${{ inputs.scan_depth }}" \
+            -t "${{ inputs.timeout }}" \
+            --web || true
+
+      - name: Upload scan artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: lenscore-accessibility-report
+          path: |
+            lenscore-report.json
+            ~/.lenscore/web/output/*.html
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Check for violations
+        run: |
+          set -euo pipefail
+          if [ ! -f lenscore-report.json ]; then
+            echo "Report file not found" >&2
+            exit 1
+          fi
+          VIOLATIONS=$(jq '[.accessibility.results[]? | .violations | length] | add // 0' lenscore-report.json 2>/dev/null || echo "0")
+          TOTAL_VIOLATIONS=${VIOLATIONS:-0}
+          echo "Total violations found: $TOTAL_VIOLATIONS"
+          if [ "$TOTAL_VIOLATIONS" -gt 0 ]; then
+            echo "::error::Accessibility violations detected: $TOTAL_VIOLATIONS"
+            echo "violations_count=$TOTAL_VIOLATIONS" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          echo "No violations found"
+
+      - name: Stop application
+        if: ${{ always() }}
+        run: |
+          if [ -f /tmp/app.pid ]; then
+            kill $(cat /tmp/app.pid) 2>/dev/null || true
+          fi
+          pkill -f "npm start" || true
+
+      - name: Stop LensCore services
+        if: ${{ always() }}
+        run: |
+          lens-core down || true
