@@ -340,10 +340,52 @@ th {
   overflow-y: auto;
 }
 
+.VPDocAside .outline-title,
+.VPDocAside .outline-marker,
+.VPDocAside > .outline-title,
+.VPDocAside .outline-title > span,
+.VPDocAside .outline-title > div {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  max-width: 100%;
+}
+
+.VPDocAside .outline-item,
+.VPDocAside .outline-item > a,
+.VPDocAside .outline-item > span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  max-width: 100%;
+}
+
 @media (max-width: 1439px) {
   .VPDocAside {
     right: 16px;
     width: 200px;
+  }
+
+  .VPDocAside .outline-title,
+  .VPDocAside .outline-marker,
+  .VPDocAside > .outline-title,
+  .VPDocAside .outline-title > span,
+  .VPDocAside .outline-title > div {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+
+  .VPDocAside .outline-item,
+  .VPDocAside .outline-item > a,
+  .VPDocAside .outline-item > span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
   }
 }
 
