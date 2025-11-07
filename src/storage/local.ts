@@ -8,18 +8,39 @@ export class LocalStorageService implements StorageService {
   private basePath: string;
 
   constructor(basePath: string = env.STORAGE_PATH) {
-    this.basePath = basePath;
+    this.basePath = path.resolve(basePath);
   }
 
   async uploadFile(filePath: string, key: string): Promise<string> {
     try {
-      await fs.mkdir(path.dirname(path.join(this.basePath, key)), {
+      const targetPath = path.join(this.basePath, key);
+      const targetDir = path.dirname(targetPath);
+
+      await fs.mkdir(targetDir, {
         recursive: true,
       });
-      await fs.copyFile(filePath, path.join(this.basePath, key));
-      return path.join(this.basePath, key);
+
+      await fs.copyFile(filePath, targetPath);
+
+      const fileStats = await fs.stat(targetPath);
+      if (fileStats.size === 0) {
+        throw new Error(`Uploaded file is empty: ${targetPath}`);
+      }
+
+      logger.info('File uploaded successfully', {
+        source: filePath,
+        target: targetPath,
+        size: fileStats.size,
+      });
+
+      return targetPath;
     } catch (error) {
-      logger.error('Failed to upload file to local storage', { error, key });
+      logger.error('Failed to upload file to local storage', {
+        error,
+        key,
+        basePath: this.basePath,
+        sourcePath: filePath,
+      });
       throw error;
     }
   }

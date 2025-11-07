@@ -23,10 +23,13 @@ export const combinedHandler = async (
       ...(request.crawlOptions || {}),
     });
 
+    const skipCache =
+      req.body.skipCache === true || request.testOptions?.skipCache === true;
     const testRequests: AccessibilityRequest[] = crawlResult.pages.map(
       (page) => ({
         url: page.url,
         includeScreenshot: true,
+        skipCache,
         ...(request.testOptions || {}),
       })
     );
@@ -51,26 +54,25 @@ export const combinedHandler = async (
 
     const processedResults = await Promise.all(
       testResult.results.map(async (result) => {
-        if (result.violations && Array.isArray(result.violations)) {
-          const aiResult = await aiService.processAccessibilityIssues(
-            result.violations,
-            {
-              apiKey: enableAI ? aiApiKey : undefined,
-              includeExplanations: enableAI,
-              includeRemediation: enableAI,
-              projectContext,
-            }
-          );
+        const violations = result.violations || [];
+        const aiResult = await aiService.processAccessibilityIssues(
+          violations,
+          {
+            apiKey: enableAI ? aiApiKey : undefined,
+            includeExplanations: enableAI,
+            includeRemediation: enableAI,
+            projectContext,
+          }
+        );
 
-          return {
-            ...result,
-            violations: aiResult.issues,
-            aiEnabled: aiResult.enabled,
-            aiError: aiResult.error,
-            metadata: aiResult.metadata,
-          };
-        }
-        return result;
+        return {
+          ...result,
+          screenshot: result.screenshot,
+          violations: aiResult.issues,
+          aiEnabled: aiResult.enabled,
+          aiError: aiResult.error,
+          metadata: aiResult.metadata,
+        };
       })
     );
 

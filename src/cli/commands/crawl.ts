@@ -25,6 +25,7 @@ export async function crawlCommand(url: string, options: any) {
       url,
       waitUntil: options.waitUntil || 'domcontentloaded',
       rules: options.rules || {},
+      skipCache: options.skipCache || false,
       ...numericOptions,
     };
 

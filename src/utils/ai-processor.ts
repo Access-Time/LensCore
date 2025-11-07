@@ -71,7 +71,6 @@ export class AIProcessor {
       for (const issue of issues) {
         const processedIssue: AIProcessedIssue = { ...issue };
 
-        // Always add user story (regardless of AI processing)
         try {
           const userStory = await this.userStoryService.getUserStory(issue.id);
           if (userStory) {

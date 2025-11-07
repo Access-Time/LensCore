@@ -32,7 +32,7 @@ export const testHandler = async (
 
     const testResult = await accessibilityService.testAccessibility(request);
 
-    if (testResult.violations) {
+    if (testResult.violations && testResult.violations.length > 0) {
       const aiResult = await aiService.processAccessibilityIssues(
         testResult.violations,
         {
@@ -51,7 +51,23 @@ export const testHandler = async (
         metadata: aiResult.metadata,
       });
     } else {
-      res.json(testResult);
+      const aiResult = await aiService.processAccessibilityIssues(
+        testResult.violations || [],
+        {
+          apiKey: enableAI ? aiApiKey : undefined,
+          includeExplanations: enableAI,
+          includeRemediation: enableAI,
+          projectContext,
+        }
+      );
+
+      res.json({
+        ...testResult,
+        violations: aiResult.issues,
+        aiEnabled: aiResult.enabled,
+        aiError: aiResult.error,
+        metadata: aiResult.metadata,
+      });
     }
   } catch (error) {
     next(error);
@@ -71,6 +87,10 @@ export const testMultipleHandler = async (
 
     if (Array.isArray(req.body)) {
       requests = z.array(accessibilityRequestSchema).parse(req.body);
+      const firstRequest = req.body[0];
+      enableAI = firstRequest?.enableAI === true;
+      aiApiKey = firstRequest?.aiApiKey || env.OPENAI_API_KEY;
+      projectContext = firstRequest?.projectContext || {};
     } else {
       const bodySchema = z.object({
         requests: z.array(accessibilityRequestSchema),
@@ -94,30 +114,37 @@ export const testMultipleHandler = async (
       projectContext = parsedBody.projectContext || {};
     }
 
+    if (enableAI && !aiApiKey) {
+      res.status(400).json({
+        error: 'AI API key is required when enableAI is true',
+        message:
+          'Please provide aiApiKey in request body or set OPENAI_API_KEY environment variable',
+      });
+      return;
+    }
+
     const testResult = await accessibilityService.testMultiplePages(requests);
 
     const processedResults = await Promise.all(
       testResult.results.map(async (result) => {
-        if (result.violations && Array.isArray(result.violations)) {
-          const aiResult = await aiService.processAccessibilityIssues(
-            result.violations,
-            {
-              apiKey: enableAI ? aiApiKey : undefined,
-              includeExplanations: enableAI,
-              includeRemediation: enableAI,
-              projectContext,
-            }
-          );
+        const violations = result.violations || [];
+        const aiResult = await aiService.processAccessibilityIssues(
+          violations,
+          {
+            apiKey: enableAI ? aiApiKey : undefined,
+            includeExplanations: enableAI,
+            includeRemediation: enableAI,
+            projectContext,
+          }
+        );
 
-          return {
-            ...result,
-            violations: aiResult.issues,
-            aiEnabled: aiResult.enabled,
-            aiError: aiResult.error,
-            metadata: aiResult.metadata,
-          };
-        }
-        return result;
+        return {
+          ...result,
+          violations: aiResult.issues,
+          aiEnabled: aiResult.enabled,
+          aiError: aiResult.error,
+          metadata: aiResult.metadata,
+        };
       })
     );
 
