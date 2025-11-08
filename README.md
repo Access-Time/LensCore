@@ -932,11 +932,15 @@ This project adheres to the [Contributor Covenant Code of Conduct](CODE_OF_CONDU
 
 ## 🧪 GitHub Actions CI Template
 
-Use this reusable workflow to run automated accessibility testing with LensCore on your web projects.
+Use these reusable workflows to run automated accessibility testing with LensCore on your web projects.
 
 ### Quick Start
 
-Create a `.github/workflows/accessibility.yml` file in your project repository:
+Choose the appropriate workflow template based on your deployment method:
+
+#### For Next.js Projects
+
+Create a `.github/workflows/accessibility.yml` file:
 
 ```yaml
 name: Accessibility Check
@@ -947,15 +951,50 @@ on:
 
 jobs:
   accessibility:
-    uses: Access-Time/LensCore/.github/workflows/lens-core.yml@main
+    uses: Access-Time/LensCore/.github/workflows/nextjs-lens-core-template.yml@main
     with:
-      mode: nextjs
       url: ''
+      port: 3000
+```
+
+#### For Vercel Deployments
+
+```yaml
+name: Accessibility Check
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  accessibility:
+    uses: Access-Time/LensCore/.github/workflows/vercel-lens-core-template.yml@main
+    with:
+      vercel_org_id: 'your-org-id'
+      vercel_project_id: 'your-project-id'
+    secrets:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+```
+
+#### For Custom URLs
+
+```yaml
+name: Accessibility Check
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  accessibility:
+    uses: Access-Time/LensCore/.github/workflows/lens-core-template.yml@main
+    with:
+      url: 'https://your-app.com'
 ```
 
 ### How Reusable Workflows Work
 
-When you use `uses: Access-Time/LensCore/.github/workflows/lens-core.yml@main`, GitHub Actions will:
+When you use `uses: Access-Time/LensCore/.github/workflows/[template-name].yml@main`, GitHub Actions will:
 
 1. **Fetch the workflow** from the `Access-Time/LensCore` repository on GitHub
 2. **Use the specified reference** (`@main` branch, or you can use a tag/commit SHA)
@@ -970,14 +1009,14 @@ When you use `uses: Access-Time/LensCore/.github/workflows/lens-core.yml@main`, 
 You can pin to a specific version for stability:
 
 ```yaml
-uses: Access-Time/LensCore/.github/workflows/lens-core.yml@v1.0.0
-uses: Access-Time/LensCore/.github/workflows/lens-core.yml@abc123def
+uses: Access-Time/LensCore/.github/workflows/nextjs-lens-core-template.yml@v1.0.0
+uses: Access-Time/LensCore/.github/workflows/nextjs-lens-core-template.yml@abc123def
 ```
 
 Or use a specific branch:
 
 ```yaml
-uses: Access-Time/LensCore/.github/workflows/lens-core.yml@develop
+uses: Access-Time/LensCore/.github/workflows/nextjs-lens-core-template.yml@develop
 ```
 
 ### Inputs
@@ -1009,7 +1048,7 @@ Add this secret in repository Settings → Secrets and variables → Actions (on
 ```yaml
 jobs:
   accessibility:
-    uses: Access-Time/LensCore/.github/workflows/lens-core.yml@main
+    uses: Access-Time/LensCore/.github/workflows/nextjs-lens-core-template.yml@main
     with:
       mode: nextjs
       url: ''
@@ -1027,7 +1066,7 @@ The workflow will:
 ```yaml
 jobs:
   accessibility:
-    uses: Access-Time/LensCore/.github/workflows/lens-core.yml@main
+    uses: Access-Time/LensCore/.github/workflows/nextjs-lens-core-template.yml@main
     with:
       mode: vercel
       url: ''
@@ -1050,7 +1089,7 @@ The workflow will:
 ```yaml
 jobs:
   accessibility:
-    uses: Access-Time/LensCore/.github/workflows/lens-core.yml@main
+    uses: Access-Time/LensCore/.github/workflows/nextjs-lens-core-template.yml@main
     with:
       mode: custom
       url: 'http://localhost:5173'
