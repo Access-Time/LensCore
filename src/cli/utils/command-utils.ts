@@ -79,17 +79,23 @@ export class CommandUtils {
   /**
    * Display scan results
    */
-  static displayScanResults(
+  static async displayScanResults(
     result: any,
-    webMode: boolean = false
-  ): string | null {
+    webMode: boolean = false,
+    outputFile?: string
+  ): Promise<string | null> {
     if (webMode) {
       const webReport = new WebReportService();
       return webReport.generateScanReport(result);
     } else {
-      // JSON output mode
-      console.log(JSON.stringify(result, null, 2));
-      return null;
+      const jsonOutput = JSON.stringify(result, null, 2);
+      if (outputFile) {
+        await fs.writeFile(outputFile, jsonOutput, 'utf8');
+        return outputFile;
+      } else {
+        console.log(jsonOutput);
+        return null;
+      }
     }
   }
 

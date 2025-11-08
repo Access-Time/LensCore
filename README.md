@@ -953,20 +953,54 @@ jobs:
       url: ''
 ```
 
-**Note:** Replace `Access-Time/LensCore@main` with the appropriate branch/tag/commit SHA if needed.
+### How Reusable Workflows Work
+
+When you use `uses: Access-Time/LensCore/.github/workflows/lens-core.yml@main`, GitHub Actions will:
+
+1. **Fetch the workflow** from the `Access-Time/LensCore` repository on GitHub
+2. **Use the specified reference** (`@main` branch, or you can use a tag/commit SHA)
+3. **Run the workflow** in your repository's context
+
+**Requirements:**
+
+- The `Access-Time/LensCore` repository must be **public** (or your repository must have access to it)
+- Your repository must have **workflow permissions** enabled in Settings → Actions → General → Workflow permissions
+
+**Using Different Versions:**
+You can pin to a specific version for stability:
+
+```yaml
+uses: Access-Time/LensCore/.github/workflows/lens-core.yml@v1.0.0
+uses: Access-Time/LensCore/.github/workflows/lens-core.yml@abc123def
+```
+
+Or use a specific branch:
+
+```yaml
+uses: Access-Time/LensCore/.github/workflows/lens-core.yml@develop
+```
 
 ### Inputs
 
 - `mode` (required): `vercel` | `nextjs` | `custom`
 - `url` (optional): Target URL to scan (auto-detect if empty)
+- `port` (optional): Port where application will run (for nextjs/custom mode, default: 3000)
+- `max_urls` (optional): Maximum number of URLs to scan (default: 10)
+- `scan_depth` (optional): Depth of crawling (default: 2)
+- `timeout` (optional): Timeout for each page scan in milliseconds (default: 15000)
+- `vercel_org_id` (optional): Vercel Organization ID (required for vercel mode)
+- `vercel_project_id` (optional): Vercel Project ID (required for vercel mode)
 
-### Secrets (Vercel Mode Only)
+### Secrets
 
-Add these in repository Settings → Secrets and variables → Actions:
+Add this secret in repository Settings → Secrets and variables → Actions (only required for vercel mode):
 
 - `VERCEL_TOKEN`: Token from Vercel dashboard
-- `VERCEL_ORG_ID`: Organization ID from Vercel
-- `VERCEL_PROJECT_ID`: Project ID from Vercel
+
+**Note:**
+
+- `VERCEL_TOKEN` is only required when using `mode: vercel`. For other modes (nextjs, custom), you don't need to provide it.
+- `vercel_org_id` and `vercel_project_id` are regular inputs, not secrets. You can pass them directly in the workflow or store them as repository variables if you prefer.
 
 ### Usage Examples
 
@@ -979,6 +1013,7 @@ jobs:
     with:
       mode: nextjs
       url: ''
+      port: 3000
 ```
 
 The workflow will:
@@ -996,11 +1031,13 @@ jobs:
     with:
       mode: vercel
       url: ''
+      vercel_org_id: 'your-org-id'
+      vercel_project_id: 'your-project-id'
     secrets:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 ```
+
+**Note:** `vercel_org_id` and `vercel_project_id` are regular inputs (not secrets). Only `VERCEL_TOKEN` needs to be stored as a secret.
 
 The workflow will:
 
@@ -1017,20 +1054,14 @@ jobs:
     with:
       mode: custom
       url: 'http://localhost:5173'
+      port: 5173
 ```
 
-For other npm projects (Vite, Remix, etc.). To modify default values (build command, port, etc.), edit the workflow file directly or fork the workflow.
+For other npm projects (Vite, Remix, etc.). The workflow will:
 
-### Default Values
-
-Default values that can be modified in the workflow file:
-
-- `MAX_URLS=10` (maximum URLs to scan)
-- `SCAN_DEPTH=2` (crawl depth)
-- `TIMEOUT=15000` (timeout in ms)
-- Build: `npm run build`
-- Start: `npm start`
-- Port: `3000`
+- Run `npm run build`
+- Run `npm start` (on specified port)
+- Scan the specified URL
 
 ### Output
 

@@ -1,15 +1,19 @@
-name: LensCore Accessibility CI - Next.js
+name: LensCore Accessibility CI
 
 on:
   workflow_call:
     inputs:
+      mode:
+        description: 'Deployment mode: nextjs, vercel, or custom'
+        required: true
+        type: string
       url:
-        description: 'Target URL to scan (default: http://localhost:3000)'
+        description: 'Target URL to scan (auto-detect if empty)'
         required: false
         type: string
-        default: 'http://localhost:3000'
+        default: ''
       port:
-        description: 'Port where Next.js application will run'
+        description: 'Port where application will run (for nextjs/custom mode)'
         required: false
         type: number
         default: 3000
@@ -28,6 +32,17 @@ on:
         required: false
         type: number
         default: 15000
+      vercel_org_id:
+        description: 'Vercel Organization ID (required for vercel mode)'
+        required: false
+        type: string
+      vercel_project_id:
+        description: 'Vercel Project ID (required for vercel mode)'
+        required: false
+        type: string
+    secrets:
+      VERCEL_TOKEN:
+        required: false
 
 jobs:
   accessibility:
@@ -54,16 +69,19 @@ jobs:
           sudo apt-get install -y jq curl
 
       - name: Build application
+        if: inputs.mode == 'nextjs' || inputs.mode == 'custom'
         run: npm run build
         continue-on-error: false
 
       - name: Start application
+        if: inputs.mode == 'nextjs' || inputs.mode == 'custom'
         run: |
           npm start > /tmp/app.log 2>&1 &
           echo $! > /tmp/app.pid
         continue-on-error: false
 
       - name: Wait for application
+        if: inputs.mode == 'nextjs' || inputs.mode == 'custom'
         run: |
           timeout=300
           elapsed=0
@@ -79,12 +97,58 @@ jobs:
           echo "Application failed to start" >&2
           exit 1
 
+      - name: Install Vercel CLI
+        if: inputs.mode == 'vercel'
+        run: npm install -g vercel@latest
+
+      - name: Deploy with Vercel
+        if: inputs.mode == 'vercel'
+        id: vercel_deploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ inputs.vercel_org_id }}
+          VERCEL_PROJECT_ID: ${{ inputs.vercel_project_id }}
+        run: |
+          set -euo pipefail
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "::error::VERCEL_TOKEN secret is required for vercel mode"
+            exit 1
+          fi
+          if [ -z "$VERCEL_ORG_ID" ] || [ -z "$VERCEL_PROJECT_ID" ]; then
+            echo "::error::vercel_org_id and vercel_project_id are required for vercel mode"
+            exit 1
+          fi
+          vercel pull --yes --token "$VERCEL_TOKEN" --environment=preview || true
+          vercel build --token "$VERCEL_TOKEN" || true
+          DEPLOY_OUTPUT=$(vercel deploy --prebuilt --token "$VERCEL_TOKEN" 2>&1)
+          PREVIEW_URL=$(echo "$DEPLOY_OUTPUT" | grep -oP 'https://[^\s]+\.vercel\.app' | head -n1 || echo "")
+          if [ -z "$PREVIEW_URL" ]; then
+            PREVIEW_URL="${{ inputs.url }}"
+          fi
+          if [ -z "$PREVIEW_URL" ]; then
+            echo "Failed to obtain preview URL" >&2
+            exit 1
+          fi
+          echo "preview_url=$PREVIEW_URL" >> $GITHUB_OUTPUT
+          echo "Deployed to: $PREVIEW_URL"
+
       - name: Resolve target URL
         id: resolve_url
         run: |
-          TARGET_URL="${{ inputs.url }}"
+          if [ "${{ inputs.mode }}" == "vercel" ]; then
+            TARGET_URL="${{ steps.vercel_deploy.outputs.preview_url }}"
+          elif [ "${{ inputs.mode }}" == "nextjs" ] || [ "${{ inputs.mode }}" == "custom" ]; then
+            if [ -n "${{ inputs.url }}" ]; then
+              TARGET_URL="${{ inputs.url }}"
+            else
+              TARGET_URL="http://localhost:${{ inputs.port }}"
+            fi
+          else
+            TARGET_URL="${{ inputs.url }}"
+          fi
           if [ -z "$TARGET_URL" ]; then
-            TARGET_URL="http://localhost:${{ inputs.port }}"
+            echo "Target URL is required" >&2
+            exit 1
           fi
           echo "target_url=$TARGET_URL" >> $GITHUB_OUTPUT
           echo "Target URL: $TARGET_URL"
@@ -191,7 +255,7 @@ jobs:
           echo "No violations found"
 
       - name: Stop application
-        if: ${{ always() }}
+        if: ${{ always() && (inputs.mode == 'nextjs' || inputs.mode == 'custom') }}
         run: |
           if [ -f /tmp/app.pid ]; then
             kill $(cat /tmp/app.pid) 2>/dev/null || true

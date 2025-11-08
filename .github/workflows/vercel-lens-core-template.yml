@@ -152,28 +152,7 @@ jobs:
             -u "${{ inputs.max_urls }}" \
             -d "${{ inputs.scan_depth }}" \
             -t "${{ inputs.timeout }}" \
-            > /tmp/scan-output.txt 2>&1 || true
-          python3 << 'PYEOF'
-          import json
-          import sys
-          import re
-
-          with open('/tmp/scan-output.txt', 'r') as f:
-              content = f.read()
-
-          json_match = re.search(r'\{[\s\S]*\}', content)
-          if json_match:
-              try:
-                  json_data = json.loads(json_match.group())
-                  with open('lenscore-report.json', 'w') as out:
-                      json.dump(json_data, out, indent=2)
-                  sys.exit(0)
-              except:
-                  pass
-
-          with open('lenscore-report.json', 'w') as out:
-              json.dump({"accessibility": {"results": []}}, out, indent=2)
-          PYEOF
+            -o lenscore-report.json || true
           if [ ! -f lenscore-report.json ]; then
             echo '{"accessibility": {"results": []}}' > lenscore-report.json
           fi

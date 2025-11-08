@@ -115,6 +115,7 @@ program
     'Project context (e.g., react,tailwind,typescript)'
   )
   .option('-w, --web', 'Open results in browser (default: JSON output)')
+  .option('-o, --output <file>', 'Save JSON output to file')
   .option('-u, --max-urls <number>', 'Maximum URLs to crawl', '10')
   .option('-d, --max-depth <number>', 'Maximum crawl depth', '2')
   .option('-t, --timeout <number>', 'Request timeout in milliseconds', '15000')
