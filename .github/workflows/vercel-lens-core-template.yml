@@ -74,6 +74,10 @@ jobs:
         with:
           node-version: 20
 
+      - name: Enable corepack (for pnpm/yarn)
+        if: steps.package_manager.outputs.manager == 'pnpm' || steps.package_manager.outputs.manager == 'yarn'
+        run: corepack enable
+
       - name: Install dependencies
         run: |
           if [ "${{ steps.package_manager.outputs.manager }}" == "npm" ]; then
@@ -85,7 +89,6 @@ jobs:
           elif [ "${{ steps.package_manager.outputs.manager }}" == "yarn" ]; then
             yarn install --frozen-lockfile
           elif [ "${{ steps.package_manager.outputs.manager }}" == "pnpm" ]; then
-            corepack enable
             pnpm install --frozen-lockfile
           fi
 
