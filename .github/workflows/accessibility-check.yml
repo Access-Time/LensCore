@@ -10,6 +10,10 @@ on:
       - 'docs/**'
   workflow_dispatch:
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   accessibility-check:
     runs-on: ubuntu-latest
@@ -27,6 +31,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Build documentation
         run: npm run docs:build
@@ -59,6 +66,12 @@ jobs:
           netstat -tuln | grep 4173 >&2 || lsof -i :4173 >&2 || echo "Port 4173 not in use" >&2
           exit 1
 
+      - name: Install Docker Compose
+        run: |
+          sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+          docker-compose --version
+
       - name: Install LensCore CLI
         run: npm install -g @accesstime/lenscore@latest
 
@@ -81,18 +94,19 @@ jobs:
       - name: Start LensCore services
         run: |
           lens-core up || true
-          sleep 20
-          timeout=90
+          sleep 30
+          timeout=120
           elapsed=0
           while [ $elapsed -lt $timeout ]; do
             if curl -f http://localhost:3001/api/health > /dev/null 2>&1; then
-              echo "LensCore is ready"
+              echo "✅ LensCore is ready"
               exit 0
             fi
-            sleep 3
-            elapsed=$((elapsed + 3))
+            echo "Waiting for LensCore... (${elapsed}s/${timeout}s)"
+            sleep 5
+            elapsed=$((elapsed + 5))
           done
-          echo "LensCore health check failed" >&2
+          echo "⚠️ LensCore health check failed, but continuing..." >&2
 
       - name: Run accessibility scan
         run: |
@@ -101,6 +115,8 @@ jobs:
             -d 3 \
             -t 30000 \
             > /tmp/scan-result.json 2>&1 || true
+        continue-on-error: true
+        id: lenscore-scan
 
       - name: Parse scan results
         run: |
@@ -114,6 +130,7 @@ jobs:
               with open('/tmp/scan-result.json', 'r') as f:
                   content = f.read()
               
+              # Try to find JSON in the output
               json_match = re.search(r'\{[\s\S]*\}', content)
               if json_match:
                   data = json.loads(json_match.group())
@@ -125,13 +142,28 @@ jobs:
                   else:
                       print("✅ No accessibility violations found")
                       sys.exit(0)
+              else:
+                  print("::warning::Could not find JSON in scan results")
+                  print("First 500 chars of output:")
+                  print(content[:500])
+                  sys.exit(0)
           except Exception as e:
               print(f"::warning::Could not parse results: {e}")
+              print("First 500 chars of output:")
+              print(content[:500] if 'content' in locals() else "No content")
               sys.exit(0)
           PYEOF
           else
             echo "::warning::Scan result file not found"
           fi
+        continue-on-error: true
+        id: parse-results
+
+      - name: Check scan results
+        if: steps.parse-results.outcome == 'failure'
+        run: |
+          echo "::error::Accessibility violations detected. Please review the logs above."
+          exit 1
 
       - name: Stop preview server
         if: always()
@@ -152,9 +184,17 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            const scanStatus = '${{ steps.lenscore-scan.outcome }}';
+            const parseStatus = '${{ steps.parse-results.outcome }}';
+            const isSuccess = scanStatus === 'success' && parseStatus !== 'failure';
+
+            const message = isSuccess
+              ? '✅ Accessibility check completed. No violations found.'
+              : '⚠️ Accessibility check completed. Please review the logs for detailed results.';
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '✅ Accessibility check completed. Review logs for detailed results.'
-            })
+              repo: context.repo.name,
+              body: message
+            });
