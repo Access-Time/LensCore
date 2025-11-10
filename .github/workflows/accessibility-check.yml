@@ -35,20 +35,28 @@ jobs:
         run: |
           npm run docs:preview > /tmp/preview.log 2>&1 &
           echo $! > /tmp/preview.pid
+          echo "Preview server started with PID: $(cat /tmp/preview.pid)"
 
       - name: Wait for server
         run: |
-          timeout=60
+          timeout=120
           elapsed=0
           while [ $elapsed -lt $timeout ]; do
             if curl -f http://localhost:4173 > /dev/null 2>&1; then
-              echo "Server is ready"
+              echo "✅ Server is ready"
               exit 0
             fi
-            sleep 2
-            elapsed=$((elapsed + 2))
+            echo "Waiting for server... (${elapsed}s/${timeout}s)"
+            sleep 3
+            elapsed=$((elapsed + 3))
           done
-          echo "Server failed to start" >&2
+          echo "❌ Server failed to start after ${timeout} seconds" >&2
+          echo "Preview server log:" >&2
+          cat /tmp/preview.log >&2 || echo "Log file not found" >&2
+          echo "Checking if process is still running:" >&2
+          ps aux | grep -E "(vitepress|preview)" | grep -v grep >&2 || echo "No preview process found" >&2
+          echo "Checking port 4173:" >&2
+          netstat -tuln | grep 4173 >&2 || lsof -i :4173 >&2 || echo "Port 4173 not in use" >&2
           exit 1
 
       - name: Install LensCore CLI
