@@ -42,7 +42,7 @@ jobs:
           timeout=120
           elapsed=0
           while [ $elapsed -lt $timeout ]; do
-            if curl -f http://localhost:4173 > /dev/null 2>&1; then
+            if curl -f http://localhost:4173/LensCore/en > /dev/null 2>&1; then
               echo "✅ Server is ready"
               exit 0
             fi
@@ -96,7 +96,7 @@ jobs:
 
       - name: Run accessibility scan
         run: |
-          lens-core scan http://localhost:4173 \
+          lens-core scan http://localhost:4173/LensCore/en \
             -u 50 \
             -d 3 \
             -t 30000 \
