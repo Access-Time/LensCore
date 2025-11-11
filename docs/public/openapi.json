@@ -1,0 +1,506 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "LensCore API",
+    "version": "0.1.22",
+    "description": "Open-source accessibility testing and web crawling REST API. Provides endpoints for automated WCAG compliance testing using axe-core, web crawling with configurable rules, and optional AI-powered analysis.",
+    "contact": {
+      "name": "AccessTime Team",
+      "url": "https://github.com/Access-Time/LensCore"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "/",
+      "description": "Current server"
+    },
+    {
+      "url": "http://localhost:3001",
+      "description": "Local development"
+    }
+  ],
+  "paths": {
+    "/api/health": {
+      "get": {
+        "summary": "Health check endpoint",
+        "description": "Returns the health status of the API server",
+        "tags": ["System"],
+        "responses": {
+          "200": {
+            "description": "Server is healthy and responding",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ok"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/crawl": {
+      "post": {
+        "summary": "Crawl website",
+        "description": "Crawl a website starting from the specified URL. Discovers and visits links according to configured depth and URL limits.",
+        "tags": ["Crawling"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Starting URL to crawl",
+                    "example": "https://example.com"
+                  },
+                  "max_depth": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Maximum crawl depth from the starting URL",
+                    "example": 3
+                  },
+                  "maxUrls": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Maximum number of URLs to crawl",
+                    "example": 50
+                  },
+                  "timeout": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Page load timeout in milliseconds",
+                    "example": 30000
+                  },
+                  "concurrency": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Number of concurrent crawl operations",
+                    "example": 5
+                  },
+                  "waitUntil": {
+                    "type": "string",
+                    "enum": [
+                      "load",
+                      "domcontentloaded",
+                      "networkidle0",
+                      "networkidle2"
+                    ],
+                    "description": "Puppeteer navigation wait condition",
+                    "example": "networkidle2"
+                  }
+                },
+                "required": ["url"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Crawl completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "urls": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "count": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Crawl operation failed"
+          }
+        }
+      }
+    },
+    "/api/test": {
+      "post": {
+        "summary": "Test accessibility",
+        "description": "Run accessibility tests on a single page using axe-core. Returns WCAG violations, passes, and incomplete tests with optional AI analysis.",
+        "tags": ["Accessibility"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "URL to test for accessibility",
+                    "example": "https://example.com"
+                  },
+                  "includeScreenshot": {
+                    "type": "boolean",
+                    "description": "Include page screenshot in results",
+                    "example": false
+                  },
+                  "timeout": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Page load timeout in milliseconds",
+                    "example": 30000
+                  }
+                },
+                "required": ["url"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Accessibility test completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "url": {
+                      "type": "string"
+                    },
+                    "violations": {
+                      "type": "array"
+                    },
+                    "passes": {
+                      "type": "array"
+                    },
+                    "incomplete": {
+                      "type": "array"
+                    },
+                    "timestamp": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid URL or parameters"
+          },
+          "500": {
+            "description": "Test execution failed"
+          }
+        }
+      }
+    },
+    "/api/test-multiple": {
+      "post": {
+        "summary": "Test multiple pages",
+        "description": "Run accessibility tests on multiple pages. Returns aggregated results for all tested URLs.",
+        "tags": ["Accessibility"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "urls": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "description": "Array of URLs to test",
+                    "example": [
+                      "https://example.com",
+                      "https://example.com/about"
+                    ]
+                  },
+                  "includeScreenshot": {
+                    "type": "boolean",
+                    "description": "Include screenshots in results",
+                    "example": false
+                  },
+                  "timeout": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Page load timeout in milliseconds",
+                    "example": 30000
+                  }
+                },
+                "required": ["urls"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Multiple page tests completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "array"
+                    },
+                    "summary": {
+                      "type": "object",
+                      "properties": {
+                        "total": {
+                          "type": "integer"
+                        },
+                        "passed": {
+                          "type": "integer"
+                        },
+                        "failed": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Test execution failed"
+          }
+        }
+      }
+    },
+    "/api/combined": {
+      "post": {
+        "summary": "Crawl and test",
+        "description": "Combined operation that crawls a website and runs accessibility tests on all discovered pages. Returns comprehensive results for the entire site.",
+        "tags": ["Combined"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Starting URL to crawl and test",
+                    "example": "https://example.com"
+                  },
+                  "crawlOptions": {
+                    "type": "object",
+                    "description": "Crawling configuration options",
+                    "properties": {
+                      "max_depth": {
+                        "type": "integer"
+                      },
+                      "maxUrls": {
+                        "type": "integer"
+                      },
+                      "concurrency": {
+                        "type": "integer"
+                      }
+                    }
+                  },
+                  "testOptions": {
+                    "type": "object",
+                    "description": "Accessibility testing configuration",
+                    "properties": {
+                      "includeScreenshot": {
+                        "type": "boolean"
+                      },
+                      "timeout": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                },
+                "required": ["url"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Crawl and test completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "crawl": {
+                      "type": "object",
+                      "properties": {
+                        "urls": {
+                          "type": "array"
+                        },
+                        "count": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "tests": {
+                      "type": "object",
+                      "properties": {
+                        "results": {
+                          "type": "array"
+                        },
+                        "summary": {
+                          "type": "object"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          },
+          "500": {
+            "description": "Operation failed"
+          }
+        }
+      }
+    },
+    "/api/cache/stats": {
+      "get": {
+        "summary": "Cache statistics",
+        "description": "Retrieve current cache statistics including hit rate, size, and entry count",
+        "tags": ["Cache"],
+        "responses": {
+          "200": {
+            "description": "Cache statistics retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "hits": {
+                      "type": "integer"
+                    },
+                    "misses": {
+                      "type": "integer"
+                    },
+                    "size": {
+                      "type": "integer"
+                    },
+                    "entries": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cache/clear": {
+      "delete": {
+        "summary": "Clear cache",
+        "description": "Clear all cached data. Use with caution in production environments.",
+        "tags": ["Cache"],
+        "responses": {
+          "200": {
+            "description": "Cache cleared successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cache/warm": {
+      "post": {
+        "summary": "Warm cache",
+        "description": "Pre-populate cache with frequently accessed data to improve performance",
+        "tags": ["Cache"],
+        "responses": {
+          "200": {
+            "description": "Cache warming completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "cached": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "System",
+      "description": "System health and status endpoints"
+    },
+    {
+      "name": "Crawling",
+      "description": "Web crawling operations with configurable depth and limits"
+    },
+    {
+      "name": "Accessibility",
+      "description": "WCAG accessibility testing using axe-core"
+    },
+    {
+      "name": "Combined",
+      "description": "Combined crawl and accessibility testing operations"
+    },
+    {
+      "name": "Cache",
+      "description": "Cache management and statistics"
+    }
+  ]
+}
