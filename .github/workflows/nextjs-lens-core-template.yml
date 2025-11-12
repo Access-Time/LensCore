@@ -70,15 +70,14 @@ jobs:
       # -------------------------
       # SETUP NODE + CACHE
       # -------------------------
+      - name: Enable corepack (pnpm/yarn)
+        if: steps.detect_pm.outputs.manager == 'pnpm' || steps.detect_pm.outputs.manager == 'yarn'
+        run: corepack enable
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: ${{ steps.detect_pm.outputs.manager }}
-
-      - name: Enable corepack (pnpm/yarn)
-        if: steps.detect_pm.outputs.manager == 'pnpm' || steps.detect_pm.outputs.manager == 'yarn'
-        run: corepack enable
 
       # -------------------------
       # INSTALL DEPENDENCIES
