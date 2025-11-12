@@ -175,6 +175,24 @@ jobs:
           fi
           echo "target_url=$URL" >> $GITHUB_OUTPUT
 
+      - name: Verify application is accessible
+        run: |
+          URL="${{ steps.resolve_url.outputs.target_url }}"
+          echo "Verifying application at $URL"
+
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "$URL" || echo "000")
+          if [ "$RESPONSE" != "200" ]; then
+            echo "::error::Application returned HTTP $RESPONSE. Expected 200."
+            exit 1
+          fi
+
+          CONTENT_LENGTH=$(curl -s -I "$URL" | grep -i "content-length" | awk '{print $2}' | tr -d '\r' || echo "0")
+          if [ "$CONTENT_LENGTH" -lt 100 ]; then
+            echo "::warning::Application response is very small ($CONTENT_LENGTH bytes). May not have content."
+          fi
+
+          echo "✅ Application is accessible and responding"
+
       # -------------------------
       # INSTALL LENSCORE
       # -------------------------
@@ -242,10 +260,18 @@ jobs:
             -u "${{ inputs.max_urls }}" \
             -d "${{ inputs.scan_depth }}" \
             -t "${{ inputs.timeout }}" \
+            --skip-cache \
             -o report.json || true
 
           if [ ! -f report.json ]; then
             echo '{"accessibility":{"results":[]}}' > report.json
+          fi
+
+          SCAN_RESULTS=$(jq '.accessibility.results | length' report.json 2>/dev/null || echo "0")
+          echo "Scan results: $SCAN_RESULTS pages scanned"
+
+          if [ "$SCAN_RESULTS" -eq 0 ]; then
+            echo "::warning::No pages were scanned. Check if the application is running and accessible."
           fi
 
       # -------------------------
@@ -259,6 +285,7 @@ jobs:
             -u "${{ inputs.max_urls }}" \
             -d "${{ inputs.scan_depth }}" \
             -t "${{ inputs.timeout }}" \
+            --skip-cache \
             --web || true
 
       # -------------------------
