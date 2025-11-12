@@ -331,8 +331,8 @@ jobs:
           echo "Crawl results: $CRAWL_PAGES pages discovered"
 
           if [ "$SCAN_RESULTS" -eq 0 ] && [ "$CRAWL_PAGES" -eq 0 ]; then
-            echo "::warning::Crawler found 0 pages. This is common for Next.js apps with client-side routing."
-            echo "::info::Trying fallback: testing main page directly with 'lens-core test'..."
+            echo "::info::Crawler found 0 pages (common for Next.js apps with client-side routing)."
+            echo "::info::Using fallback: testing main page directly with 'lens-core test'..."
             
             lens-core test "$TARGET_URL" \
               -t "${{ inputs.timeout }}" \
@@ -454,6 +454,44 @@ jobs:
           echo "Total violations: $VIOLATIONS"
 
           if [ "$VIOLATIONS" -gt 0 ]; then
+            echo ""
+            echo "=========================================="
+            echo "🔴 ACCESSIBILITY VIOLATIONS DETECTED"
+            echo "=========================================="
+            echo ""
+            
+            PAGE_COUNT=$(jq '.accessibility.results | length' report.json)
+            echo "Pages scanned: $PAGE_COUNT"
+            echo "Total violations: $VIOLATIONS"
+            echo ""
+            
+            echo "--- Violation Details ---"
+            jq -r '.accessibility.results[]? | 
+              "Page: \(.url // "Unknown")",
+              (.violations[]? | 
+                "  ❌ \(.id // "unknown") [\(.impact // "unknown")]",
+                "     Description: \(.description // "N/A")",
+                "     Help: \(.help // "N/A")",
+                "     Help URL: \(.helpUrl // "N/A")",
+                (.nodes[]? | 
+                  "     - Element: \(.target | join(", ") // "N/A")",
+                  "       HTML: \(.html // "N/A" | .[0:100])",
+                  "       Summary: \(.failureSummary // .any[]?[0].message // "N/A" | .[0:200])"
+                ),
+                ""
+              )
+            ' report.json || true
+            
+            echo ""
+            echo "=========================================="
+            echo "💡 How to fix:"
+            echo "  1. Review each violation above"
+            echo "  2. Check the Help URL for detailed guidance"
+            echo "  3. Fix the issues in your code"
+            echo "  4. Re-run the workflow to verify fixes"
+            echo "=========================================="
+            echo ""
+            
             echo "::error::Accessibility violations detected: $VIOLATIONS"
             exit 1
           fi
