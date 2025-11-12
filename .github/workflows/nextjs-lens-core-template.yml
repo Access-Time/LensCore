@@ -330,15 +330,68 @@ jobs:
           echo "Scan results: $SCAN_RESULTS pages scanned"
           echo "Crawl results: $CRAWL_PAGES pages discovered"
 
+          if [ "$SCAN_RESULTS" -eq 0 ] && [ "$CRAWL_PAGES" -eq 0 ]; then
+            echo "::warning::Crawler found 0 pages. This is common for Next.js apps with client-side routing."
+            echo "::info::Trying fallback: testing main page directly with 'lens-core test'..."
+            
+            lens-core test "$TARGET_URL" \
+              -t "${{ inputs.timeout }}" \
+              --skip-cache > /tmp/test_output.txt 2>&1 || true
+            
+            echo "Extracting JSON from test output..."
+            if jq empty /tmp/test_output.txt 2>/dev/null; then
+              cp /tmp/test_output.txt report-fallback.json
+              echo "✅ Found valid JSON in output"
+            else
+              awk '/^\{/,/^\}$/' /tmp/test_output.txt > report-fallback.json 2>/dev/null || true
+              if [ -f report-fallback.json ] && jq empty report-fallback.json 2>/dev/null; then
+                echo "✅ Extracted JSON using awk"
+              else
+                echo "⚠️ Could not extract JSON, trying alternative method..."
+                jq -s '.[] | select(type == "object")' /tmp/test_output.txt > report-fallback.json 2>/dev/null || true
+              fi
+            fi
+            
+            if [ -f report-fallback.json ] && jq empty report-fallback.json 2>/dev/null; then
+              FALLBACK_RESULTS=$(jq '.results | length' report-fallback.json 2>/dev/null || echo "0")
+              if [ "$FALLBACK_RESULTS" -gt 0 ]; then
+                echo "✅ Fallback test found $FALLBACK_RESULTS accessibility results"
+                jq '{
+                  "crawl": {"pages": [], "totalPages": 1, "crawlTime": 0},
+                  "accessibility": {
+                    "results": [.],
+                    "totalPages": 1,
+                    "testTime": (.testTime // 0)
+                  },
+                  "totalTime": (.testTime // 0)
+                }' report-fallback.json > report.json
+                SCAN_RESULTS=1
+                CRAWL_PAGES=1
+                echo "✅ Successfully converted test results to scan report format"
+              else
+                echo "::warning::Fallback test returned 0 results. The page may not have accessible content."
+                echo "Test output preview:"
+                head -50 /tmp/test_output.txt || true
+              fi
+            else
+              echo "::warning::Could not extract valid JSON from fallback test output."
+              echo "Test output preview:"
+              head -50 /tmp/test_output.txt || true
+            fi
+          fi
+
           if [ "$SCAN_RESULTS" -eq 0 ]; then
             echo "::warning::No pages were scanned."
             if [ "$CRAWL_PAGES" -eq 0 ]; then
               echo "::warning::Crawler found 0 pages. The application may not have any links or the page may be empty."
+              echo "::info::Tip: Ensure your application has HTML links (<a> tags) or use a SPA framework that renders links server-side."
             else
               echo "::warning::Crawler found $CRAWL_PAGES pages but accessibility scan returned 0 results."
             fi
             echo "Report content:"
-            jq '.' report.json | head -20 || cat report.json | head -20
+            jq '.' report.json | head -30 || cat report.json | head -30
+          else
+            echo "✅ Successfully scanned $SCAN_RESULTS page(s)"
           fi
 
       # -------------------------
