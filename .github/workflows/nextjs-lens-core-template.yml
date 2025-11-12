@@ -125,23 +125,50 @@ jobs:
       # -------------------------
       - name: Build application
         run: |
+          echo "Building application..."
+          if [ -f package.json ]; then
+            echo "Checking available scripts:"
+            case "${{ steps.detect_pm.outputs.manager }}" in
+              "npm") npm run | grep -E "(build|start)" || true ;;
+              "yarn") yarn run 2>/dev/null | grep -E "(build|start)" || true ;;
+              "pnpm") pnpm run 2>/dev/null | grep -E "(build|start)" || true ;;
+            esac
+          fi
+
           case "${{ steps.detect_pm.outputs.manager }}" in
             "npm") npm run build ;;
             "yarn") yarn build ;;
             "pnpm") pnpm build ;;
           esac
 
+          echo "✅ Build completed"
+
       # -------------------------
       # START APP
       # -------------------------
       - name: Start application
         run: |
+          echo "Starting application on port ${{ inputs.port }}..."
+
           case "${{ steps.detect_pm.outputs.manager }}" in
             "npm") npm start > /tmp/app.log 2>&1 & ;;
             "yarn") yarn start > /tmp/app.log 2>&1 & ;;
             "pnpm") pnpm start > /tmp/app.log 2>&1 & ;;
           esac
-          echo $! > /tmp/app.pid
+
+          APP_PID=$!
+          echo $APP_PID > /tmp/app.pid
+          echo "Application started with PID: $APP_PID"
+
+          sleep 2
+
+          if ! ps -p $APP_PID > /dev/null 2>&1; then
+            echo "::error::Application process died immediately. Check logs:"
+            cat /tmp/app.log || true
+            exit 1
+          fi
+
+          echo "Application process is running (PID: $APP_PID)"
 
       # -------------------------
       # WAIT FOR APP
@@ -151,16 +178,38 @@ jobs:
           timeout=300
           elapsed=0
           port=${{ inputs.port }}
+
+          echo "Waiting for application to be ready on port $port..."
+
           while [ $elapsed -lt $timeout ]; do
             if curl -f "http://localhost:$port" > /dev/null 2>&1; then
-              echo "✅ Application is ready"
+              echo "✅ Application is ready on port $port"
+              curl -s "http://localhost:$port" | head -c 200
+              echo ""
               exit 0
             fi
-            echo "⏳ Waiting for application... ($elapsed/$timeout)"
+            
+            if [ -f /tmp/app.pid ]; then
+              APP_PID=$(cat /tmp/app.pid)
+              if ! ps -p $APP_PID > /dev/null 2>&1; then
+                echo "::error::Application process (PID: $APP_PID) is not running!"
+                echo "Application logs:"
+                cat /tmp/app.log || true
+                exit 1
+              fi
+            fi
+            
+            echo "⏳ Waiting for application... ($elapsed/$timeout seconds)"
             sleep 5
             elapsed=$((elapsed + 5))
           done
-          echo "❌ Application failed to start"
+
+          echo "❌ Application failed to start within $timeout seconds"
+          echo "Application logs:"
+          cat /tmp/app.log || true
+          echo ""
+          echo "Checking if port $port is in use:"
+          netstat -tuln | grep ":$port " || lsof -i :$port || true
           exit 1
 
       # -------------------------
@@ -230,6 +279,30 @@ jobs:
           exit 1
 
       # -------------------------
+      # VERIFY APPLICATION BEFORE SCAN
+      # -------------------------
+      - name: Verify application before scan
+        env:
+          TARGET_URL: ${{ steps.resolve_url.outputs.target_url }}
+        run: |
+          echo "Pre-scan verification for $TARGET_URL"
+
+          HTTP_CODE=$(curl -sL -o /dev/null -w "%{http_code}" "$TARGET_URL" || echo "000")
+          echo "HTTP Response Code: $HTTP_CODE"
+
+          if [ "$HTTP_CODE" -ge 400 ]; then
+            echo "::error::Application returned HTTP $HTTP_CODE. Cannot proceed with scan."
+            exit 1
+          fi
+
+          CONTENT=$(curl -sL "$TARGET_URL" | head -c 500)
+          if [ -z "$CONTENT" ] || [ ${#CONTENT} -lt 50 ]; then
+            echo "::warning::Application response seems empty or very small. Scan may not find pages."
+          else
+            echo "✅ Application is responding with content (${#CONTENT} chars sampled)"
+          fi
+
+      # -------------------------
       # RUN ACCESSIBILITY SCAN (JSON)
       # -------------------------
       - name: Run accessibility scan
@@ -238,6 +311,8 @@ jobs:
           TARGET_URL: ${{ steps.resolve_url.outputs.target_url }}
         run: |
           echo "Scanning $TARGET_URL"
+          echo "Max URLs: ${{ inputs.max_urls }}, Depth: ${{ inputs.scan_depth }}, Timeout: ${{ inputs.timeout }}ms"
+
           lens-core scan "$TARGET_URL" \
             -u "${{ inputs.max_urls }}" \
             -d "${{ inputs.scan_depth }}" \
@@ -250,10 +325,20 @@ jobs:
           fi
 
           SCAN_RESULTS=$(jq '.accessibility.results | length' report.json 2>/dev/null || echo "0")
+          CRAWL_PAGES=$(jq '.crawl.totalPages // 0' report.json 2>/dev/null || echo "0")
+
           echo "Scan results: $SCAN_RESULTS pages scanned"
+          echo "Crawl results: $CRAWL_PAGES pages discovered"
 
           if [ "$SCAN_RESULTS" -eq 0 ]; then
-            echo "::warning::No pages were scanned. Check if the application is running and accessible."
+            echo "::warning::No pages were scanned."
+            if [ "$CRAWL_PAGES" -eq 0 ]; then
+              echo "::warning::Crawler found 0 pages. The application may not have any links or the page may be empty."
+            else
+              echo "::warning::Crawler found $CRAWL_PAGES pages but accessibility scan returned 0 results."
+            fi
+            echo "Report content:"
+            jq '.' report.json | head -20 || cat report.json | head -20
           fi
 
       # -------------------------
