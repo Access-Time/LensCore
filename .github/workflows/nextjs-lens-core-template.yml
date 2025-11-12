@@ -156,27 +156,25 @@ jobs:
           timeout=300
           elapsed=0
           port=${{ inputs.port }}
-
+          
           while [ $elapsed -lt $timeout ]; do
             if curl -sf "http://localhost:$port" > /dev/null 2>&1; then
-              sleep 15
-              for i in 1 2 3; do
-                CONTENT=$(curl -sL "http://localhost:$port" 2>/dev/null || echo "")
-                if ! echo "$CONTENT" | grep -qi "example domain"; then
-                  exit 0
-                fi
-                sleep 5
-              done
-              echo "::error::Application is serving placeholder content"
-              cat /tmp/app.log 2>/dev/null | tail -30 || true
-              exit 1
+              sleep 20
+              CONTENT=$(curl -sL "http://localhost:$port" 2>/dev/null || echo "")
+              if echo "$CONTENT" | grep -qi "example domain"; then
+                echo "::error::Application is serving placeholder, not Next.js app"
+                echo "Application logs:"
+                cat /tmp/app.log 2>/dev/null | tail -50 || true
+                exit 1
+              fi
+              exit 0
             fi
             sleep 5
             elapsed=$((elapsed + 5))
           done
-
+          
           echo "::error::Application failed to start"
-          cat /tmp/app.log 2>/dev/null | tail -30 || true
+          cat /tmp/app.log 2>/dev/null | tail -50 || true
           exit 1
 
       # -------------------------
@@ -246,6 +244,19 @@ jobs:
           exit 1
 
       # -------------------------
+      # VERIFY APP CONTENT BEFORE SCAN
+      # -------------------------
+      - name: Verify app content before scan
+        env:
+          TARGET_URL: ${{ steps.resolve_url.outputs.target_url }}
+        run: |
+          CONTENT=$(curl -sL "$TARGET_URL" 2>/dev/null || echo "")
+          if echo "$CONTENT" | grep -qi "example domain"; then
+            echo "::error::Application is serving placeholder content, not Next.js app"
+            exit 1
+          fi
+
+      # -------------------------
       # RUN ACCESSIBILITY SCAN (JSON)
       # -------------------------
       - name: Run accessibility scan
@@ -253,9 +264,6 @@ jobs:
         env:
           TARGET_URL: ${{ steps.resolve_url.outputs.target_url }}
         run: |
-          echo "Scanning $TARGET_URL"
-          echo "Max URLs: ${{ inputs.max_urls }}, Depth: ${{ inputs.scan_depth }}, Timeout: ${{ inputs.timeout }}ms"
-
           lens-core scan "$TARGET_URL" \
             -u "${{ inputs.max_urls }}" \
             -d "${{ inputs.scan_depth }}" \
