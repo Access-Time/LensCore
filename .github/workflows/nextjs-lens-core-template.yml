@@ -295,11 +295,31 @@ jobs:
             exit 1
           fi
 
-          CONTENT=$(curl -sL "$TARGET_URL" | head -c 500)
-          if [ -z "$CONTENT" ] || [ ${#CONTENT} -lt 50 ]; then
+          FULL_CONTENT=$(curl -sL "$TARGET_URL")
+          CONTENT_LENGTH=${#FULL_CONTENT}
+          CONTENT_PREVIEW=$(echo "$FULL_CONTENT" | head -c 500)
+
+          echo "Content length: $CONTENT_LENGTH bytes"
+
+          if [ "$CONTENT_LENGTH" -lt 50 ]; then
             echo "::warning::Application response seems empty or very small. Scan may not find pages."
           else
-            echo "✅ Application is responding with content (${#CONTENT} chars sampled)"
+            echo "✅ Application is responding with content"
+            echo ""
+            echo "Content preview (first 500 chars):"
+            echo "$CONTENT_PREVIEW"
+            echo ""
+            
+            if echo "$FULL_CONTENT" | grep -qi "example domain"; then
+              echo "::warning::Content contains 'Example Domain' - this might be a default/placeholder page."
+              echo "::warning::Make sure your Next.js application is actually running and serving your content."
+            fi
+            
+            if echo "$FULL_CONTENT" | grep -qi "next.js\|__next\|nextjs"; then
+              echo "✅ Detected Next.js application"
+            else
+              echo "::warning::Next.js markers not found in content. Make sure the app is built and running correctly."
+            fi
           fi
 
       # -------------------------
