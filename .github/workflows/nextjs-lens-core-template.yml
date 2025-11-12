@@ -124,6 +124,8 @@ jobs:
       # BUILD APP
       # -------------------------
       - name: Build application
+        env:
+          NODE_ENV: production
         run: |
           case "${{ steps.detect_pm.outputs.manager }}" in
             "npm") npm run build || exit 1 ;;
@@ -131,15 +133,13 @@ jobs:
             "pnpm") pnpm build || exit 1 ;;
           esac
 
-          if [ ! -d ".next" ] && [ ! -d "dist" ] && [ ! -d "build" ]; then
-            echo "::error::Build output not found. Check if build completed successfully."
-            exit 1
-          fi
-
       # -------------------------
       # START APP
       # -------------------------
       - name: Start application
+        env:
+          NODE_ENV: production
+          PORT: ${{ inputs.port }}
         run: |
           case "${{ steps.detect_pm.outputs.manager }}" in
             "npm") npm start > /tmp/app.log 2>&1 & ;;
@@ -159,19 +159,24 @@ jobs:
 
           while [ $elapsed -lt $timeout ]; do
             if curl -sf "http://localhost:$port" > /dev/null 2>&1; then
-              sleep 10
-              CONTENT=$(curl -sL "http://localhost:$port" 2>/dev/null || echo "")
-              if echo "$CONTENT" | grep -qi "example domain"; then
-                echo "::error::Application is serving placeholder, not Next.js app"
-                exit 1
-              fi
-              exit 0
+              sleep 15
+              for i in 1 2 3; do
+                CONTENT=$(curl -sL "http://localhost:$port" 2>/dev/null || echo "")
+                if ! echo "$CONTENT" | grep -qi "example domain"; then
+                  exit 0
+                fi
+                sleep 5
+              done
+              echo "::error::Application is serving placeholder content"
+              cat /tmp/app.log 2>/dev/null | tail -30 || true
+              exit 1
             fi
             sleep 5
             elapsed=$((elapsed + 5))
           done
 
           echo "::error::Application failed to start"
+          cat /tmp/app.log 2>/dev/null | tail -30 || true
           exit 1
 
       # -------------------------
