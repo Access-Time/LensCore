@@ -242,10 +242,10 @@ jobs:
             -u "${{ inputs.max_urls }}" \
             -d "${{ inputs.scan_depth }}" \
             -t "${{ inputs.timeout }}" \
-            -o lenscore-report.json || true
+            -o report.json || true
 
-          if [ ! -f lenscore-report.json ]; then
-            echo '{"accessibility":{"results":[]}}' > lenscore-report.json
+          if [ ! -f report.json ]; then
+            echo '{"accessibility":{"results":[]}}' > report.json
           fi
 
       # -------------------------
@@ -269,7 +269,7 @@ jobs:
         with:
           name: lenscore-accessibility-report
           path: |
-            lenscore-report.json
+            report.json
             ~/.lenscore/web/output/*.html
           retention-days: 7
           if-no-files-found: warn
@@ -279,7 +279,7 @@ jobs:
       # -------------------------
       - name: Check for violations
         run: |
-          VIOLATIONS=$(jq '[.accessibility.results[]? | .violations | length] | add // 0' lenscore-report.json)
+          VIOLATIONS=$(jq '[.accessibility.results[]? | .violations | length] | add // 0' report.json)
           echo "Total violations: $VIOLATIONS"
 
           if [ "$VIOLATIONS" -gt 0 ]; then

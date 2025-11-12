@@ -67,10 +67,11 @@ export async function scanCommand(url: string, options: any) {
     }
 
     const webMode = options.web || false;
+    const outputFile = options.output || options.o || '';
     const reportFilename = await CommandUtils.displayScanResults(
       result,
       webMode,
-      options.output
+      outputFile
     );
     CommandUtils.displayAIStatus(options, result);
     await CommandUtils.displayFooter(options, reportFilename || undefined);
