@@ -125,50 +125,28 @@ jobs:
       # -------------------------
       - name: Build application
         run: |
-          echo "Building application..."
-          if [ -f package.json ]; then
-            echo "Checking available scripts:"
-            case "${{ steps.detect_pm.outputs.manager }}" in
-              "npm") npm run | grep -E "(build|start)" || true ;;
-              "yarn") yarn run 2>/dev/null | grep -E "(build|start)" || true ;;
-              "pnpm") pnpm run 2>/dev/null | grep -E "(build|start)" || true ;;
-            esac
-          fi
-
           case "${{ steps.detect_pm.outputs.manager }}" in
-            "npm") npm run build ;;
-            "yarn") yarn build ;;
-            "pnpm") pnpm build ;;
+            "npm") npm run build || exit 1 ;;
+            "yarn") yarn build || exit 1 ;;
+            "pnpm") pnpm build || exit 1 ;;
           esac
 
-          echo "✅ Build completed"
+          if [ ! -d ".next" ] && [ ! -d "dist" ] && [ ! -d "build" ]; then
+            echo "::error::Build output not found. Check if build completed successfully."
+            exit 1
+          fi
 
       # -------------------------
       # START APP
       # -------------------------
       - name: Start application
         run: |
-          echo "Starting application on port ${{ inputs.port }}..."
-
           case "${{ steps.detect_pm.outputs.manager }}" in
             "npm") npm start > /tmp/app.log 2>&1 & ;;
             "yarn") yarn start > /tmp/app.log 2>&1 & ;;
             "pnpm") pnpm start > /tmp/app.log 2>&1 & ;;
           esac
-
-          APP_PID=$!
-          echo $APP_PID > /tmp/app.pid
-          echo "Application started with PID: $APP_PID"
-
-          sleep 2
-
-          if ! ps -p $APP_PID > /dev/null 2>&1; then
-            echo "::error::Application process died immediately. Check logs:"
-            cat /tmp/app.log || true
-            exit 1
-          fi
-
-          echo "Application process is running (PID: $APP_PID)"
+          echo $! > /tmp/app.pid
 
       # -------------------------
       # WAIT FOR APP
@@ -179,37 +157,21 @@ jobs:
           elapsed=0
           port=${{ inputs.port }}
 
-          echo "Waiting for application to be ready on port $port..."
-
           while [ $elapsed -lt $timeout ]; do
-            if curl -f "http://localhost:$port" > /dev/null 2>&1; then
-              echo "✅ Application is ready on port $port"
-              curl -s "http://localhost:$port" | head -c 200
-              echo ""
-              exit 0
-            fi
-            
-            if [ -f /tmp/app.pid ]; then
-              APP_PID=$(cat /tmp/app.pid)
-              if ! ps -p $APP_PID > /dev/null 2>&1; then
-                echo "::error::Application process (PID: $APP_PID) is not running!"
-                echo "Application logs:"
-                cat /tmp/app.log || true
+            if curl -sf "http://localhost:$port" > /dev/null 2>&1; then
+              sleep 10
+              CONTENT=$(curl -sL "http://localhost:$port" 2>/dev/null || echo "")
+              if echo "$CONTENT" | grep -qi "example domain"; then
+                echo "::error::Application is serving placeholder, not Next.js app"
                 exit 1
               fi
+              exit 0
             fi
-            
-            echo "⏳ Waiting for application... ($elapsed/$timeout seconds)"
             sleep 5
             elapsed=$((elapsed + 5))
           done
 
-          echo "❌ Application failed to start within $timeout seconds"
-          echo "Application logs:"
-          cat /tmp/app.log || true
-          echo ""
-          echo "Checking if port $port is in use:"
-          netstat -tuln | grep ":$port " || lsof -i :$port || true
+          echo "::error::Application failed to start"
           exit 1
 
       # -------------------------
@@ -277,50 +239,6 @@ jobs:
           echo "❌ LensCore health check failed"
           docker ps -a
           exit 1
-
-      # -------------------------
-      # VERIFY APPLICATION BEFORE SCAN
-      # -------------------------
-      - name: Verify application before scan
-        env:
-          TARGET_URL: ${{ steps.resolve_url.outputs.target_url }}
-        run: |
-          echo "Pre-scan verification for $TARGET_URL"
-
-          HTTP_CODE=$(curl -sL -o /dev/null -w "%{http_code}" "$TARGET_URL" || echo "000")
-          echo "HTTP Response Code: $HTTP_CODE"
-
-          if [ "$HTTP_CODE" -ge 400 ]; then
-            echo "::error::Application returned HTTP $HTTP_CODE. Cannot proceed with scan."
-            exit 1
-          fi
-
-          FULL_CONTENT=$(curl -sL "$TARGET_URL")
-          CONTENT_LENGTH=${#FULL_CONTENT}
-          CONTENT_PREVIEW=$(echo "$FULL_CONTENT" | head -c 500)
-
-          echo "Content length: $CONTENT_LENGTH bytes"
-
-          if [ "$CONTENT_LENGTH" -lt 50 ]; then
-            echo "::warning::Application response seems empty or very small. Scan may not find pages."
-          else
-            echo "✅ Application is responding with content"
-            echo ""
-            echo "Content preview (first 500 chars):"
-            echo "$CONTENT_PREVIEW"
-            echo ""
-            
-            if echo "$FULL_CONTENT" | grep -qi "example domain"; then
-              echo "::warning::Content contains 'Example Domain' - this might be a default/placeholder page."
-              echo "::warning::Make sure your Next.js application is actually running and serving your content."
-            fi
-            
-            if echo "$FULL_CONTENT" | grep -qi "next.js\|__next\|nextjs"; then
-              echo "✅ Detected Next.js application"
-            else
-              echo "::warning::Next.js markers not found in content. Make sure the app is built and running correctly."
-            fi
-          fi
 
       # -------------------------
       # RUN ACCESSIBILITY SCAN (JSON)
