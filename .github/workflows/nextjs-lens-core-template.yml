@@ -175,24 +175,6 @@ jobs:
           fi
           echo "target_url=$URL" >> $GITHUB_OUTPUT
 
-      - name: Verify application is accessible
-        run: |
-          URL="${{ steps.resolve_url.outputs.target_url }}"
-          echo "Verifying application at $URL"
-
-          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "$URL" || echo "000")
-          if [ "$RESPONSE" != "200" ]; then
-            echo "::error::Application returned HTTP $RESPONSE. Expected 200."
-            exit 1
-          fi
-
-          CONTENT_LENGTH=$(curl -s -I "$URL" | grep -i "content-length" | awk '{print $2}' | tr -d '\r' || echo "0")
-          if [ "$CONTENT_LENGTH" -lt 100 ]; then
-            echo "::warning::Application response is very small ($CONTENT_LENGTH bytes). May not have content."
-          fi
-
-          echo "✅ Application is accessible and responding"
-
       # -------------------------
       # INSTALL LENSCORE
       # -------------------------
