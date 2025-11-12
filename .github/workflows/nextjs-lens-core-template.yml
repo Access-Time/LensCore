@@ -353,23 +353,47 @@ jobs:
             fi
             
             if [ -f report-fallback.json ] && jq empty report-fallback.json 2>/dev/null; then
-              FALLBACK_RESULTS=$(jq '.results | length' report-fallback.json 2>/dev/null || echo "0")
-              if [ "$FALLBACK_RESULTS" -gt 0 ]; then
-                echo "✅ Fallback test found $FALLBACK_RESULTS accessibility results"
+              echo "Analyzing test results..."
+              
+              HAS_URL=$(jq -r 'if .url then "yes" else "no" end' report-fallback.json 2>/dev/null || echo "no")
+              VIOLATIONS_COUNT=$(jq '.violations | length' report-fallback.json 2>/dev/null || echo "0")
+              PASSES_COUNT=$(jq '.passes | length' report-fallback.json 2>/dev/null || echo "0")
+              HAS_SCORE=$(jq -r 'if .score then "yes" else "no" end' report-fallback.json 2>/dev/null || echo "no")
+              
+              echo "Test result analysis:"
+              echo "  - Has URL: $HAS_URL"
+              echo "  - Violations count: $VIOLATIONS_COUNT"
+              echo "  - Passes count: $PASSES_COUNT"
+              echo "  - Has score: $HAS_SCORE"
+              
+              if [ "$HAS_URL" = "yes" ] && ([ "$VIOLATIONS_COUNT" -gt 0 ] || [ "$PASSES_COUNT" -gt 0 ] || [ "$HAS_SCORE" = "yes" ]); then
+                echo "✅ Fallback test found valid accessibility results"
+                echo "  - Violations: $VIOLATIONS_COUNT"
+                echo "  - Passes: $PASSES_COUNT"
+                
                 jq '{
                   "crawl": {"pages": [], "totalPages": 1, "crawlTime": 0},
                   "accessibility": {
                     "results": [.],
                     "totalPages": 1,
-                    "testTime": (.testTime // 0)
+                    "testTime": (.metadata.processingTime // 0)
                   },
-                  "totalTime": (.testTime // 0)
+                  "totalTime": (.metadata.processingTime // 0)
                 }' report-fallback.json > report.json
-                SCAN_RESULTS=1
-                CRAWL_PAGES=1
-                echo "✅ Successfully converted test results to scan report format"
+                
+                if jq empty report.json 2>/dev/null; then
+                  SCAN_RESULTS=1
+                  CRAWL_PAGES=1
+                  echo "✅ Successfully converted test results to scan report format"
+                else
+                  echo "::error::Failed to create valid report.json from test results"
+                fi
               else
-                echo "::warning::Fallback test returned 0 results. The page may not have accessible content."
+                echo "::warning::Fallback test did not find valid accessibility results."
+                echo "  - URL present: $HAS_URL"
+                echo "  - Violations: $VIOLATIONS_COUNT"
+                echo "  - Passes: $PASSES_COUNT"
+                echo "  - Score: $HAS_SCORE"
                 echo "Test output preview:"
                 head -50 /tmp/test_output.txt || true
               fi
