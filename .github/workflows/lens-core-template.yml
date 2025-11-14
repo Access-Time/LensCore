@@ -86,6 +86,7 @@ jobs:
           fi
           echo "port=$PORT" >> $GITHUB_OUTPUT
           echo "app_url=http://app:$PORT" >> $GITHUB_OUTPUT
+          echo "localhost_url=http://localhost:$PORT" >> $GITHUB_OUTPUT
 
       - name: Setup LensCore
         run: |
@@ -229,13 +230,22 @@ jobs:
           echo "Checking container status..."
           docker-compose ps
 
+          CONTAINER_STARTED=false
+
           while [ $elapsed -lt $timeout ]; do
             CONTAINER_STATUS=$(docker-compose ps -q app 2>/dev/null | xargs docker inspect --format='{{.State.Status}}' 2>/dev/null || echo "not-found")
-            echo "[$elapsed s] Container status: $CONTAINER_STATUS"
             
             if [ "$CONTAINER_STATUS" = "running" ]; then
+              if [ "$CONTAINER_STARTED" = "false" ]; then
+                echo "✓ Container is running, waiting for application to start..."
+                CONTAINER_STARTED=true
+                sleep 10
+                elapsed=$((elapsed + 10))
+                continue
+              fi
+              
               if curl -sf "http://localhost:$PORT" > /dev/null 2>&1; then
-                sleep 5
+                sleep 3
                 CONTENT=$(curl -sL "http://localhost:$PORT" 2>/dev/null || echo "")
                 if [ -n "$CONTENT" ] && ! echo "$CONTENT" | grep -qi "example domain"; then
                   echo "✓ Application is accessible at http://localhost:$PORT"
@@ -254,14 +264,17 @@ jobs:
                   exit 0
                 fi
               else
-                echo "[$elapsed s] Container running but not responding on port $PORT"
-                HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:$PORT" 2>/dev/null || echo "000")
-                echo "[$elapsed s] HTTP status: $HTTP_CODE"
+                if [ $elapsed -ge 30 ]; then
+                  HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:$PORT" 2>/dev/null || echo "000")
+                  echo "[$elapsed s] Still waiting for application to respond (HTTP: $HTTP_CODE)..."
+                fi
               fi
             elif [ "$CONTAINER_STATUS" = "exited" ] || [ "$CONTAINER_STATUS" = "dead" ]; then
               echo "::error::Application container exited or died"
               docker-compose logs app --tail=50
               exit 1
+            else
+              echo "[$elapsed s] Waiting for container to start (status: $CONTAINER_STATUS)..."
             fi
             
             sleep 5
@@ -293,11 +306,43 @@ jobs:
             echo "::warning::Application container not found"
           fi
 
+      - name: Verify application accessibility from LensCore
+        run: |
+          APP_URL="${{ steps.extract_port.outputs.app_url }}"
+          LOCALHOST_URL="${{ steps.extract_port.outputs.localhost_url }}"
+          PORT="${{ steps.extract_port.outputs.port }}"
+
+          echo "Testing application accessibility..."
+          echo "From host: curl http://localhost:$PORT"
+          HOST_ACCESS=$(curl -sf "http://localhost:$PORT" > /dev/null 2>&1 && echo "yes" || echo "no")
+          echo "Host access: $HOST_ACCESS"
+
+          LENSCORE_CONTAINER=$(docker ps --filter "name=lenscore" --format "{{.Names}}" | head -1 || echo "")
+          if [ -n "$LENSCORE_CONTAINER" ]; then
+            echo "Testing from LensCore container: curl $APP_URL"
+            CONTAINER_ACCESS=$(docker exec "$LENSCORE_CONTAINER" sh -c "curl -sf '$APP_URL' > /dev/null 2>&1" 2>/dev/null && echo "yes" || echo "no")
+            echo "Container access to $APP_URL: $CONTAINER_ACCESS"
+            
+            if [ "$CONTAINER_ACCESS" = "no" ]; then
+              echo "::warning::LensCore container cannot access application via service name. Will use localhost instead."
+              echo "scan_url=$LOCALHOST_URL" >> $GITHUB_ENV
+            else
+              echo "✓ LensCore container can access application via service name"
+              echo "scan_url=$APP_URL" >> $GITHUB_ENV
+            fi
+          else
+            echo "::warning::LensCore container not found. Using localhost."
+            echo "scan_url=$LOCALHOST_URL" >> $GITHUB_ENV
+          fi
+
       - name: Run scan
         run: |
-          lens-core scan '${{ steps.extract_port.outputs.app_url }}' -u ${{ inputs.max_urls }} -d ${{ inputs.scan_depth }} -t ${{ inputs.timeout }} --skip-cache -o report.json || true
+          SCAN_URL="${scan_url:-${{ steps.extract_port.outputs.localhost_url }}}"
+          echo "Scanning: $SCAN_URL"
+          lens-core scan "$SCAN_URL" -u ${{ inputs.max_urls }} -d ${{ inputs.scan_depth }} -t ${{ inputs.timeout }} --skip-cache -o report.json || true
           if [ ! -f report.json ]; then
-            lens-core test '${{ steps.extract_port.outputs.app_url }}' -t ${{ inputs.timeout }} --skip-cache > test_output.txt 2>&1 || true
+            echo "Scan failed, trying with test command..."
+            lens-core test "$SCAN_URL" -t ${{ inputs.timeout }} --skip-cache > test_output.txt 2>&1 || true
             if [ -f test_output.txt ]; then
               if jq empty test_output.txt 2>/dev/null; then
                 cp test_output.txt report-fallback.json
@@ -373,7 +418,8 @@ jobs:
 
       - name: Generate HTML report
         run: |
-          lens-core scan '${{ steps.extract_port.outputs.app_url }}' -u ${{ inputs.max_urls }} -d ${{ inputs.scan_depth }} -t ${{ inputs.timeout }} --skip-cache --web || true
+          SCAN_URL="${scan_url:-${{ steps.extract_port.outputs.localhost_url }}}"
+          lens-core scan "$SCAN_URL" -u ${{ inputs.max_urls }} -d ${{ inputs.scan_depth }} -t ${{ inputs.timeout }} --skip-cache --web || true
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
