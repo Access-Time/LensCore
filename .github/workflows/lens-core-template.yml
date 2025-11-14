@@ -113,7 +113,8 @@ jobs:
       - name: Prepare docker-compose.yml for application
         run: |
           PORT="${{ steps.extract_port.outputs.port }}"
-
+          PM="${{ steps.detect_pm.outputs.manager }}"
+          
           if [ -f docker-compose.yml ]; then
             echo "✓ Found existing docker-compose.yml"
             if ! docker-compose config --services 2>/dev/null | grep -q "^app$"; then
@@ -125,9 +126,60 @@ jobs:
             echo "✓ Service 'app' found in docker-compose.yml"
           else
             echo "No docker-compose.yml found. Generating one with service 'app'..."
+            
+            if [ ! -f Dockerfile ]; then
+              echo "Dockerfile not found. Creating a basic Dockerfile for $PM..."
+              
+              if [ "$PM" = "npm" ]; then
+                {
+                  echo "FROM node:20-alpine"
+                  echo "WORKDIR /app"
+                  echo "COPY package*.json ./"
+                  echo "RUN npm ci --only=production"
+                  echo "COPY . ."
+                  echo "EXPOSE ${PORT}"
+                  echo "CMD [\"npm\", \"start\"]"
+                } > Dockerfile
+              elif [ "$PM" = "yarn" ]; then
+                {
+                  echo "FROM node:20-alpine"
+                  echo "WORKDIR /app"
+                  echo "RUN corepack enable && corepack prepare yarn@stable --activate"
+                  echo "COPY package.json yarn.lock ./"
+                  echo "RUN yarn install --frozen-lockfile --production"
+                  echo "COPY . ."
+                  echo "EXPOSE ${PORT}"
+                  echo "CMD [\"yarn\", \"start\"]"
+                } > Dockerfile
+              elif [ "$PM" = "pnpm" ]; then
+                {
+                  echo "FROM node:20-alpine"
+                  echo "WORKDIR /app"
+                  echo "RUN corepack enable && corepack prepare pnpm@latest --activate"
+                  echo "COPY package.json pnpm-lock.yaml ./"
+                  echo "RUN pnpm install --frozen-lockfile --prod"
+                  echo "COPY . ."
+                  echo "EXPOSE ${PORT}"
+                  echo "CMD [\"pnpm\", \"start\"]"
+                } > Dockerfile
+              else
+                echo "::warning::Unknown package manager: $PM. Creating generic Dockerfile..."
+                {
+                  echo "FROM node:20-alpine"
+                  echo "WORKDIR /app"
+                  echo "COPY package*.json ./"
+                  echo "RUN npm install --production || true"
+                  echo "COPY . ."
+                  echo "EXPOSE ${PORT}"
+                  echo "CMD [\"node\", \"index.js\"]"
+                } > Dockerfile
+              fi
+              echo "✓ Created basic Dockerfile for $PM"
+            else
+              echo "✓ Using existing Dockerfile"
+            fi
+            
             {
-              echo "version: \"3.9\""
-              echo ""
               echo "services:"
               echo "  app:"
               echo "    build:"
@@ -141,7 +193,6 @@ jobs:
               echo ""
             } > docker-compose.yml
             echo "✓ Generated docker-compose.yml with service 'app'"
-            echo "::warning::Make sure your Dockerfile exists and builds your application correctly."
           fi
 
       - name: Start application
