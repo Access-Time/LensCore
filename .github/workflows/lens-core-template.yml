@@ -87,99 +87,65 @@ jobs:
           echo "port=$PORT" >> $GITHUB_OUTPUT
           echo "app_url=http://app:$PORT" >> $GITHUB_OUTPUT
 
-      - name: Verify and prepare docker-compose.yml
+      - name: Setup LensCore
         run: |
-          if [ ! -f docker-compose.yml ]; then
-            echo "::error::docker-compose.yml not found. Please create one with a service named 'app' for your application."
-            exit 1
-          fi
-          if ! docker-compose config --services 2>/dev/null | grep -q "^app$"; then
-            echo "::error::docker-compose.yml must contain a service named 'app' for your application."
-            echo "Available services:"
-            docker-compose config --services 2>/dev/null || echo "Invalid docker-compose.yml"
-            exit 1
-          fi
-          echo "✓ docker-compose.yml found with 'app' service"
+          npm install -g @accesstime/lenscore@latest
+          mkdir -p ~/.lenscore
+          cat > ~/.lenscore/config.json << 'CONFIG_EOF'
+          {
+            "mode": "local",
+            "docker": {
+              "image": "lenscore:latest",
+              "port": 3001
+            },
+            "remote": {
+              "baseUrl": "http://localhost:3001"
+            },
+            "openai": {
+              "apiKey": "",
+              "model": "gpt-3.5-turbo",
+              "enabled": false
+            }
+          }
+          CONFIG_EOF
+          lens-core build
 
-          HAS_LENSCORE=$(docker-compose config --services 2>/dev/null | grep -q "^lenscore$" && echo "yes" || echo "no")
-          HAS_REDIS=$(docker-compose config --services 2>/dev/null | grep -q "^redis$" && echo "yes" || echo "no")
+      - name: Prepare docker-compose.yml for application
+        run: |
+          PORT="${{ steps.extract_port.outputs.port }}"
 
-          if [ "$HAS_LENSCORE" = "no" ] || [ "$HAS_REDIS" = "no" ]; then
-            echo "Adding LensCore and Redis services to docker-compose.yml..."
-            cp docker-compose.yml docker-compose.yml.backup
-            
+          if [ -f docker-compose.yml ]; then
+            echo "✓ Found existing docker-compose.yml"
+            if ! docker-compose config --services 2>/dev/null | grep -q "^app$"; then
+              echo "::error::docker-compose.yml must contain a service named 'app' for your application."
+              echo "Available services:"
+              docker-compose config --services 2>/dev/null || echo "Invalid docker-compose.yml"
+              exit 1
+            fi
+            echo "✓ Service 'app' found in docker-compose.yml"
+          else
+            echo "No docker-compose.yml found. Generating one with service 'app'..."
             {
+              echo "version: \"3.9\""
               echo ""
-              echo "  lenscore:"
-              echo "    image: accesstime/lenscore:latest"
-              echo "    container_name: lenscore-app"
+              echo "services:"
+              echo "  app:"
+              echo "    build:"
+              echo "      context: ."
+              echo "      dockerfile: Dockerfile"
               echo "    ports:"
-              echo "      - \"3001:3001\""
+              echo "      - \"${PORT}:${PORT}\""
               echo "    environment:"
               echo "      - NODE_ENV=production"
-              echo "      - PORT=3001"
-              echo "      - CACHE_TYPE=redis"
-              echo "      - REDIS_HOST=redis"
-              echo "      - REDIS_PORT=6379"
-              echo "    networks:"
-              echo "      - lenscore-network"
-              echo "    depends_on:"
-              echo "      - redis"
-              echo "    volumes:"
-              echo "      - ./reports:/app/reports"
+              echo "      - PORT=${PORT}"
               echo ""
-              echo "  redis:"
-              echo "    image: redis:7-alpine"
-              echo "    container_name: lenscore-redis"
-              echo "    ports:"
-              echo "      - \"6379:6379\""
-              echo "    volumes:"
-              echo "      - redis_data:/data"
-              echo "    command: redis-server --appendonly yes"
-              echo "    networks:"
-              echo "      - lenscore-network"
-              echo ""
-              echo "volumes:"
-              echo "  redis_data:"
-              echo ""
-              echo "networks:"
-              echo "  lenscore-network:"
-              echo "    driver: bridge"
-            } >> docker-compose.yml
-            echo "✓ Added LensCore and Redis services"
-          else
-            echo "✓ LensCore and Redis services already present"
+            } > docker-compose.yml
+            echo "✓ Generated docker-compose.yml with service 'app'"
+            echo "::warning::Make sure your Dockerfile exists and builds your application correctly."
           fi
 
-          if ! docker-compose config 2>/dev/null | grep -q "networks:"; then
-            echo "Adding network configuration..."
-            {
-              echo ""
-              echo "networks:"
-              echo "  lenscore-network:"
-              echo "    driver: bridge"
-            } >> docker-compose.yml
-            echo "✓ Added lenscore-network"
-          fi
-
-          APP_HAS_NETWORK=$(docker-compose config 2>/dev/null | grep -A 20 "^  app:" | grep -q "networks:" && echo "yes" || echo "no")
-          if [ "$APP_HAS_NETWORK" = "no" ]; then
-            echo "::warning::Service 'app' should be in the same network as LensCore (lenscore-network) for scanning to work."
-            echo "::warning::Please add the following to your 'app' service in docker-compose.yml:"
-            echo "::warning::  networks:"
-            echo "::warning::    - lenscore-network"
-          else
-            APP_IN_LENSCORE_NETWORK=$(docker-compose config 2>/dev/null | grep -A 20 "^  app:" | grep -A 5 "networks:" | grep -q "lenscore-network" && echo "yes" || echo "no")
-            if [ "$APP_IN_LENSCORE_NETWORK" = "no" ]; then
-              echo "::warning::Service 'app' is in a different network. Please add 'lenscore-network' to its networks list."
-            else
-              echo "✓ Service 'app' is already in lenscore-network"
-            fi
-          fi
-
-      - name: Start services
+      - name: Start application
         run: |
-          mkdir -p reports
           docker-compose up -d --build
 
       - name: Wait for LensCore
@@ -188,12 +154,14 @@ jobs:
           elapsed=0
           while [ $elapsed -lt $timeout ]; do
             if curl -sf "http://localhost:3001/api/health" > /dev/null 2>&1; then
+              echo "✓ LensCore is ready"
               exit 0
             fi
             sleep 5
             elapsed=$((elapsed + 5))
           done
-          docker-compose logs
+          echo "::error::LensCore did not become available within timeout"
+          docker ps -a | grep lenscore || true
           exit 1
 
       - name: Wait for application
@@ -228,48 +196,43 @@ jobs:
           docker-compose logs app
           exit 1
 
-      - name: Setup LensCore configuration
+      - name: Connect application to LensCore network
         run: |
-          docker exec lenscore-app sh -c "npm install -g @accesstime/lenscore@latest" || true
-          docker exec lenscore-app sh -c "mkdir -p ~/.lenscore" || true
-          docker exec -i lenscore-app sh -c "cat > ~/.lenscore/config.json" << 'CONFIG_EOF'
-          {
-            "mode": "local",
-            "docker": {
-              "image": "lenscore:latest",
-              "port": 3001
-            },
-            "remote": {
-              "baseUrl": "http://localhost:3001"
-            },
-            "openai": {
-              "apiKey": "",
-              "model": "gpt-3.5-turbo",
-              "enabled": false
-            }
-          }
-          CONFIG_EOF
-          docker exec lenscore-app sh -c "lens-core build" || true
+          APP_CONTAINER=$(docker-compose ps -q app 2>/dev/null || echo "")
+          if [ -n "$APP_CONTAINER" ]; then
+            LENSCORE_NETWORK=$(docker network ls | grep lenscore | awk '{print $1}' | head -1 || echo "")
+            if [ -n "$LENSCORE_NETWORK" ]; then
+              NETWORK_NAME=$(docker network inspect "$LENSCORE_NETWORK" --format '{{.Name}}' 2>/dev/null || echo "")
+              if [ -n "$NETWORK_NAME" ]; then
+                docker network connect "$NETWORK_NAME" "$APP_CONTAINER" 2>/dev/null || echo "Container already in network or network not found"
+                echo "✓ Connected application to LensCore network: $NETWORK_NAME"
+              fi
+            else
+              echo "::warning::LensCore network not found. Application may not be accessible from LensCore."
+            fi
+          else
+            echo "::warning::Application container not found"
+          fi
 
-      - name: Run scan from LensCore container
+      - name: Run scan
         run: |
-          docker exec lenscore-app sh -c "lens-core scan '${{ steps.extract_port.outputs.app_url }}' -u ${{ inputs.max_urls }} -d ${{ inputs.scan_depth }} -t ${{ inputs.timeout }} --skip-cache -o /app/reports/report.json" || true
-          if [ ! -f reports/report.json ]; then
-            docker exec lenscore-app sh -c "lens-core test '${{ steps.extract_port.outputs.app_url }}' -t ${{ inputs.timeout }} --skip-cache" > reports/test_output.txt 2>&1 || true
-            if [ -f reports/test_output.txt ]; then
-              if jq empty reports/test_output.txt 2>/dev/null; then
-                cp reports/test_output.txt reports/report-fallback.json
+          lens-core scan '${{ steps.extract_port.outputs.app_url }}' -u ${{ inputs.max_urls }} -d ${{ inputs.scan_depth }} -t ${{ inputs.timeout }} --skip-cache -o report.json || true
+          if [ ! -f report.json ]; then
+            lens-core test '${{ steps.extract_port.outputs.app_url }}' -t ${{ inputs.timeout }} --skip-cache > test_output.txt 2>&1 || true
+            if [ -f test_output.txt ]; then
+              if jq empty test_output.txt 2>/dev/null; then
+                cp test_output.txt report-fallback.json
               else
-                awk '/^\{/,/^\}$/' reports/test_output.txt > reports/report-fallback.json 2>/dev/null || true
-                if [ ! -f reports/report-fallback.json ] || ! jq empty reports/report-fallback.json 2>/dev/null; then
-                  jq -s '.[] | select(type == "object")' reports/test_output.txt > reports/report-fallback.json 2>/dev/null || true
+                awk '/^\{/,/^\}$/' test_output.txt > report-fallback.json 2>/dev/null || true
+                if [ ! -f report-fallback.json ] || ! jq empty report-fallback.json 2>/dev/null; then
+                  jq -s '.[] | select(type == "object")' test_output.txt > report-fallback.json 2>/dev/null || true
                 fi
               fi
-              if [ -f reports/report-fallback.json ] && jq empty reports/report-fallback.json 2>/dev/null; then
-                HAS_URL=$(jq -r 'if .url then "yes" else "no" end' reports/report-fallback.json 2>/dev/null || echo "no")
-                VIOLATIONS_COUNT=$(jq '.violations | length' reports/report-fallback.json 2>/dev/null || echo "0")
-                PASSES_COUNT=$(jq '.passes | length' reports/report-fallback.json 2>/dev/null || echo "0")
-                HAS_SCORE=$(jq -r 'if .score then "yes" else "no" end' reports/report-fallback.json 2>/dev/null || echo "no")
+              if [ -f report-fallback.json ] && jq empty report-fallback.json 2>/dev/null; then
+                HAS_URL=$(jq -r 'if .url then "yes" else "no" end' report-fallback.json 2>/dev/null || echo "no")
+                VIOLATIONS_COUNT=$(jq '.violations | length' report-fallback.json 2>/dev/null || echo "0")
+                PASSES_COUNT=$(jq '.passes | length' report-fallback.json 2>/dev/null || echo "0")
+                HAS_SCORE=$(jq -r 'if .score then "yes" else "no" end' report-fallback.json 2>/dev/null || echo "no")
                 if [ "$HAS_URL" = "yes" ] && ([ "$VIOLATIONS_COUNT" -gt 0 ] || [ "$PASSES_COUNT" -gt 0 ] || [ "$HAS_SCORE" = "yes" ]); then
                   jq '{
                     "crawl": {"pages": [], "totalPages": 1, "crawlTime": 0},
@@ -279,15 +242,14 @@ jobs:
                       "testTime": (.metadata.processingTime // 0)
                     },
                     "totalTime": (.metadata.processingTime // 0)
-                  }' reports/report-fallback.json > reports/report.json
+                  }' report-fallback.json > report.json
                 fi
               fi
             fi
           fi
-          if [ ! -f reports/report.json ]; then
-            echo '{"accessibility":{"results":[]}}' > reports/report.json
+          if [ ! -f report.json ]; then
+            echo '{"accessibility":{"results":[]}}' > report.json
           fi
-          docker cp lenscore-app:/app/reports/report.json report.json 2>/dev/null || cp reports/report.json report.json 2>/dev/null || echo '{"accessibility":{"results":[]}}' > report.json
           VIOLATIONS=$(jq '[.accessibility.results[]? | .violations | length] | add // 0' report.json)
           echo "Total violations: $VIOLATIONS"
           if [ "$VIOLATIONS" -gt 0 ]; then
@@ -332,7 +294,7 @@ jobs:
 
       - name: Generate HTML report
         run: |
-          docker exec lenscore-app sh -c "lens-core scan '${{ steps.extract_port.outputs.app_url }}' -u ${{ inputs.max_urls }} -d ${{ inputs.scan_depth }} -t ${{ inputs.timeout }} --skip-cache --web" || true
+          lens-core scan '${{ steps.extract_port.outputs.app_url }}' -u ${{ inputs.max_urls }} -d ${{ inputs.scan_depth }} -t ${{ inputs.timeout }} --skip-cache --web || true
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -347,3 +309,4 @@ jobs:
         if: always()
         run: |
           docker-compose down -v || true
+          lens-core down || true
