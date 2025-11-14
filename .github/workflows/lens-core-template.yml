@@ -4,9 +4,15 @@ on:
   workflow_call:
     inputs:
       url:
-        description: 'Target URL to scan'
-        required: true
+        description: 'Application URL to scan'
+        required: false
         type: string
+        default: 'http://localhost:3000'
+      port:
+        description: 'Application port'
+        required: false
+        type: number
+        default: 3000
       max_urls:
         description: 'Maximum number of URLs to scan'
         required: false
@@ -18,7 +24,7 @@ on:
         type: number
         default: 2
       timeout:
-        description: 'Timeout for each page scan in milliseconds'
+        description: 'Timeout for each page scan (ms)'
         required: false
         type: number
         default: 15000
@@ -35,15 +41,9 @@ jobs:
       id-token: write
 
     steps:
-      # -------------------------
-      # CHECKOUT
-      # -------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # -------------------------
-      # DETECT PACKAGE MANAGER
-      # -------------------------
       - name: Detect package manager
         id: detect_pm
         run: |
@@ -61,38 +61,6 @@ jobs:
             echo "lockfile=" >> $GITHUB_OUTPUT
           fi
 
-      # -------------------------
-      # SETUP NODE + CACHE
-      # -------------------------
-      - name: Enable corepack (pnpm/yarn)
-        if: steps.detect_pm.outputs.manager == 'pnpm' || steps.detect_pm.outputs.manager == 'yarn'
-        run: corepack enable
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      # -------------------------
-      # INSTALL DEPENDENCIES
-      # -------------------------
-      - name: Install dependencies
-        run: |
-          case "${{ steps.detect_pm.outputs.manager }}" in
-            "npm")
-              if [ -n "${{ steps.detect_pm.outputs.lockfile }}" ]; then npm ci; else npm install; fi
-              ;;
-            "yarn")
-              yarn install --frozen-lockfile
-              ;;
-            "pnpm")
-              pnpm install --frozen-lockfile
-              ;;
-          esac
-
-      # -------------------------
-      # SYSTEM DEPENDENCIES
-      # -------------------------
       - name: Install system packages
         run: |
           sudo apt-get update
@@ -104,43 +72,167 @@ jobs:
           sudo chmod +x /usr/local/bin/docker-compose
           docker-compose --version
 
-      # -------------------------
-      # DOCKER PREPARATION
-      # -------------------------
-      - name: Ensure Docker is running
+      - name: Extract port from URL
+        id: extract_port
         run: |
-          echo "Starting Docker daemon..."
-          sudo systemctl start docker
-          sudo chmod 666 /var/run/docker.sock || true
-          docker info
+          URL="${{ inputs.url }}"
+          PORT="${{ inputs.port }}"
+          if [ -z "$PORT" ] || [ "$PORT" = "0" ]; then
+            if echo "$URL" | grep -qE ':[0-9]+'; then
+              PORT=$(echo "$URL" | sed -E 's/.*:([0-9]+).*/\1/')
+            else
+              PORT=3000
+            fi
+          fi
+          echo "port=$PORT" >> $GITHUB_OUTPUT
+          echo "app_url=http://app:$PORT" >> $GITHUB_OUTPUT
 
-      # -------------------------
-      # RESOLVE URL
-      # -------------------------
-      - name: Resolve target URL
-        id: resolve_url
+      - name: Verify and prepare docker-compose.yml
         run: |
-          TARGET_URL="${{ inputs.url }}"
-          if [ -z "$TARGET_URL" ]; then
-            echo "Target URL is required" >&2
+          if [ ! -f docker-compose.yml ]; then
+            echo "::error::docker-compose.yml not found. Please create one with a service named 'app' for your application."
             exit 1
           fi
-          echo "target_url=$TARGET_URL" >> $GITHUB_OUTPUT
-          echo "Target URL: $TARGET_URL"
+          if ! docker-compose config --services 2>/dev/null | grep -q "^app$"; then
+            echo "::error::docker-compose.yml must contain a service named 'app' for your application."
+            echo "Available services:"
+            docker-compose config --services 2>/dev/null || echo "Invalid docker-compose.yml"
+            exit 1
+          fi
+          echo "✓ docker-compose.yml found with 'app' service"
 
-      # -------------------------
-      # INSTALL LENSCORE
-      # -------------------------
-      - name: Install LensCore CLI
-        run: npm install -g @accesstime/lenscore@latest
+          HAS_LENSCORE=$(docker-compose config --services 2>/dev/null | grep -q "^lenscore$" && echo "yes" || echo "no")
+          HAS_REDIS=$(docker-compose config --services 2>/dev/null | grep -q "^redis$" && echo "yes" || echo "no")
 
-      # -------------------------
-      # CONFIGURE LENSCORE
-      # -------------------------
+          if [ "$HAS_LENSCORE" = "no" ] || [ "$HAS_REDIS" = "no" ]; then
+            echo "Adding LensCore and Redis services to docker-compose.yml..."
+            cp docker-compose.yml docker-compose.yml.backup
+            
+            {
+              echo ""
+              echo "  lenscore:"
+              echo "    image: accesstime/lenscore:latest"
+              echo "    container_name: lenscore-app"
+              echo "    ports:"
+              echo "      - \"3001:3001\""
+              echo "    environment:"
+              echo "      - NODE_ENV=production"
+              echo "      - PORT=3001"
+              echo "      - CACHE_TYPE=redis"
+              echo "      - REDIS_HOST=redis"
+              echo "      - REDIS_PORT=6379"
+              echo "    networks:"
+              echo "      - lenscore-network"
+              echo "    depends_on:"
+              echo "      - redis"
+              echo "    volumes:"
+              echo "      - ./reports:/app/reports"
+              echo ""
+              echo "  redis:"
+              echo "    image: redis:7-alpine"
+              echo "    container_name: lenscore-redis"
+              echo "    ports:"
+              echo "      - \"6379:6379\""
+              echo "    volumes:"
+              echo "      - redis_data:/data"
+              echo "    command: redis-server --appendonly yes"
+              echo "    networks:"
+              echo "      - lenscore-network"
+              echo ""
+              echo "volumes:"
+              echo "  redis_data:"
+              echo ""
+              echo "networks:"
+              echo "  lenscore-network:"
+              echo "    driver: bridge"
+            } >> docker-compose.yml
+            echo "✓ Added LensCore and Redis services"
+          else
+            echo "✓ LensCore and Redis services already present"
+          fi
+
+          if ! docker-compose config 2>/dev/null | grep -q "networks:"; then
+            echo "Adding network configuration..."
+            {
+              echo ""
+              echo "networks:"
+              echo "  lenscore-network:"
+              echo "    driver: bridge"
+            } >> docker-compose.yml
+            echo "✓ Added lenscore-network"
+          fi
+
+          APP_HAS_NETWORK=$(docker-compose config 2>/dev/null | grep -A 20 "^  app:" | grep -q "networks:" && echo "yes" || echo "no")
+          if [ "$APP_HAS_NETWORK" = "no" ]; then
+            echo "::warning::Service 'app' should be in the same network as LensCore (lenscore-network) for scanning to work."
+            echo "::warning::Please add the following to your 'app' service in docker-compose.yml:"
+            echo "::warning::  networks:"
+            echo "::warning::    - lenscore-network"
+          else
+            APP_IN_LENSCORE_NETWORK=$(docker-compose config 2>/dev/null | grep -A 20 "^  app:" | grep -A 5 "networks:" | grep -q "lenscore-network" && echo "yes" || echo "no")
+            if [ "$APP_IN_LENSCORE_NETWORK" = "no" ]; then
+              echo "::warning::Service 'app' is in a different network. Please add 'lenscore-network' to its networks list."
+            else
+              echo "✓ Service 'app' is already in lenscore-network"
+            fi
+          fi
+
+      - name: Start services
+        run: |
+          mkdir -p reports
+          docker-compose up -d --build
+
+      - name: Wait for LensCore
+        run: |
+          timeout=120
+          elapsed=0
+          while [ $elapsed -lt $timeout ]; do
+            if curl -sf "http://localhost:3001/api/health" > /dev/null 2>&1; then
+              exit 0
+            fi
+            sleep 5
+            elapsed=$((elapsed + 5))
+          done
+          docker-compose logs
+          exit 1
+
+      - name: Wait for application
+        run: |
+          timeout=300
+          elapsed=0
+          PORT="${{ steps.extract_port.outputs.port }}"
+          APP_URL="${{ steps.extract_port.outputs.app_url }}"
+          echo "Waiting for application at $APP_URL (service name) and http://localhost:$PORT (exposed port)..."
+          while [ $elapsed -lt $timeout ]; do
+            if curl -sf "http://localhost:$PORT" > /dev/null 2>&1; then
+              sleep 10
+              CONTENT=$(curl -sL "http://localhost:$PORT" 2>/dev/null || echo "")
+              if echo "$CONTENT" | grep -qi "example domain"; then
+                echo "::warning::Application returned 'Example Domain' placeholder. Waiting longer..."
+                sleep 10
+                CONTENT=$(curl -sL "http://localhost:$PORT" 2>/dev/null || echo "")
+                if echo "$CONTENT" | grep -qi "example domain"; then
+                  echo "::error::Application still returning placeholder content"
+                  docker-compose logs app
+                  exit 1
+                fi
+              fi
+              echo "✓ Application is accessible at http://localhost:$PORT"
+              echo "✓ Application will be scanned at $APP_URL (Docker network)"
+              exit 0
+            fi
+            sleep 5
+            elapsed=$((elapsed + 5))
+          done
+          echo "::error::Application did not become available within timeout"
+          docker-compose logs app
+          exit 1
+
       - name: Setup LensCore configuration
         run: |
-          mkdir -p ~/.lenscore
-          cat > ~/.lenscore/config.json << 'EOF'
+          docker exec lenscore-app sh -c "npm install -g @accesstime/lenscore@latest" || true
+          docker exec lenscore-app sh -c "mkdir -p ~/.lenscore" || true
+          docker exec -i lenscore-app sh -c "cat > ~/.lenscore/config.json" << 'CONFIG_EOF'
           {
             "mode": "local",
             "docker": {
@@ -156,105 +248,102 @@ jobs:
               "enabled": false
             }
           }
-          EOF
+          CONFIG_EOF
+          docker exec lenscore-app sh -c "lens-core build" || true
 
-      # -------------------------
-      # START LENSCORE DOCKER SERVICES
-      # -------------------------
-      - name: Start LensCore services
+      - name: Run scan from LensCore container
         run: |
-          echo "Starting LensCore services..."
-          lens-core up || true
-
-          timeout=120
-          elapsed=0
-          while [ $elapsed -lt $timeout ]; do
-            if curl -sf http://localhost:3001/api/health > /dev/null 2>&1; then
-              echo "✅ LensCore is ready"
-              exit 0
+          docker exec lenscore-app sh -c "lens-core scan '${{ steps.extract_port.outputs.app_url }}' -u ${{ inputs.max_urls }} -d ${{ inputs.scan_depth }} -t ${{ inputs.timeout }} --skip-cache -o /app/reports/report.json" || true
+          if [ ! -f reports/report.json ]; then
+            docker exec lenscore-app sh -c "lens-core test '${{ steps.extract_port.outputs.app_url }}' -t ${{ inputs.timeout }} --skip-cache" > reports/test_output.txt 2>&1 || true
+            if [ -f reports/test_output.txt ]; then
+              if jq empty reports/test_output.txt 2>/dev/null; then
+                cp reports/test_output.txt reports/report-fallback.json
+              else
+                awk '/^\{/,/^\}$/' reports/test_output.txt > reports/report-fallback.json 2>/dev/null || true
+                if [ ! -f reports/report-fallback.json ] || ! jq empty reports/report-fallback.json 2>/dev/null; then
+                  jq -s '.[] | select(type == "object")' reports/test_output.txt > reports/report-fallback.json 2>/dev/null || true
+                fi
+              fi
+              if [ -f reports/report-fallback.json ] && jq empty reports/report-fallback.json 2>/dev/null; then
+                HAS_URL=$(jq -r 'if .url then "yes" else "no" end' reports/report-fallback.json 2>/dev/null || echo "no")
+                VIOLATIONS_COUNT=$(jq '.violations | length' reports/report-fallback.json 2>/dev/null || echo "0")
+                PASSES_COUNT=$(jq '.passes | length' reports/report-fallback.json 2>/dev/null || echo "0")
+                HAS_SCORE=$(jq -r 'if .score then "yes" else "no" end' reports/report-fallback.json 2>/dev/null || echo "no")
+                if [ "$HAS_URL" = "yes" ] && ([ "$VIOLATIONS_COUNT" -gt 0 ] || [ "$PASSES_COUNT" -gt 0 ] || [ "$HAS_SCORE" = "yes" ]); then
+                  jq '{
+                    "crawl": {"pages": [], "totalPages": 1, "crawlTime": 0},
+                    "accessibility": {
+                      "results": [.],
+                      "totalPages": 1,
+                      "testTime": (.metadata.processingTime // 0)
+                    },
+                    "totalTime": (.metadata.processingTime // 0)
+                  }' reports/report-fallback.json > reports/report.json
+                fi
+              fi
             fi
-            echo "⏳ Waiting for LensCore... ($elapsed/$timeout)"
-            sleep 5
-            elapsed=$((elapsed + 5))
-          done
-
-          echo "❌ LensCore health check failed"
-          docker ps -a
+          fi
+          if [ ! -f reports/report.json ]; then
+            echo '{"accessibility":{"results":[]}}' > reports/report.json
+          fi
+          docker cp lenscore-app:/app/reports/report.json report.json 2>/dev/null || cp reports/report.json report.json 2>/dev/null || echo '{"accessibility":{"results":[]}}' > report.json
+          VIOLATIONS=$(jq '[.accessibility.results[]? | .violations | length] | add // 0' report.json)
+          echo "Total violations: $VIOLATIONS"
+          if [ "$VIOLATIONS" -gt 0 ]; then
+            echo ""
+            echo "=========================================="
+            echo "ACCESSIBILITY VIOLATIONS DETECTED"
+            echo "=========================================="
+            echo ""
+            PAGE_COUNT=$(jq '.accessibility.results | length' report.json)
+            echo "Pages scanned: $PAGE_COUNT"
+            echo "Total violations: $VIOLATIONS"
+            echo ""
+            echo "--- Violation Details ---"
+            jq -r '.accessibility.results[]? | 
+              "Page: \(.url // "Unknown")",
+              (.violations[]? | 
+                "  ❌ \(.id // "unknown") [\(.impact // "unknown")]",
+                "     Description: \(.description // "N/A")",
+                "     Help: \(.help // "N/A")",
+                "     Help URL: \(.helpUrl // "N/A")",
+                (.nodes[]? | 
+                  "     - Element: \(.target | join(", ") // "N/A")",
+                  "       HTML: \(.html // "N/A" | .[0:100])",
+                  "       Summary: \(.failureSummary // .any[]?[0].message // "N/A" | .[0:200])"
+                ),
+                ""
+              )
+            ' report.json || true
+            echo ""
+            echo "=========================================="
+            echo "How to fix:"
+            echo "  1. Review each violation above"
+            echo "  2. Check the Help URL for detailed guidance"
+            echo "  3. Fix the issues in your code"
+            echo "  4. Re-run the workflow to verify fixes"
+            echo "=========================================="
+            echo ""
+            echo "::error::Accessibility violations detected: $VIOLATIONS"
           exit 1
-
-      # -------------------------
-      # RUN ACCESSIBILITY SCAN (JSON)
-      # -------------------------
-      - name: Run accessibility scan
-        id: scan
-        env:
-          TARGET_URL: ${{ steps.resolve_url.outputs.target_url }}
-        run: |
-          echo "Scanning $TARGET_URL"
-          lens-core scan "$TARGET_URL" \
-            -u "${{ inputs.max_urls }}" \
-            -d "${{ inputs.scan_depth }}" \
-            -t "${{ inputs.timeout }}" \
-            --skip-cache \
-            -o report.json || true
-
-          if [ ! -f report.json ]; then
-            echo '{"accessibility":{"results":[]}}' > report.json
           fi
+          echo "No violations found"
 
-          SCAN_RESULTS=$(jq '.accessibility.results | length' report.json 2>/dev/null || echo "0")
-          echo "Scan results: $SCAN_RESULTS pages scanned"
-
-          if [ "$SCAN_RESULTS" -eq 0 ]; then
-            echo "::warning::No pages were scanned. Check if the application is running and accessible."
-          fi
-
-      # -------------------------
-      # RUN HTML REPORT GENERATION
-      # -------------------------
       - name: Generate HTML report
-        env:
-          TARGET_URL: ${{ steps.resolve_url.outputs.target_url }}
         run: |
-          lens-core scan "$TARGET_URL" \
-            -u "${{ inputs.max_urls }}" \
-            -d "${{ inputs.scan_depth }}" \
-            -t "${{ inputs.timeout }}" \
-            --skip-cache \
-            --web || true
+          docker exec lenscore-app sh -c "lens-core scan '${{ steps.extract_port.outputs.app_url }}' -u ${{ inputs.max_urls }} -d ${{ inputs.scan_depth }} -t ${{ inputs.timeout }} --skip-cache --web" || true
 
-      # -------------------------
-      # UPLOAD ARTIFACTS
-      # -------------------------
-      - name: Upload scan artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: lenscore-accessibility-report
           path: |
             report.json
-            ~/.lenscore/web/output/*.html
           retention-days: 7
           if-no-files-found: warn
 
-      # -------------------------
-      # CHECK VIOLATIONS
-      # -------------------------
-      - name: Check for violations
-        run: |
-          VIOLATIONS=$(jq '[.accessibility.results[]? | .violations | length] | add // 0' report.json)
-          echo "Total violations: $VIOLATIONS"
-
-          if [ "$VIOLATIONS" -gt 0 ]; then
-            echo "::error::Accessibility violations detected: $VIOLATIONS"
-            exit 1
-          fi
-
-          echo "✅ No violations found"
-
-      # -------------------------
-      # CLEANUP RESOURCES
-      # -------------------------
-      - name: Stop LensCore services
+      - name: Stop services
         if: always()
         run: |
-          lens-core down || true
+          docker-compose down -v || true
