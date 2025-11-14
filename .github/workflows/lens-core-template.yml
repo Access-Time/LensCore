@@ -222,29 +222,54 @@ jobs:
           PORT="${{ steps.extract_port.outputs.port }}"
           APP_URL="${{ steps.extract_port.outputs.app_url }}"
           echo "Waiting for application at $APP_URL (service name) and http://localhost:$PORT (exposed port)..."
+
+          echo "Checking container status..."
+          docker-compose ps
+
           while [ $elapsed -lt $timeout ]; do
-            if curl -sf "http://localhost:$PORT" > /dev/null 2>&1; then
-              sleep 10
-              CONTENT=$(curl -sL "http://localhost:$PORT" 2>/dev/null || echo "")
-              if echo "$CONTENT" | grep -qi "example domain"; then
-                echo "::warning::Application returned 'Example Domain' placeholder. Waiting longer..."
-                sleep 10
+            CONTAINER_STATUS=$(docker-compose ps -q app 2>/dev/null | xargs docker inspect --format='{{.State.Status}}' 2>/dev/null || echo "not-found")
+            echo "[$elapsed s] Container status: $CONTAINER_STATUS"
+            
+            if [ "$CONTAINER_STATUS" = "running" ]; then
+              if curl -sf "http://localhost:$PORT" > /dev/null 2>&1; then
+                sleep 5
                 CONTENT=$(curl -sL "http://localhost:$PORT" 2>/dev/null || echo "")
-                if echo "$CONTENT" | grep -qi "example domain"; then
-                  echo "::error::Application still returning placeholder content"
-                  docker-compose logs app
-                  exit 1
+                if [ -n "$CONTENT" ] && ! echo "$CONTENT" | grep -qi "example domain"; then
+                  echo "✓ Application is accessible at http://localhost:$PORT"
+                  echo "✓ Application will be scanned at $APP_URL (Docker network)"
+                  exit 0
+                elif echo "$CONTENT" | grep -qi "example domain"; then
+                  echo "::warning::Application returned 'Example Domain' placeholder. Waiting longer..."
+                  sleep 10
+                  CONTENT=$(curl -sL "http://localhost:$PORT" 2>/dev/null || echo "")
+                  if echo "$CONTENT" | grep -qi "example domain"; then
+                    echo "::error::Application still returning placeholder content"
+                    docker-compose logs app --tail=50
+                    exit 1
+                  fi
+                  echo "✓ Application is now accessible at http://localhost:$PORT"
+                  exit 0
                 fi
+              else
+                echo "[$elapsed s] Container running but not responding on port $PORT"
+                HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:$PORT" 2>/dev/null || echo "000")
+                echo "[$elapsed s] HTTP status: $HTTP_CODE"
               fi
-              echo "✓ Application is accessible at http://localhost:$PORT"
-              echo "✓ Application will be scanned at $APP_URL (Docker network)"
-              exit 0
+            elif [ "$CONTAINER_STATUS" = "exited" ] || [ "$CONTAINER_STATUS" = "dead" ]; then
+              echo "::error::Application container exited or died"
+              docker-compose logs app --tail=50
+              exit 1
             fi
+            
             sleep 5
             elapsed=$((elapsed + 5))
           done
-          echo "::error::Application did not become available within timeout"
-          docker-compose logs app
+
+          echo "::error::Application did not become available within timeout ($timeout seconds)"
+          echo "Container status:"
+          docker-compose ps
+          echo "Application logs:"
+          docker-compose logs app --tail=100
           exit 1
 
       - name: Connect application to LensCore network
