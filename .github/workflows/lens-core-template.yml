@@ -114,7 +114,7 @@ jobs:
         run: |
           PORT="${{ steps.extract_port.outputs.port }}"
           PM="${{ steps.detect_pm.outputs.manager }}"
-          
+
           if [ -f docker-compose.yml ]; then
             echo "✓ Found existing docker-compose.yml"
             if ! docker-compose config --services 2>/dev/null | grep -q "^app$"; then
