@@ -111,10 +111,87 @@ jobs:
           CONFIG_EOF
           lens-core build
 
-      - name: Prepare docker-compose.yml for application
+      - name: Prepare Dockerfile
         run: |
-          PORT="${{ steps.extract_port.outputs.port }}"
           PM="${{ steps.detect_pm.outputs.manager }}"
+          PORT="${{ steps.extract_port.outputs.port }}"
+
+          if [ ! -f Dockerfile ]; then
+            echo "Dockerfile not found. Creating a basic Dockerfile for $PM..."
+            
+            if [ "$PM" = "npm" ]; then
+              {
+                echo "FROM node:20-alpine"
+                echo "WORKDIR /app"
+                echo "COPY package*.json ./"
+                echo "RUN npm ci"
+                echo "COPY . ."
+                echo "RUN npm run build || true"
+                echo "EXPOSE ${PORT}"
+                echo "CMD [\"npm\", \"start\"]"
+              } > Dockerfile
+            elif [ "$PM" = "yarn" ]; then
+              {
+                echo "FROM node:20-alpine"
+                echo "WORKDIR /app"
+                echo "RUN corepack enable && corepack prepare yarn@stable --activate"
+                echo "COPY package.json yarn.lock ./"
+                echo "RUN yarn install --frozen-lockfile"
+                echo "COPY . ."
+                echo "RUN yarn build || true"
+                echo "EXPOSE ${PORT}"
+                echo "CMD [\"yarn\", \"start\"]"
+              } > Dockerfile
+            elif [ "$PM" = "pnpm" ]; then
+              {
+                echo "FROM node:20-alpine"
+                echo "WORKDIR /app"
+                echo "RUN corepack enable && corepack prepare pnpm@latest --activate"
+                echo "COPY package.json pnpm-lock.yaml ./"
+                echo "RUN pnpm install --frozen-lockfile"
+                echo "COPY . ."
+                echo "RUN pnpm build || true"
+                echo "EXPOSE ${PORT}"
+                echo "CMD [\"pnpm\", \"start\"]"
+              } > Dockerfile
+            else
+              echo "::warning::Unknown package manager: $PM. Creating generic Dockerfile..."
+              {
+                echo "FROM node:20-alpine"
+                echo "WORKDIR /app"
+                echo "COPY package*.json ./"
+                echo "RUN npm install --production || true"
+                echo "COPY . ."
+                echo "EXPOSE ${PORT}"
+                echo "CMD [\"node\", \"index.js\"]"
+              } > Dockerfile
+            fi
+            echo "✓ Created basic Dockerfile for $PM"
+          else
+            echo "✓ Using existing Dockerfile"
+          fi
+
+      - name: Get LensCore network name
+        id: get_lenscore_network
+        run: |
+          LENSCORE_NETWORK=$(docker network ls | grep lenscore | awk '{print $2}' | head -1 || echo "")
+          if [ -z "$LENSCORE_NETWORK" ]; then
+            LENSCORE_NETWORK=$(docker network ls | grep lenscore | awk '{print $1}' | head -1 || echo "")
+            if [ -n "$LENSCORE_NETWORK" ]; then
+              LENSCORE_NETWORK=$(docker network inspect "$LENSCORE_NETWORK" --format '{{.Name}}' 2>/dev/null || echo "")
+            fi
+          fi
+          if [ -z "$LENSCORE_NETWORK" ]; then
+            echo "::error::LensCore network not found. Make sure lens-core build completed successfully."
+            exit 1
+          fi
+          echo "network_name=$LENSCORE_NETWORK" >> $GITHUB_OUTPUT
+          echo "✓ Found LensCore network: $LENSCORE_NETWORK"
+
+      - name: Prepare docker-compose.yml with LensCore network
+        run: |
+          NETWORK_NAME="${{ steps.get_lenscore_network.outputs.network_name }}"
+          PORT="${{ steps.extract_port.outputs.port }}"
 
           if [ -f docker-compose.yml ]; then
             echo "✓ Found existing docker-compose.yml"
@@ -125,64 +202,17 @@ jobs:
               exit 1
             fi
             echo "✓ Service 'app' found in docker-compose.yml"
+            echo "::warning::Please ensure your docker-compose.yml has 'app' service in the same network as LensCore ($NETWORK_NAME)"
+            echo "::warning::Add this to your 'app' service:"
+            echo "::warning::  networks:"
+            echo "::warning::    - lenscore"
+            echo "::warning::And add this networks section:"
+            echo "::warning::  networks:"
+            echo "::warning::    lenscore:"
+            echo "::warning::      external: true"
+            echo "::warning::      name: $NETWORK_NAME"
           else
-            echo "No docker-compose.yml found. Generating one with service 'app'..."
-            
-            if [ ! -f Dockerfile ]; then
-              echo "Dockerfile not found. Creating a basic Dockerfile for $PM..."
-              
-              if [ "$PM" = "npm" ]; then
-                {
-                  echo "FROM node:20-alpine"
-                  echo "WORKDIR /app"
-                  echo "COPY package*.json ./"
-                  echo "RUN npm ci"
-                  echo "COPY . ."
-                  echo "RUN npm run build || true"
-                  echo "EXPOSE ${PORT}"
-                  echo "CMD [\"npm\", \"start\"]"
-                } > Dockerfile
-              elif [ "$PM" = "yarn" ]; then
-                {
-                  echo "FROM node:20-alpine"
-                  echo "WORKDIR /app"
-                  echo "RUN corepack enable && corepack prepare yarn@stable --activate"
-                  echo "COPY package.json yarn.lock ./"
-                  echo "RUN yarn install --frozen-lockfile"
-                  echo "COPY . ."
-                  echo "RUN yarn build || true"
-                  echo "EXPOSE ${PORT}"
-                  echo "CMD [\"yarn\", \"start\"]"
-                } > Dockerfile
-              elif [ "$PM" = "pnpm" ]; then
-                {
-                  echo "FROM node:20-alpine"
-                  echo "WORKDIR /app"
-                  echo "RUN corepack enable && corepack prepare pnpm@latest --activate"
-                  echo "COPY package.json pnpm-lock.yaml ./"
-                  echo "RUN pnpm install --frozen-lockfile"
-                  echo "COPY . ."
-                  echo "RUN pnpm build || true"
-                  echo "EXPOSE ${PORT}"
-                  echo "CMD [\"pnpm\", \"start\"]"
-                } > Dockerfile
-              else
-                echo "::warning::Unknown package manager: $PM. Creating generic Dockerfile..."
-                {
-                  echo "FROM node:20-alpine"
-                  echo "WORKDIR /app"
-                  echo "COPY package*.json ./"
-                  echo "RUN npm install --production || true"
-                  echo "COPY . ."
-                  echo "EXPOSE ${PORT}"
-                  echo "CMD [\"node\", \"index.js\"]"
-                } > Dockerfile
-              fi
-              echo "✓ Created basic Dockerfile for $PM"
-            else
-              echo "✓ Using existing Dockerfile"
-            fi
-            
+            echo "Creating docker-compose.yml with LensCore network..."
             {
               echo "services:"
               echo "  app:"
@@ -194,9 +224,15 @@ jobs:
               echo "    environment:"
               echo "      - NODE_ENV=production"
               echo "      - PORT=${PORT}"
+              echo "    networks:"
+              echo "      - lenscore"
               echo ""
+              echo "networks:"
+              echo "  lenscore:"
+              echo "    external: true"
+              echo "    name: $NETWORK_NAME"
             } > docker-compose.yml
-            echo "✓ Generated docker-compose.yml with service 'app'"
+            echo "✓ Created docker-compose.yml with LensCore network"
           fi
 
       - name: Start application
@@ -288,22 +324,20 @@ jobs:
           docker-compose logs app --tail=100
           exit 1
 
-      - name: Connect application to LensCore network
+      - name: Verify application is in LensCore network
         run: |
+          NETWORK_NAME="${{ steps.get_lenscore_network.outputs.network_name }}"
           APP_CONTAINER=$(docker-compose ps -q app 2>/dev/null || echo "")
+
           if [ -n "$APP_CONTAINER" ]; then
-            LENSCORE_NETWORK=$(docker network ls | grep lenscore | awk '{print $1}' | head -1 || echo "")
-            if [ -n "$LENSCORE_NETWORK" ]; then
-              NETWORK_NAME=$(docker network inspect "$LENSCORE_NETWORK" --format '{{.Name}}' 2>/dev/null || echo "")
-              if [ -n "$NETWORK_NAME" ]; then
-                docker network connect "$NETWORK_NAME" "$APP_CONTAINER" 2>/dev/null || echo "Container already in network or network not found"
-                echo "✓ Connected application to LensCore network: $NETWORK_NAME"
-                
-                echo "Verifying network connection..."
-                docker network inspect "$NETWORK_NAME" --format '{{range .Containers}}{{.Name}} {{end}}' | grep -q app && echo "✓ App container found in network" || echo "::warning::App container not found in network"
-              fi
+            echo "Verifying application is in LensCore network: $NETWORK_NAME"
+            IN_NETWORK=$(docker network inspect "$NETWORK_NAME" --format '{{range .Containers}}{{.Name}} {{end}}' 2>/dev/null | grep -q app && echo "yes" || echo "no")
+            if [ "$IN_NETWORK" = "yes" ]; then
+              echo "✓ Application is in LensCore network"
             else
-              echo "::warning::LensCore network not found. Application may not be accessible from LensCore."
+              echo "::error::Application is not in LensCore network. This should not happen."
+              docker network inspect "$NETWORK_NAME" --format '{{range .Containers}}{{.Name}} {{end}}' || true
+              exit 1
             fi
           else
             echo "::warning::Application container not found"
@@ -315,12 +349,12 @@ jobs:
           APP_URL="${{ steps.extract_port.outputs.app_url }}"
           LOCALHOST_URL="${{ steps.extract_port.outputs.localhost_url }}"
           PORT="${{ steps.extract_port.outputs.port }}"
-          
+
           echo "Testing application accessibility..."
           echo "From host: curl http://localhost:$PORT"
           HOST_ACCESS=$(curl -sf "http://localhost:$PORT" > /dev/null 2>&1 && echo "yes" || echo "no")
           echo "Host access: $HOST_ACCESS"
-          
+
           LENSCORE_CONTAINER=$(docker ps --filter "name=lenscore" --format "{{.Names}}" | head -1 || echo "")
           if [ -n "$LENSCORE_CONTAINER" ]; then
             echo "Testing from LensCore container: curl $APP_URL (service name)"
