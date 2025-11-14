@@ -53,7 +53,7 @@
 1. **Clone the repository:**
 
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/Access-Time/LensCore.git
    cd LensCore
    ```
 
@@ -927,6 +927,192 @@ See our [Contributing Guide](CONTRIBUTING.md) for details on how to get started.
 ## Code of Conduct
 
 This project adheres to the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md) to ensure a welcoming and inclusive environment for all contributors. By participating in this project, you are expected to uphold this code. Please report any violations to the project maintainers.
+
+---
+
+## 🧪 GitHub Actions CI Template
+
+Use these reusable workflows to run automated accessibility testing with LensCore on your web projects.
+
+### Quick Start
+
+Choose the appropriate workflow template based on your deployment method:
+
+#### For Next.js Projects
+
+Create a `.github/workflows/accessibility.yml` file:
+
+```yaml
+name: Accessibility Check
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  accessibility:
+    uses: Access-Time/LensCore/.github/workflows/nextjs-lens-core-template.yml@main
+    with:
+      url: ''
+      port: 3000
+```
+
+#### For Vercel Deployments
+
+```yaml
+name: Accessibility Check
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  accessibility:
+    uses: Access-Time/LensCore/.github/workflows/vercel-lens-core-template.yml@main
+    with:
+      vercel_org_id: 'your-org-id'
+      vercel_project_id: 'your-project-id'
+    secrets:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+```
+
+#### For Custom URLs
+
+```yaml
+name: Accessibility Check
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  accessibility:
+    uses: Access-Time/LensCore/.github/workflows/lens-core-template.yml@main
+    with:
+      url: 'https://your-app.com'
+```
+
+### How Reusable Workflows Work
+
+When you use `uses: Access-Time/LensCore/.github/workflows/[template-name].yml@main`, GitHub Actions will:
+
+1. **Fetch the workflow** from the `Access-Time/LensCore` repository on GitHub
+2. **Use the specified reference** (`@main` branch, or you can use a tag/commit SHA)
+3. **Run the workflow** in your repository's context
+
+**Requirements:**
+
+- The `Access-Time/LensCore` repository must be **public** (or your repository must have access to it)
+- Your repository must have **workflow permissions** enabled in Settings → Actions → General → Workflow permissions
+
+**Using Different Versions:**
+You can pin to a specific version for stability:
+
+```yaml
+uses: Access-Time/LensCore/.github/workflows/nextjs-lens-core-template.yml@v1.0.0
+uses: Access-Time/LensCore/.github/workflows/nextjs-lens-core-template.yml@abc123def
+```
+
+Or use a specific branch:
+
+```yaml
+uses: Access-Time/LensCore/.github/workflows/nextjs-lens-core-template.yml@develop
+```
+
+### Inputs
+
+- `mode` (required): `vercel` | `nextjs` | `custom`
+- `url` (optional): Target URL to scan (auto-detect if empty)
+- `port` (optional): Port where application will run (for nextjs/custom mode, default: 3000)
+- `max_urls` (optional): Maximum number of URLs to scan (default: 10)
+- `scan_depth` (optional): Depth of crawling (default: 2)
+- `timeout` (optional): Timeout for each page scan in milliseconds (default: 15000)
+- `vercel_org_id` (optional): Vercel Organization ID (required for vercel mode)
+- `vercel_project_id` (optional): Vercel Project ID (required for vercel mode)
+
+### Secrets
+
+Add this secret in repository Settings → Secrets and variables → Actions (only required for vercel mode):
+
+- `VERCEL_TOKEN`: Token from Vercel dashboard
+
+**Note:**
+
+- `VERCEL_TOKEN` is only required when using `mode: vercel`. For other modes (nextjs, custom), you don't need to provide it.
+- `vercel_org_id` and `vercel_project_id` are regular inputs, not secrets. You can pass them directly in the workflow or store them as repository variables if you prefer.
+
+### Usage Examples
+
+#### Mode: Next.js
+
+```yaml
+jobs:
+  accessibility:
+    uses: Access-Time/LensCore/.github/workflows/nextjs-lens-core-template.yml@main
+    with:
+      mode: nextjs
+      url: ''
+      port: 3000
+```
+
+The workflow will:
+
+- Run `npm run build`
+- Run `npm start` (port 3000)
+- Scan `http://localhost:3000`
+
+#### Mode: Vercel
+
+```yaml
+jobs:
+  accessibility:
+    uses: Access-Time/LensCore/.github/workflows/nextjs-lens-core-template.yml@main
+    with:
+      mode: vercel
+      url: ''
+      vercel_org_id: 'your-org-id'
+      vercel_project_id: 'your-project-id'
+    secrets:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+```
+
+**Note:** `vercel_org_id` and `vercel_project_id` are regular inputs (not secrets). Only `VERCEL_TOKEN` needs to be stored as a secret.
+
+The workflow will:
+
+- Deploy to Vercel preview
+- Automatically get preview URL
+- Scan the preview URL
+
+#### Mode: Custom
+
+```yaml
+jobs:
+  accessibility:
+    uses: Access-Time/LensCore/.github/workflows/nextjs-lens-core-template.yml@main
+    with:
+      mode: custom
+      url: 'http://localhost:5173'
+      port: 5173
+```
+
+For other npm projects (Vite, Remix, etc.). The workflow will:
+
+- Run `npm run build`
+- Run `npm start` (on specified port)
+- Scan the specified URL
+
+### Output
+
+After the workflow runs:
+
+- **JSON Report**: `lenscore-report.json` file uploaded as artifact
+- **HTML Report**: HTML files uploaded as `lenscore-accessibility-report` artifact
+- **CI Status**:
+  - ✅ **PASS** if no violations found
+  - ❌ **FAIL** if violations detected
+
+Reports can be downloaded from GitHub Actions → Artifacts.
 
 ---
 

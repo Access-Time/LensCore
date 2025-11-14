@@ -67,7 +67,12 @@ export async function scanCommand(url: string, options: any) {
     }
 
     const webMode = options.web || false;
-    const reportFilename = CommandUtils.displayScanResults(result, webMode);
+    const outputFile = options.output || options.o || '';
+    const reportFilename = await CommandUtils.displayScanResults(
+      result,
+      webMode,
+      outputFile
+    );
     CommandUtils.displayAIStatus(options, result);
     await CommandUtils.displayFooter(options, reportFilename || undefined);
   } catch (error: any) {
