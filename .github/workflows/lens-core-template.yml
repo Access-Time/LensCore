@@ -298,6 +298,9 @@ jobs:
               if [ -n "$NETWORK_NAME" ]; then
                 docker network connect "$NETWORK_NAME" "$APP_CONTAINER" 2>/dev/null || echo "Container already in network or network not found"
                 echo "✓ Connected application to LensCore network: $NETWORK_NAME"
+                
+                echo "Verifying network connection..."
+                docker network inspect "$NETWORK_NAME" --format '{{range .Containers}}{{.Name}} {{end}}' | grep -q app && echo "✓ App container found in network" || echo "::warning::App container not found in network"
               fi
             else
               echo "::warning::LensCore network not found. Application may not be accessible from LensCore."
@@ -306,33 +309,60 @@ jobs:
             echo "::warning::Application container not found"
           fi
 
-      - name: Verify application accessibility from LensCore
+      - name: Determine scan URL
+        id: determine_scan_url
         run: |
           APP_URL="${{ steps.extract_port.outputs.app_url }}"
           LOCALHOST_URL="${{ steps.extract_port.outputs.localhost_url }}"
           PORT="${{ steps.extract_port.outputs.port }}"
-
+          
           echo "Testing application accessibility..."
           echo "From host: curl http://localhost:$PORT"
           HOST_ACCESS=$(curl -sf "http://localhost:$PORT" > /dev/null 2>&1 && echo "yes" || echo "no")
           echo "Host access: $HOST_ACCESS"
-
+          
           LENSCORE_CONTAINER=$(docker ps --filter "name=lenscore" --format "{{.Names}}" | head -1 || echo "")
           if [ -n "$LENSCORE_CONTAINER" ]; then
-            echo "Testing from LensCore container: curl $APP_URL"
-            CONTAINER_ACCESS=$(docker exec "$LENSCORE_CONTAINER" sh -c "curl -sf '$APP_URL' > /dev/null 2>&1" 2>/dev/null && echo "yes" || echo "no")
-            echo "Container access to $APP_URL: $CONTAINER_ACCESS"
+            echo "Testing from LensCore container: curl $APP_URL (service name)"
+            CONTAINER_ACCESS_SERVICE=$(docker exec "$LENSCORE_CONTAINER" sh -c "curl -sf --max-time 5 '$APP_URL' > /dev/null 2>&1" 2>/dev/null && echo "yes" || echo "no")
+            echo "Container access to $APP_URL: $CONTAINER_ACCESS_SERVICE"
             
-            if [ "$CONTAINER_ACCESS" = "no" ]; then
-              echo "::warning::LensCore container cannot access application via service name. Will use localhost instead."
-              echo "scan_url=$LOCALHOST_URL" >> $GITHUB_ENV
-            else
+            if [ "$CONTAINER_ACCESS_SERVICE" = "yes" ]; then
               echo "✓ LensCore container can access application via service name"
               echo "scan_url=$APP_URL" >> $GITHUB_ENV
+              echo "Using: $APP_URL"
+            else
+              echo "Service name not accessible, trying host.docker.internal..."
+              HOST_GATEWAY=$(docker exec "$LENSCORE_CONTAINER" sh -c "getent hosts host.docker.internal | awk '{print \$1}'" 2>/dev/null || echo "")
+              if [ -z "$HOST_GATEWAY" ]; then
+                HOST_GATEWAY=$(docker exec "$LENSCORE_CONTAINER" sh -c "ip route | grep default | awk '{print \$3}'" 2>/dev/null | head -1 || echo "")
+              fi
+              
+              if [ -n "$HOST_GATEWAY" ]; then
+                HOST_IP_URL="http://$HOST_GATEWAY:$PORT"
+                echo "Testing: $HOST_IP_URL"
+                CONTAINER_ACCESS_HOST=$(docker exec "$LENSCORE_CONTAINER" sh -c "curl -sf --max-time 5 '$HOST_IP_URL' > /dev/null 2>&1" 2>/dev/null && echo "yes" || echo "no")
+                echo "Container access to host gateway: $CONTAINER_ACCESS_HOST"
+                
+                if [ "$CONTAINER_ACCESS_HOST" = "yes" ]; then
+                  echo "✓ LensCore container can access application via host gateway"
+                  echo "scan_url=$HOST_IP_URL" >> $GITHUB_ENV
+                  echo "Using: $HOST_IP_URL"
+                else
+                  echo "::warning::LensCore container cannot access application. Using localhost (may not work from container)."
+                  echo "scan_url=$LOCALHOST_URL" >> $GITHUB_ENV
+                  echo "Using: $LOCALHOST_URL (may fail)"
+                fi
+              else
+                echo "::warning::Could not determine host gateway. Using localhost."
+                echo "scan_url=$LOCALHOST_URL" >> $GITHUB_ENV
+                echo "Using: $LOCALHOST_URL"
+              fi
             fi
           else
             echo "::warning::LensCore container not found. Using localhost."
             echo "scan_url=$LOCALHOST_URL" >> $GITHUB_ENV
+            echo "Using: $LOCALHOST_URL"
           fi
 
       - name: Run scan
