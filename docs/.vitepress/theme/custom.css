@@ -425,3 +425,14 @@ html {
 .vp-doc h4 {
   scroll-margin-top: calc(var(--vp-nav-height) + 20px);
 }
+
+.VPSidebar {
+  min-width: var(--vp-sidebar-width);
+}
+
+@media (min-width: 1440px) and (max-width: 1920px) {
+  .VPContent.has-sidebar,
+  .VPNavBar.has-sidebar .content {
+    padding-left: var(--vp-sidebar-width) !important;
+  }
+}
