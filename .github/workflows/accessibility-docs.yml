@@ -5,14 +5,13 @@ on:
     branches: ['main']
   pull_request:
 
-env:
-  LENSCORE_MAX_URLS: 20
-  LENSCORE_SCAN_DEPTH: 2
-  LENSCORE_TIMEOUT: 120
-
 jobs:
   accessibility-docs:
     runs-on: ubuntu-latest
+    env:
+      LENSCORE_MAX_URLS: 20
+      LENSCORE_SCAN_DEPTH: 2
+      LENSCORE_TIMEOUT: 120
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -46,11 +45,11 @@ jobs:
             node:20 \
             sh -c "npm ci && npm run docs:dev -- --host 0.0.0.0 --port 3000 --strictPort"
 
-      - name: Setup LensCore CLI
+      - name: Setup LensCore
         run: |
           npm install -g @accesstime/lenscore@latest
           mkdir -p ~/.lenscore
-          cat > ~/.lenscore/config.json <<'CONFIG_EOF'
+          cat > ~/.lenscore/config.json << 'CONFIG_EOF'
           {
             "mode": "local",
             "docker": {
@@ -67,6 +66,7 @@ jobs:
             }
           }
           CONFIG_EOF
+
           lens-core build
 
       - name: Wait for docs & expose URL
