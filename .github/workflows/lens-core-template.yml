@@ -151,7 +151,6 @@ jobs:
                 echo "WORKDIR /app"
                 echo "RUN corepack enable && corepack prepare yarn@stable --activate"
                 echo "COPY package.json yarn.lock* .yarnrc* ./"
-                echo "RUN yarn install --frozen-lockfile || yarn install"
                 echo "COPY . ."
                 echo "RUN yarn install"
                 echo "RUN yarn build || true"
