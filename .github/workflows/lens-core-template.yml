@@ -146,53 +146,17 @@ jobs:
                 echo "CMD [\"npm\", \"start\"]"
               } > Dockerfile
             elif [ "$PM" = "yarn" ]; then
-              # Check if Yarn Berry (v2+) is being used
-              if [ -f .yarnrc.yml ] || [ -d .yarn ]; then
-                echo "Detected Yarn Berry, creating Dockerfile with .yarn support..."
-                # Check if .yarn directory exists
-                if [ -d .yarn ]; then
-                  {
-                    echo "FROM node:20-alpine"
-                    echo "WORKDIR /app"
-                    echo "RUN corepack enable && corepack prepare yarn@stable --activate"
-                    echo "COPY package.json yarn.lock* .yarnrc.yml* .yarnrc* ./"
-                    echo "COPY .yarn ./.yarn"
-                    echo "RUN yarn install --immutable || yarn install"
-                    echo "COPY . ."
-                    echo "RUN yarn install || true"
-                    echo "RUN yarn build || true"
-                    echo "EXPOSE ${PORT}"
-                    echo "CMD [\"yarn\", \"start\"]"
-                  } > Dockerfile
-                else
-                  {
-                    echo "FROM node:20-alpine"
-                    echo "WORKDIR /app"
-                    echo "RUN corepack enable && corepack prepare yarn@stable --activate"
-                    echo "COPY package.json yarn.lock* .yarnrc.yml* .yarnrc* ./"
-                    echo "RUN yarn install --immutable || yarn install"
-                    echo "COPY . ."
-                    echo "RUN yarn install || true"
-                    echo "RUN yarn build || true"
-                    echo "EXPOSE ${PORT}"
-                    echo "CMD [\"yarn\", \"start\"]"
-                  } > Dockerfile
-                fi
-              else
-                echo "Detected Yarn Classic, creating Dockerfile..."
-                {
-                  echo "FROM node:20-alpine"
-                  echo "WORKDIR /app"
-                  echo "RUN corepack enable && corepack prepare yarn@stable --activate"
-                  echo "COPY package.json yarn.lock* .yarnrc* ./"
-                  echo "RUN yarn install --frozen-lockfile || yarn install"
-                  echo "COPY . ."
-                  echo "RUN yarn install || true"
-                  echo "RUN yarn build || true"
-                  echo "EXPOSE ${PORT}"
-                  echo "CMD [\"yarn\", \"start\"]"
-                } > Dockerfile
-              fi
+              {
+                echo "FROM node:20-alpine"
+                echo "WORKDIR /app"
+                echo "RUN corepack enable && corepack prepare yarn@stable --activate"
+                echo "COPY package.json yarn.lock* .yarnrc* ./"
+                echo "RUN yarn install"
+                echo "COPY . ."
+                echo "RUN yarn build || true"
+                echo "EXPOSE ${PORT}"
+                echo "CMD [\"yarn\", \"start\"]"
+              } > Dockerfile
             elif [ "$PM" = "pnpm" ]; then
               {
                 echo "FROM node:20-alpine"
