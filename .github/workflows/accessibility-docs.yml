@@ -8,10 +8,6 @@ on:
 jobs:
   accessibility-docs:
     runs-on: ubuntu-latest
-    env:
-      LENSCORE_MAX_URLS: 20
-      LENSCORE_SCAN_DEPTH: 2
-      LENSCORE_TIMEOUT: 120
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -97,16 +93,16 @@ jobs:
           SCAN_URL="${scan_url:-${{ steps.extract_port.outputs.localhost_url }}}"
           echo "Scanning: $SCAN_URL"
           lens-core scan "$SCAN_URL" \
-            -u "${LENSCORE_MAX_URLS}" \
-            -d "${LENSCORE_SCAN_DEPTH}" \
-            -t "${LENSCORE_TIMEOUT}" \
+            -u 20 \
+            -d 2 \
+            -t 120 \
             --skip-cache \
             -o report.json || true
 
           if [ ! -f report.json ]; then
             echo "Scan failed, trying fallback test command..."
             lens-core test "$SCAN_URL" \
-              -t "${LENSCORE_TIMEOUT}" \
+              -t 120 \
               --skip-cache > test_output.txt 2>&1 || true
 
             if [ -f test_output.txt ]; then
@@ -193,9 +189,9 @@ jobs:
         run: |
           SCAN_URL="${scan_url:-${{ steps.extract_port.outputs.localhost_url }}}"
           lens-core scan "$SCAN_URL" \
-            -u "${LENSCORE_MAX_URLS}" \
-            -d "${LENSCORE_SCAN_DEPTH}" \
-            -t "${LENSCORE_TIMEOUT}" \
+            -u 20 \
+            -d 2 \
+            -t 120 \
             --skip-cache \
             --web || true
 
