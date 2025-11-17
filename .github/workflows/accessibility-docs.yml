@@ -9,7 +9,12 @@ jobs:
   accessibility-docs:
     runs-on: ubuntu-latest
     env:
-      LENSCORE_CI_HOME: /home/runner/.lenscore-ci
+      LENSCORE_CI_HOME: /home/runner/.lenscore
+      VITEPRESS_PORT: 5173
+      LENSCORE_PORT: 3001
+      MAX_URLS: 20
+      SCAN_DEPTH: 2
+      TIMEOUT: 120
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -35,13 +40,12 @@ jobs:
         run: |
           docker run -d --rm \
             --name lenscore-docs \
-            -p 3000:3000 \
+            -p "${VITEPRESS_PORT}:${VITEPRESS_PORT}" \
             -v "${{ github.workspace }}:/app" \
             -w /app \
             -e HOST=0.0.0.0 \
-            -e PORT=3000 \
             node:20 \
-            sh -c "npm ci && npm run docs:dev -- --host 0.0.0.0 --port 3000 --strictPort"
+            sh -c "npm ci && npm run docs:dev -- --host 0.0.0.0 --port ${VITEPRESS_PORT} --strictPort"
 
       - name: Setup LensCore
         run: |
@@ -51,15 +55,15 @@ jobs:
           rm -rf "$CONFIG_BASE"
           mkdir -p "$CONFIG_BASE/.lenscore"
 
-          cat > "$CONFIG_BASE/.lenscore/config.json" <<'CONFIG_EOF'
+          cat > "$CONFIG_BASE/.lenscore/config.json" <<EOF
           {
             "mode": "local",
             "docker": {
               "image": "lenscore:latest",
-              "port": 3001
+              "port": $LENSCORE_PORT
             },
             "remote": {
-              "baseUrl": "http://localhost:3001"
+              "baseUrl": "http://localhost:$LENSCORE_PORT"
             },
             "openai": {
               "apiKey": "",
@@ -67,7 +71,7 @@ jobs:
               "enabled": false
             }
           }
-          CONFIG_EOF
+          EOF
 
           TMP_DIR=$(mktemp -d)
           HOME="$CONFIG_BASE" bash -c "cd '$TMP_DIR' && lens-core build"
@@ -75,12 +79,36 @@ jobs:
       - name: Wait for docs & expose URL
         id: extract_port
         run: |
+          echo "Waiting for VitePress container to be ready..."
+          sleep 5
+
           DOCKER_HOST_IP=$(docker network inspect bridge --format '{{ (index .IPAM.Config 0).Gateway }}')
-          SCAN_BASE_URL="http://${DOCKER_HOST_IP}:3000"
+          SCAN_BASE_URL="http://${DOCKER_HOST_IP}:${VITEPRESS_PORT}"
+
           echo "Docker host IP: ${DOCKER_HOST_IP}"
+          echo "VitePress port: ${VITEPRESS_PORT}"
           echo "Waiting for docs on ${SCAN_BASE_URL}..."
-          curl --retry 15 --retry-delay 3 --retry-connrefused \
-               "${SCAN_BASE_URL}" > /dev/null
+
+          # Check container logs
+          docker logs lenscore-docs 2>&1 | tail -20 || true
+
+          # Wait for VitePress to be ready
+          for i in {1..30}; do
+            if curl -sSf "${SCAN_BASE_URL}" > /dev/null 2>&1; then
+              echo "✅ VitePress is ready!"
+              break
+            fi
+            echo "Attempt $i/30: Waiting for VitePress..."
+            sleep 2
+          done
+
+          # Final check
+          if ! curl -sSf "${SCAN_BASE_URL}" > /dev/null 2>&1; then
+            echo "::error::VitePress failed to start"
+            docker logs lenscore-docs 2>&1 | tail -50
+            exit 1
+          fi
+
           echo "localhost_url=${SCAN_BASE_URL}" >> "$GITHUB_OUTPUT"
 
       - name: Preview VitePress response
@@ -100,16 +128,16 @@ jobs:
           SCAN_URL="${scan_url:-${{ steps.extract_port.outputs.localhost_url }}}"
           echo "Scanning: $SCAN_URL"
           HOME="$LENSCORE_CI_HOME" lens-core scan "$SCAN_URL" \
-            -u 20 \
-            -d 2 \
-            -t 120 \
+            -u "${MAX_URLS}" \
+            -d "${SCAN_DEPTH}" \
+            -t "${TIMEOUT}" \
             --skip-cache \
             -o report.json || true
 
           if [ ! -f report.json ]; then
             echo "Scan failed, trying fallback test command..."
             HOME="$LENSCORE_CI_HOME" lens-core test "$SCAN_URL" \
-              -t 120 \
+              -t "${TIMEOUT}" \
               --skip-cache > test_output.txt 2>&1 || true
 
             if [ -f test_output.txt ]; then
@@ -196,9 +224,9 @@ jobs:
         run: |
           SCAN_URL="${scan_url:-${{ steps.extract_port.outputs.localhost_url }}}"
           HOME="$LENSCORE_CI_HOME" lens-core scan "$SCAN_URL" \
-            -u 20 \
-            -d 2 \
-            -t 120 \
+            -u "${MAX_URLS}" \
+            -d "${SCAN_DEPTH}" \
+            -t "${TIMEOUT}" \
             --skip-cache \
             --web || true
 
