@@ -8,6 +8,8 @@ on:
 jobs:
   accessibility-docs:
     runs-on: ubuntu-latest
+    env:
+      LENSCORE_CI_HOME: /home/runner/.lenscore-ci
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -44,8 +46,12 @@ jobs:
       - name: Setup LensCore
         run: |
           npm install -g @accesstime/lenscore@latest
-          mkdir -p ~/.lenscore
-          cat > ~/.lenscore/config.json << 'CONFIG_EOF'
+
+          CONFIG_BASE="${LENSCORE_CI_HOME:-$HOME/.lenscore-ci}"
+          rm -rf "$CONFIG_BASE"
+          mkdir -p "$CONFIG_BASE/.lenscore"
+
+          cat > "$CONFIG_BASE/.lenscore/config.json" <<'CONFIG_EOF'
           {
             "mode": "local",
             "docker": {
@@ -63,7 +69,8 @@ jobs:
           }
           CONFIG_EOF
 
-          lens-core build
+          TMP_DIR=$(mktemp -d)
+          HOME="$CONFIG_BASE" bash -c "cd '$TMP_DIR' && lens-core build"
 
       - name: Wait for docs & expose URL
         id: extract_port
@@ -92,7 +99,7 @@ jobs:
         run: |
           SCAN_URL="${scan_url:-${{ steps.extract_port.outputs.localhost_url }}}"
           echo "Scanning: $SCAN_URL"
-          lens-core scan "$SCAN_URL" \
+          HOME="$LENSCORE_CI_HOME" lens-core scan "$SCAN_URL" \
             -u 20 \
             -d 2 \
             -t 120 \
@@ -101,7 +108,7 @@ jobs:
 
           if [ ! -f report.json ]; then
             echo "Scan failed, trying fallback test command..."
-            lens-core test "$SCAN_URL" \
+            HOME="$LENSCORE_CI_HOME" lens-core test "$SCAN_URL" \
               -t 120 \
               --skip-cache > test_output.txt 2>&1 || true
 
@@ -188,7 +195,7 @@ jobs:
       - name: Generate HTML report
         run: |
           SCAN_URL="${scan_url:-${{ steps.extract_port.outputs.localhost_url }}}"
-          lens-core scan "$SCAN_URL" \
+          HOME="$LENSCORE_CI_HOME" lens-core scan "$SCAN_URL" \
             -u 20 \
             -d 2 \
             -t 120 \
