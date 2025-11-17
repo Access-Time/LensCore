@@ -9,7 +9,7 @@ jobs:
   accessibility-docs:
     runs-on: ubuntu-latest
     env:
-      LENSCORE_CI_HOME: /home/runner
+      LENSCORE_CI_HOME: /home/runner/.lenscore
       VITEPRESS_PORT: 5173
       LENSCORE_PORT: 3001
       MAX_URLS: 20
