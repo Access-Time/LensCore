@@ -14,7 +14,7 @@ jobs:
       LENSCORE_PORT: 3001
       MAX_URLS: 20
       SCAN_DEPTH: 2
-      TIMEOUT: 120
+      TIMEOUT: 120000
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -82,31 +82,47 @@ jobs:
           echo "Waiting for VitePress container to be ready..."
           sleep 5
 
+          # Get container IP address
+          CONTAINER_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' lenscore-docs)
           DOCKER_HOST_IP=$(docker network inspect bridge --format '{{ (index .IPAM.Config 0).Gateway }}')
-          SCAN_BASE_URL="http://${DOCKER_HOST_IP}:${VITEPRESS_PORT}"
 
-          echo "Docker host IP: ${DOCKER_HOST_IP}"
-          echo "VitePress port: ${VITEPRESS_PORT}"
-          echo "Waiting for docs on ${SCAN_BASE_URL}..."
-
-          # Check container logs
-          docker logs lenscore-docs 2>&1 | tail -20 || true
-
-          # Wait for VitePress to be ready
-          for i in {1..30}; do
-            if curl -sSf "${SCAN_BASE_URL}" > /dev/null 2>&1; then
-              echo "✅ VitePress is ready!"
+          SCAN_BASE_URL=""
+          # Try container IP first, fallback to gateway IP, then localhost
+          for TEST_URL in "http://${CONTAINER_IP}:${VITEPRESS_PORT}" "http://${DOCKER_HOST_IP}:${VITEPRESS_PORT}" "http://localhost:${VITEPRESS_PORT}"; do
+            echo "Testing URL: ${TEST_URL}"
+            if curl -sSf "${TEST_URL}" > /dev/null 2>&1; then
+              SCAN_BASE_URL="${TEST_URL}"
+              echo "✅ Found working URL: ${SCAN_BASE_URL}"
               break
             fi
-            echo "Attempt $i/30: Waiting for VitePress..."
-            sleep 2
           done
 
-          # Final check
-          if ! curl -sSf "${SCAN_BASE_URL}" > /dev/null 2>&1; then
-            echo "::error::VitePress failed to start"
-            docker logs lenscore-docs 2>&1 | tail -50
-            exit 1
+          if [ -z "${SCAN_BASE_URL}" ]; then
+            echo "Container IP: ${CONTAINER_IP}"
+            echo "Gateway IP: ${DOCKER_HOST_IP}"
+            echo "VitePress port: ${VITEPRESS_PORT}"
+            echo "Waiting for docs..."
+
+            # Check container logs
+            docker logs lenscore-docs 2>&1 | tail -20 || true
+
+            # Wait for VitePress to be ready with container IP
+            SCAN_BASE_URL="http://${CONTAINER_IP}:${VITEPRESS_PORT}"
+            for i in {1..30}; do
+              if curl -sSf "${SCAN_BASE_URL}" > /dev/null 2>&1; then
+                echo "✅ VitePress is ready!"
+                break
+              fi
+              echo "Attempt $i/30: Waiting for VitePress on ${SCAN_BASE_URL}..."
+              sleep 2
+            done
+
+            # Final check
+            if ! curl -sSf "${SCAN_BASE_URL}" > /dev/null 2>&1; then
+              echo "::error::VitePress failed to start"
+              docker logs lenscore-docs 2>&1 | tail -50
+              exit 1
+            fi
           fi
 
           echo "localhost_url=${SCAN_BASE_URL}" >> "$GITHUB_OUTPUT"
