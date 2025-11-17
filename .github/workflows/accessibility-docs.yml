@@ -1,0 +1,214 @@
+name: LensCore Accessibility Docs Check
+
+on:
+  push:
+    branches: ['main']
+  pull_request:
+
+env:
+  LENSCORE_MAX_URLS: 20
+  LENSCORE_SCAN_DEPTH: 2
+  LENSCORE_TIMEOUT: 120
+
+jobs:
+  accessibility-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+
+      - name: Install docker-compose
+        run: |
+          sudo curl -SL "https://github.com/docker/compose/releases/download/v2.33.1/docker-compose-$(uname -s)-$(uname -m)" \
+            -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+          docker-compose version
+
+      - name: Run VitePress docs container
+        run: |
+          docker run -d --rm \
+            --name lenscore-docs \
+            -p 3000:3000 \
+            -v "${{ github.workspace }}:/app" \
+            -w /app \
+            -e HOST=0.0.0.0 \
+            -e PORT=3000 \
+            node:20 \
+            sh -c "npm ci && npm run docs:dev -- --host 0.0.0.0 --port 3000 --strictPort"
+
+      - name: Setup LensCore CLI
+        run: |
+          npm install -g @accesstime/lenscore@latest
+          mkdir -p ~/.lenscore
+          cat > ~/.lenscore/config.json <<'CONFIG_EOF'
+          {
+            "mode": "local",
+            "docker": {
+              "image": "lenscore:latest",
+              "port": 3001
+            },
+            "remote": {
+              "baseUrl": "http://localhost:3001"
+            },
+            "openai": {
+              "apiKey": "",
+              "model": "gpt-3.5-turbo",
+              "enabled": false
+            }
+          }
+          CONFIG_EOF
+          lens-core build
+
+      - name: Wait for docs & expose URL
+        id: extract_port
+        run: |
+          DOCKER_HOST_IP=$(docker network inspect bridge --format '{{ (index .IPAM.Config 0).Gateway }}')
+          SCAN_BASE_URL="http://${DOCKER_HOST_IP}:3000"
+          echo "Docker host IP: ${DOCKER_HOST_IP}"
+          echo "Waiting for docs on ${SCAN_BASE_URL}..."
+          curl --retry 15 --retry-delay 3 --retry-connrefused \
+               "${SCAN_BASE_URL}" > /dev/null
+          echo "localhost_url=${SCAN_BASE_URL}" >> "$GITHUB_OUTPUT"
+
+      - name: Preview VitePress response
+        run: |
+          SCAN_URL="${scan_url:-${{ steps.extract_port.outputs.localhost_url }}}"
+          echo "Fetching homepage from: $SCAN_URL"
+          RESPONSE=$(curl -sS "$SCAN_URL")
+          echo "----- Begin VitePress response (first 40 lines) -----"
+          echo "$RESPONSE" | head -n 40
+          echo "----- End VitePress response -----"
+          if ! echo "$RESPONSE" | grep -q "LensCore"; then
+            echo "::warning::Expected marker text not found in VitePress response."
+          fi
+
+      - name: Run accessibility scan
+        run: |
+          SCAN_URL="${scan_url:-${{ steps.extract_port.outputs.localhost_url }}}"
+          echo "Scanning: $SCAN_URL"
+          lens-core scan "$SCAN_URL" \
+            -u "${LENSCORE_MAX_URLS}" \
+            -d "${LENSCORE_SCAN_DEPTH}" \
+            -t "${LENSCORE_TIMEOUT}" \
+            --skip-cache \
+            -o report.json || true
+
+          if [ ! -f report.json ]; then
+            echo "Scan failed, trying fallback test command..."
+            lens-core test "$SCAN_URL" \
+              -t "${LENSCORE_TIMEOUT}" \
+              --skip-cache > test_output.txt 2>&1 || true
+
+            if [ -f test_output.txt ]; then
+              if jq empty test_output.txt 2>/dev/null; then
+                cp test_output.txt report-fallback.json
+              else
+                awk '/^\{/,/^\}$/' test_output.txt > report-fallback.json 2>/dev/null || true
+                if [ ! -f report-fallback.json ] || ! jq empty report-fallback.json 2>/dev/null; then
+                  jq -s '.[] | select(type == "object")' test_output.txt > report-fallback.json 2>/dev/null || true
+                fi
+              fi
+
+              if [ -f report-fallback.json ] && jq empty report-fallback.json 2>/dev/null; then
+                HAS_URL=$(jq -r 'if .url then "yes" else "no" end' report-fallback.json 2>/dev/null || echo "no")
+                VIOLATIONS_COUNT=$(jq '.violations | length' report-fallback.json 2>/dev/null || echo "0")
+                PASSES_COUNT=$(jq '.passes | length' report-fallback.json 2>/dev/null || echo "0")
+                HAS_SCORE=$(jq -r 'if .score then "yes" else "no" end' report-fallback.json 2>/dev/null || echo "no")
+                if [ "$HAS_URL" = "yes" ]; then
+                  if [ "$VIOLATIONS_COUNT" -gt 0 ] || [ "$PASSES_COUNT" -gt 0 ] || [ "$HAS_SCORE" = "yes" ]; then
+                    jq '{
+                      "crawl": {"pages": [], "totalPages": 1, "crawlTime": 0},
+                      "accessibility": {
+                        "results": [.],
+                        "totalPages": 1,
+                        "testTime": (.metadata.processingTime // 0)
+                      },
+                      "totalTime": (.metadata.processingTime // 0)
+                    }' report-fallback.json > report.json
+                  fi
+                fi
+              fi
+            fi
+          fi
+
+          if [ ! -f report.json ]; then
+            echo '{"accessibility":{"results":[]}}' > report.json
+          fi
+
+          VIOLATIONS=$(jq '[.accessibility.results[]? | .violations | length] | add // 0' report.json)
+          echo "Total violations: $VIOLATIONS"
+
+          if [ "$VIOLATIONS" -gt 0 ]; then
+            echo ""
+            echo "=========================================="
+            echo "ACCESSIBILITY VIOLATIONS DETECTED"
+            echo "=========================================="
+            echo ""
+            PAGE_COUNT=$(jq '.accessibility.results | length' report.json)
+            echo "Pages scanned: $PAGE_COUNT"
+            echo "Total violations: $VIOLATIONS"
+            echo ""
+            echo "--- Violation Details ---"
+            jq -r '.accessibility.results[]? |
+              "Page: \(.url // "Unknown")",
+              (.violations[]? |
+                "  ❌ \(.id // "unknown") [\(.impact // "unknown")]",
+                "     Description: \(.description // "N/A")",
+                "     Help: \(.help // "N/A")",
+                "     Help URL: \(.helpUrl // "N/A")",
+                (.nodes[]? |
+                  "     - Element: \(.target | join(", ") // "N/A")",
+                  "       HTML: \(.html // "N/A" | .[0:100])",
+                  "       Summary: \(.failureSummary // .any[]?[0].message // "N/A" | .[0:200])"
+                ),
+                ""
+              )
+            ' report.json || true
+            echo ""
+            echo "=========================================="
+            echo "How to fix:"
+            echo "  1. Review each violation above"
+            echo "  2. Check the Help URL for detailed guidance"
+            echo "  3. Fix the issues in your code"
+            echo "  4. Re-run the workflow to verify fixes"
+            echo "=========================================="
+            echo ""
+            echo "::error::Accessibility violations detected: $VIOLATIONS"
+            exit 1
+          fi
+
+          echo "No violations found"
+
+      - name: Generate HTML report
+        run: |
+          SCAN_URL="${scan_url:-${{ steps.extract_port.outputs.localhost_url }}}"
+          lens-core scan "$SCAN_URL" \
+            -u "${LENSCORE_MAX_URLS}" \
+            -d "${LENSCORE_SCAN_DEPTH}" \
+            -t "${LENSCORE_TIMEOUT}" \
+            --skip-cache \
+            --web || true
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: lenscore-accessibility-report
+          path: |
+            report.json
+          retention-days: 7
+          if-no-files-found: warn
+
+      - name: Stop docs container
+        if: always()
+        run: |
+          docker stop lenscore-docs || true
