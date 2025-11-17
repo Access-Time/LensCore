@@ -9,12 +9,12 @@ jobs:
   accessibility-docs:
     runs-on: ubuntu-latest
     env:
-      LENSCORE_CI_HOME: /home/runner/.lenscore
+      LENSCORE_CI_HOME: /home/runner
       VITEPRESS_PORT: 5173
       LENSCORE_PORT: 3001
       MAX_URLS: 20
       SCAN_DEPTH: 2
-      TIMEOUT: 120000
+      TIMEOUT: 10000
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
