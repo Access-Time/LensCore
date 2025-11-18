@@ -11,6 +11,7 @@ jobs:
     env:
       LENSCORE_CI_HOME: /home/runner/.lenscore
       VITEPRESS_PORT: 5173
+      VITEPRESS_BASE_PATH: /LensCore/en/
       LENSCORE_PORT: 3001
       MAX_URLS: 20
       SCAN_DEPTH: 2
@@ -53,9 +54,9 @@ jobs:
 
           CONFIG_BASE="${LENSCORE_CI_HOME:-$HOME/.lenscore-ci}"
           rm -rf "$CONFIG_BASE"
-          mkdir -p "$CONFIG_BASE/.lenscore"
+          mkdir -p "$CONFIG_BASE"
 
-          cat > "$CONFIG_BASE/.lenscore/config.json" <<EOF
+          cat > "$CONFIG_BASE/config.json" <<EOF
           {
             "mode": "local",
             "docker": {
@@ -88,7 +89,8 @@ jobs:
 
           SCAN_BASE_URL=""
           # Try container IP first, fallback to gateway IP, then localhost
-          for TEST_URL in "http://${CONTAINER_IP}:${VITEPRESS_PORT}" "http://${DOCKER_HOST_IP}:${VITEPRESS_PORT}" "http://localhost:${VITEPRESS_PORT}"; do
+          for BASE_IP in "${CONTAINER_IP}" "${DOCKER_HOST_IP}" "localhost"; do
+            TEST_URL="http://${BASE_IP}:${VITEPRESS_PORT}${VITEPRESS_BASE_PATH}"
             echo "Testing URL: ${TEST_URL}"
             if curl -sSf "${TEST_URL}" > /dev/null 2>&1; then
               SCAN_BASE_URL="${TEST_URL}"
@@ -101,13 +103,14 @@ jobs:
             echo "Container IP: ${CONTAINER_IP}"
             echo "Gateway IP: ${DOCKER_HOST_IP}"
             echo "VitePress port: ${VITEPRESS_PORT}"
+            echo "VitePress base path: ${VITEPRESS_BASE_PATH}"
             echo "Waiting for docs..."
 
             # Check container logs
             docker logs lenscore-docs 2>&1 | tail -20 || true
 
-            # Wait for VitePress to be ready with container IP
-            SCAN_BASE_URL="http://${CONTAINER_IP}:${VITEPRESS_PORT}"
+            # Wait for VitePress to be ready with container IP and base path
+            SCAN_BASE_URL="http://${CONTAINER_IP}:${VITEPRESS_PORT}${VITEPRESS_BASE_PATH}"
             for i in {1..30}; do
               if curl -sSf "${SCAN_BASE_URL}" > /dev/null 2>&1; then
                 echo "✅ VitePress is ready!"
