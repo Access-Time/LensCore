@@ -122,6 +122,10 @@ Test accessibility of a single page.
 - `-r, --rules <rules>`: Specific rules to test (comma-separated)
 - `-g, --tags <tags>`: WCAG tags to test (e.g., "wcag2a,wcag2aa")
 - `--no-screenshot`: Skip screenshot capture
+- `--ci`: CI mode: formatted output for continuous integration
+- `-o, --output <file>`: Output file for JSON report (default: report.json when --ci is used)
+- `--no-exit-on-violations`: Do not exit with error code when violations are found (CI mode)
+- `--no-show-details`: Hide detailed violation information (CI mode)
 - `--skip-cache`: Bypass cache and force a fresh test
 
 **Examples:**
@@ -181,6 +185,22 @@ lens-core crawl https://example.com --web
 
 Crawl website and test accessibility (combined operation).
 
+**Options:**
+
+- `--enable-ai`: Enable AI-powered analysis
+- `-k, --openai-key <key>`: OpenAI API key
+- `-c, --project-context <context>`: Project context (e.g., "react,tailwind")
+- `-w, --web`: Generate HTML report
+- `-u, --max-urls <number>`: Maximum URLs to crawl (default: 10)
+- `-d, --max-depth <number>`: Maximum crawl depth (default: 2)
+- `-t, --timeout <ms>`: Request timeout in milliseconds (default: 15000)
+- `-j, --concurrency <number>`: Number of concurrent requests (default: 3)
+- `--skip-cache`: Bypass cache and force fresh scan
+- `--ci`: CI mode: formatted output for continuous integration
+- `-o, --output <file>`: Output file for JSON report (default: report.json when --ci is used)
+- `--no-exit-on-violations`: Do not exit with error code when violations are found (CI mode)
+- `--no-show-details`: Hide detailed violation information (CI mode)
+
 **Examples:**
 
 ```bash
@@ -189,6 +209,8 @@ lens-core scan https://example.com --enable-ai
 lens-core scan https://example.com --max-urls 50 --max-depth 3
 lens-core scan https://example.com --project-context "react,tailwind"
 lens-core scan https://example.com --web
+lens-core scan https://example.com --ci
+lens-core scan https://example.com --ci --no-exit-on-violations
 ```
 
 **Options (summary):**
@@ -294,6 +316,84 @@ Generates an HTML report saved to `web/output/` directory with:
 - Code snippets
 - Recommendations
 
+### CI Output (Continuous Integration)
+
+The `--ci` flag provides formatted output optimized for CI/CD pipelines:
+
+```bash
+lens-core scan https://example.com --ci
+lens-core test https://example.com --ci
+```
+
+**Features:**
+
+- ✅ **Formatted output**: Clean, structured output for CI logs
+- ✅ **Automatic exit codes**: Exit code 1 if violations found, 0 if none
+- ✅ **Detailed violations**: Shows violation details with help URLs
+- ✅ **JSON report**: Automatically saves report to `report.json` (or custom file with `-o`)
+- ✅ **Fallback handling**: Automatically falls back to test command if scan fails
+- ✅ **GitHub Actions integration**: Includes `::error::` annotations for violations
+
+**CI Mode Options:**
+
+- `--ci`: Enable CI mode with formatted output
+- `-o, --output <file>`: Specify output file for JSON report (default: `report.json`)
+- `--no-exit-on-violations`: Don't fail workflow on violations (useful for monitoring)
+- `--no-show-details`: Hide detailed violation information (summary only)
+
+**Example CI Output:**
+
+```
+==========================================
+ACCESSIBILITY VIOLATIONS DETECTED
+==========================================
+
+Pages scanned: 3
+Total violations: 5
+
+--- Violation Details ---
+
+Page: https://example.com
+  ❌ color-contrast [serious]
+     Description: Ensures the contrast between foreground and background colors meets WCAG 2 AA contrast ratio thresholds
+     Help: Elements must have sufficient color contrast
+     Help URL: https://dequeuniversity.com/rules/axe/4.8/color-contrast
+     - Element: button.submit-btn
+       HTML: <button class="submit-btn">Submit</button>
+       Summary: Element has insufficient color contrast
+
+==========================================
+How to fix:
+  1. Review each violation above
+  2. Check the Help URL for detailed guidance
+  3. Fix the issues in your code
+  4. Re-run the workflow to verify fixes
+==========================================
+
+::error::Accessibility violations detected: 5
+```
+
+**Use Cases:**
+
+1. **Enforcing Quality** (default behavior):
+
+   ```bash
+   lens-core scan https://example.com --ci
+   # Workflow fails if violations found
+   ```
+
+2. **Monitoring Only** (non-blocking):
+
+   ```bash
+   lens-core scan https://example.com --ci --no-exit-on-violations
+   # Workflow succeeds but violations are reported
+   ```
+
+3. **Custom Output File**:
+   ```bash
+   lens-core scan https://example.com --ci -o custom-report.json
+   ```
+
 ## Configuration File
 
 LensCore configuration is stored in `~/.lenscore/config.json`:
@@ -365,6 +465,48 @@ lens-core crawl https://example.com \
 ```
 
 ### CI/CD Integration
+
+LensCore provides dedicated CI mode for seamless integration with CI/CD pipelines:
+
+**Basic CI Integration:**
+
+```bash
+lens-core setup --port 3001
+lens-core build
+lens-core scan https://example.com --ci
+```
+
+**GitHub Actions Example:**
+
+```yaml
+- name: Run accessibility scan
+  run: |
+    lens-core scan "$SCAN_URL" \
+      -u 20 \
+      -d 2 \
+      -t 10000 \
+      --skip-cache \
+      --ci \
+      -o report.json
+```
+
+**Advanced CI Integration:**
+
+```bash
+# With AI analysis
+lens-core scan https://example.com --ci --enable-ai
+
+# Non-blocking (monitoring only)
+lens-core scan https://example.com --ci --no-exit-on-violations
+
+# Custom output file
+lens-core scan https://example.com --ci -o accessibility-report.json
+
+# Minimal output (no details)
+lens-core scan https://example.com --ci --no-show-details
+```
+
+**Legacy Integration (without --ci):**
 
 ```bash
 lens-core setup --port 3001 --ai --openai-key $OPENAI_API_KEY

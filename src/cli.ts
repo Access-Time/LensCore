@@ -86,6 +86,16 @@ program
   .option('-g, --tags <tags>', 'WCAG tags (comma-separated)')
   .option('--no-screenshot', 'Disable screenshot capture')
   .option('--skip-cache', 'Bypass cache and force fresh test')
+  .option('--ci', 'CI mode: formatted output for continuous integration')
+  .option(
+    '-o, --output <file>',
+    'Output file for JSON report (default: report.json when --ci is used)'
+  )
+  .option(
+    '--no-exit-on-violations',
+    'Do not exit with error code when violations are found (CI mode)'
+  )
+  .option('--no-show-details', 'Hide detailed violation information (CI mode)')
   .action(testCommand);
 
 program
@@ -120,6 +130,16 @@ program
   .option('-t, --timeout <number>', 'Request timeout in milliseconds', '15000')
   .option('-j, --concurrency <number>', 'Number of concurrent requests', '3')
   .option('--skip-cache', 'Bypass cache and force fresh scan')
+  .option('--ci', 'CI mode: formatted output for continuous integration')
+  .option(
+    '-o, --output <file>',
+    'Output file for JSON report (default: report.json when --ci is used)'
+  )
+  .option(
+    '--no-exit-on-violations',
+    'Do not exit with error code when violations are found (CI mode)'
+  )
+  .option('--no-show-details', 'Hide detailed violation information (CI mode)')
   .action(scanCommand);
 
 // ============================================================================

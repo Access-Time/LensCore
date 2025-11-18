@@ -122,6 +122,10 @@ Test aksesibilitas satu halaman.
 - `-r, --rules <rules>`: Rule spesifik untuk di-test (dipisahkan koma)
 - `-g, --tags <tags>`: Tag WCAG untuk di-test (contoh: "wcag2a,wcag2aa")
 - `--no-screenshot`: Skip capture screenshot
+- `--ci`: Mode CI: output terformat untuk continuous integration
+- `-o, --output <file>`: File output untuk laporan JSON (default: report.json saat menggunakan --ci)
+- `--no-exit-on-violations`: Jangan exit dengan error code saat violations ditemukan (mode CI)
+- `--no-show-details`: Sembunyikan informasi detail violations (mode CI)
 - `--skip-cache`: Lewati cache dan paksa test baru
 
 **Contoh:**
@@ -181,6 +185,22 @@ lens-core crawl https://example.com --web
 
 Crawl website dan test aksesibilitas (operasi gabungan).
 
+**Opsi:**
+
+- `--enable-ai`: Aktifkan analisis berbasis AI
+- `-k, --openai-key <key>`: OpenAI API key
+- `-c, --project-context <context>`: Konteks proyek (contoh: "react,tailwind")
+- `-w, --web`: Generate laporan HTML
+- `-u, --max-urls <number>`: Maksimum URL untuk di-crawl (default: 10)
+- `-d, --max-depth <number>`: Kedalaman maksimum crawl (default: 2)
+- `-t, --timeout <ms>`: Timeout request dalam milliseconds (default: 15000)
+- `-j, --concurrency <number>`: Jumlah request bersamaan (default: 3)
+- `--skip-cache`: Bypass cache dan paksa scan baru
+- `--ci`: Mode CI: output terformat untuk continuous integration
+- `-o, --output <file>`: File output untuk laporan JSON (default: report.json saat menggunakan --ci)
+- `--no-exit-on-violations`: Jangan exit dengan error code saat violations ditemukan (mode CI)
+- `--no-show-details`: Sembunyikan informasi detail violations (mode CI)
+
 **Contoh:**
 
 ```bash
@@ -189,6 +209,8 @@ lens-core scan https://example.com --enable-ai
 lens-core scan https://example.com --max-urls 50 --max-depth 3
 lens-core scan https://example.com --project-context "react,tailwind"
 lens-core scan https://example.com --web
+lens-core scan https://example.com --ci
+lens-core scan https://example.com --ci --no-exit-on-violations
 ```
 
 **Ringkasan opsi:**
@@ -294,6 +316,84 @@ Generate laporan HTML disimpan ke direktori `web/output/` dengan:
 - Code snippets
 - Rekomendasi
 
+### Output CI (Continuous Integration)
+
+Flag `--ci` menyediakan output terformat yang dioptimalkan untuk pipeline CI/CD:
+
+```bash
+lens-core scan https://example.com --ci
+lens-core test https://example.com --ci
+```
+
+**Fitur:**
+
+- ✅ **Output terformat**: Output bersih dan terstruktur untuk log CI
+- ✅ **Exit code otomatis**: Exit code 1 jika violations ditemukan, 0 jika tidak ada
+- ✅ **Detail violations**: Menampilkan detail violations dengan help URL
+- ✅ **Laporan JSON**: Otomatis menyimpan laporan ke `report.json` (atau file kustom dengan `-o`)
+- ✅ **Fallback handling**: Otomatis fallback ke test command jika scan gagal
+- ✅ **Integrasi GitHub Actions**: Termasuk anotasi `::error::` untuk violations
+
+**Opsi Mode CI:**
+
+- `--ci`: Aktifkan mode CI dengan output terformat
+- `-o, --output <file>`: Tentukan file output untuk laporan JSON (default: `report.json`)
+- `--no-exit-on-violations`: Jangan gagalkan workflow pada violations (berguna untuk monitoring)
+- `--no-show-details`: Sembunyikan informasi detail violations (hanya ringkasan)
+
+**Contoh Output CI:**
+
+```
+==========================================
+ACCESSIBILITY VIOLATIONS DETECTED
+==========================================
+
+Pages scanned: 3
+Total violations: 5
+
+--- Violation Details ---
+
+Page: https://example.com
+  ❌ color-contrast [serious]
+     Description: Ensures the contrast between foreground and background colors meets WCAG 2 AA contrast ratio thresholds
+     Help: Elements must have sufficient color contrast
+     Help URL: https://dequeuniversity.com/rules/axe/4.8/color-contrast
+     - Element: button.submit-btn
+       HTML: <button class="submit-btn">Submit</button>
+       Summary: Element has insufficient color contrast
+
+==========================================
+How to fix:
+  1. Review each violation above
+  2. Check the Help URL for detailed guidance
+  3. Fix the issues in your code
+  4. Re-run the workflow to verify fixes
+==========================================
+
+::error::Accessibility violations detected: 5
+```
+
+**Kasus Penggunaan:**
+
+1. **Enforcing Quality** (perilaku default):
+
+   ```bash
+   lens-core scan https://example.com --ci
+   # Workflow gagal jika violations ditemukan
+   ```
+
+2. **Monitoring Saja** (non-blocking):
+
+   ```bash
+   lens-core scan https://example.com --ci --no-exit-on-violations
+   # Workflow sukses tapi violations dilaporkan
+   ```
+
+3. **File Output Kustom**:
+   ```bash
+   lens-core scan https://example.com --ci -o custom-report.json
+   ```
+
 ## File Konfigurasi
 
 Konfigurasi LensCore disimpan di `~/.lenscore/config.json`:
@@ -365,6 +465,48 @@ lens-core crawl https://example.com \
 ```
 
 ### Integrasi CI/CD
+
+LensCore menyediakan mode CI khusus untuk integrasi seamless dengan pipeline CI/CD:
+
+**Integrasi CI Dasar:**
+
+```bash
+lens-core setup --port 3001
+lens-core build
+lens-core scan https://example.com --ci
+```
+
+**Contoh GitHub Actions:**
+
+```yaml
+- name: Run accessibility scan
+  run: |
+    lens-core scan "$SCAN_URL" \
+      -u 20 \
+      -d 2 \
+      -t 10000 \
+      --skip-cache \
+      --ci \
+      -o report.json
+```
+
+**Integrasi CI Lanjutan:**
+
+```bash
+# Dengan analisis AI
+lens-core scan https://example.com --ci --enable-ai
+
+# Non-blocking (monitoring saja)
+lens-core scan https://example.com --ci --no-exit-on-violations
+
+# File output kustom
+lens-core scan https://example.com --ci -o accessibility-report.json
+
+# Output minimal (tanpa detail)
+lens-core scan https://example.com --ci --no-show-details
+```
+
+**Integrasi Legacy (tanpa --ci):**
 
 ```bash
 lens-core setup --port 3001 --ai --openai-key $OPENAI_API_KEY

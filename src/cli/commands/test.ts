@@ -3,12 +3,18 @@
 import chalk from 'chalk';
 import ora from 'ora';
 import { CommandUtils } from '../utils/command-utils';
+import { CIOutputService } from '../services/ci-output';
 
 export async function testCommand(url: string, options: any) {
   const spinner = ora('Starting test...').start();
 
   try {
-    console.log(chalk.blue.bold(`\n♿ Testing: ${url}\n`));
+    if (!options.ci) {
+      console.log(chalk.blue.bold(`\n♿ Testing: ${url}\n`));
+    } else {
+      console.log(`- Starting test...`);
+      console.log(`♿ Testing: ${url}`);
+    }
 
     await CommandUtils.ensureLensCoreReady();
 
@@ -35,7 +41,13 @@ export async function testCommand(url: string, options: any) {
       };
     }
 
-    spinner.text = 'Starting accessibility test...';
+    if (!options.ci) {
+      spinner.text = 'Starting accessibility test...';
+    } else {
+      console.log('- Ensuring LensCore is ready...');
+      console.log('✔ LensCore ready');
+      console.log('- Running accessibility test...');
+    }
 
     const testOptions = {
       url,
@@ -52,8 +64,22 @@ export async function testCommand(url: string, options: any) {
     const client = await CommandUtils.getClient();
     const result = await client.test(testOptions);
 
-    spinner.succeed('Test completed');
+    if (!options.ci) {
+      spinner.succeed('Test completed');
+    }
 
+    // CI mode output
+    if (options.ci) {
+      const exitCode = await CIOutputService.handleTestResult(result, {
+        exitOnViolations: options.exitOnViolations !== false,
+        outputFile: options.output || 'report.json',
+        showDetails: options.showDetails !== false,
+      });
+
+      process.exit(exitCode);
+    }
+
+    // Normal mode output
     const webMode = options.web || false;
     const reportFilename = CommandUtils.displayTestResults(
       result,
@@ -63,6 +89,12 @@ export async function testCommand(url: string, options: any) {
     CommandUtils.displayAIStatus(options, result);
     await CommandUtils.displayFooter(options, reportFilename || undefined);
   } catch (error: any) {
-    CommandUtils.handleError(error, spinner, 'Test');
+    if (options.ci) {
+      console.log('✖ Test failed');
+      console.error('Error:', error.message);
+      process.exit(1);
+    } else {
+      CommandUtils.handleError(error, spinner, 'Test');
+    }
   }
 }
