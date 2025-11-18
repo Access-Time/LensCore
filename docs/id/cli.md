@@ -387,7 +387,7 @@ Setiap push ke `main` dan setiap pull request akan menjalankan workflow GitHub A
 
 Selain itu, workflow **Security Check** (`.github/workflows/security.yml`) berjalan terjadwal untuk:
 
-- Menjalankan `npm audit` dengan threshold severitas *moderate*
+- Menjalankan `npm audit` dengan threshold severitas _moderate_
 - Menghasilkan laporan dependency yang ketinggalan versi
 
 ### Deploy Dokumentasi
