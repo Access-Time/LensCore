@@ -4,9 +4,17 @@ LensCore CLI is a powerful command-line interface for accessibility testing and 
 
 ## Installation
 
+LensCore CLI is published as the `@accesstime/lenscore` npm package and requires **Node.js 20+**.
+
 ```bash
+# Global install (recommended)
 npm install -g @accesstime/lenscore
+
+# Or run without global install
+npx @accesstime/lenscore --help
 ```
+
+After a global install the CLI is available everywhere as the `lens-core` command.
 
 ## Quick Start Guide
 
@@ -66,8 +74,9 @@ lens-core setup
 **Options:**
 
 - `--port <port>`: Set API port (default: 3001)
+- `-u, --url <url>`: Set custom base URL (e.g., `http://localhost:3003`)
 - `--ai`: Enable AI features during setup
-- `--openai-key <key>`: Set OpenAI API key
+- `-k, --openai-key <key>`: Set OpenAI API key
 
 ---
 
@@ -113,6 +122,7 @@ Test accessibility of a single page.
 - `-r, --rules <rules>`: Specific rules to test (comma-separated)
 - `-g, --tags <tags>`: WCAG tags to test (e.g., "wcag2a,wcag2aa")
 - `--no-screenshot`: Skip screenshot capture
+- `--skip-cache`: Bypass cache and force a fresh test
 
 **Examples:**
 
@@ -154,6 +164,7 @@ Crawl website and discover pages.
 - `-t, --timeout <ms>`: Page load timeout
 - `-j, --concurrency <number>`: Concurrent requests
 - `-l, --wait-until <event>`: Wait until event (load|domcontentloaded|networkidle)
+- `--skip-cache`: Bypass cache and force a fresh crawl
 
 **Examples:**
 
@@ -179,6 +190,11 @@ lens-core scan https://example.com --max-urls 50 --max-depth 3
 lens-core scan https://example.com --project-context "react,tailwind"
 lens-core scan https://example.com --web
 ```
+
+**Options (summary):**
+
+- All `crawl` options: `--max-urls`, `--max-depth`, `--timeout`, `--concurrency`, `--wait-until`, `--skip-cache`
+- All `test` options: `--enable-ai`, `--openai-key`, `--project-context`, `--web`, `--timeout`, `--rules`, `--tags`, `--no-screenshot`
 
 ## Docker Management
 
@@ -228,6 +244,24 @@ Check API health endpoint.
 
 ```bash
 lens-core health
+```
+
+## Cache Management
+
+### `cache:clear`
+
+Clear all cached data used by LensCore (in-memory or external cache depending on your configuration).
+
+```bash
+lens-core cache:clear
+```
+
+### `cache:stats`
+
+Show cache statistics such as hit rate and cache size.
+
+```bash
+lens-core cache:stats
 ```
 
 ## Output Formats
@@ -338,6 +372,50 @@ lens-core build
 lens-core health
 lens-core test https://example.com > results.json
 ```
+
+## CI & Release Workflow
+
+This section is intended for contributors and maintainers who work on the LensCore CLI itself.
+
+### Continuous Integration (GitHub Actions)
+
+On every push to `main` and for all pull requests, GitHub Actions runs:
+
+- **Build Check** (`.github/workflows/build.yml`): `npm run typecheck` and `npm run build`
+- **Test Check** (`.github/workflows/test.yml`): `npm run test` and `npm run test:coverage`
+- **Lint Check** (`.github/workflows/lint.yml`): `npm run lint` and `npm run format:check`
+
+In addition, the **Security Check** workflow (`.github/workflows/security.yml`) runs on a schedule to:
+
+- Perform `npm audit` with a moderate severity threshold
+- Generate reports about outdated dependencies
+
+### Documentation Deployment
+
+Documentation is built and deployed to GitHub Pages by `.github/workflows/deploy-docs.yml`:
+
+- Triggered on pushes to `main` that touch `docs/**`, `package.json`, `package-lock.json`, or the workflow itself
+- Runs `npm ci` and `npm run docs:build`
+- Publishes the built docs to GitHub Pages
+
+### Releasing a New CLI Version to npm
+
+Releases of the `@accesstime/lenscore` npm package are currently performed manually, outside of CI. A typical release flow is:
+
+1. **Ensure the main branch is green**
+   - All GitHub Actions workflows (build, test, lint, security) should be passing.
+2. **Update the version**
+   - Use `npm version patch|minor|major` (preferred) or edit `package.json` manually.
+   - This updates the version field and creates a Git tag when using `npm version`.
+3. **Build the project**
+   - Run `npm run build` to generate the `dist/` output, including `dist/cli.js` used by `bin/index.js`.
+4. **Publish to npm**
+   - Log in with `npm login` (once per environment).
+   - For an existing public package: `npm publish`
+   - For the first publish of the scoped package: `npm publish --access public`
+5. **Verify the new version**
+   - Install globally on a clean environment: `npm install -g @accesstime/lenscore`
+   - Run `lens-core --version` to confirm the published version.
 
 ## Troubleshooting
 
