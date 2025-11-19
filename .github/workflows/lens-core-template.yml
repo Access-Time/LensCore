@@ -60,18 +60,15 @@ jobs:
             echo "manager=npm" >> $GITHUB_OUTPUT
             echo "lockfile=" >> $GITHUB_OUTPUT
           fi
-
       - name: Install system packages
         run: |
           sudo apt-get update
           sudo apt-get install -y jq curl
-
       - name: Install docker-compose
         run: |
           sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
           sudo chmod +x /usr/local/bin/docker-compose
           docker-compose --version
-
       - name: Extract port and get Docker host IP
         id: extract_port
         run: |
@@ -84,7 +81,6 @@ jobs:
               PORT=3000
             fi
           fi
-
           DOCKER_HOST_IP=$(docker network inspect bridge --format '{{ (index .IPAM.Config 0).Gateway }}' 2>/dev/null || echo "")
           if [ -z "$DOCKER_HOST_IP" ]; then
             DOCKER_HOST_IP=$(docker network inspect bridge --format '{{range .IPAM.Config}}{{.Gateway}}{{end}}' 2>/dev/null | head -1 || echo "")
@@ -93,7 +89,6 @@ jobs:
             DOCKER_HOST_IP="172.17.0.1"
             echo "::warning::Could not get Docker host IP from bridge network, using default: $DOCKER_HOST_IP"
           fi
-
           echo "port=$PORT" >> $GITHUB_OUTPUT
           echo "docker_host_ip=$DOCKER_HOST_IP" >> $GITHUB_OUTPUT
           echo "app_url=http://app:$PORT" >> $GITHUB_OUTPUT
@@ -102,7 +97,6 @@ jobs:
           echo "docker_host_url=http://${DOCKER_HOST_IP}:${PORT}" >> $GITHUB_OUTPUT
           echo "Docker host IP: $DOCKER_HOST_IP"
           echo "Scan URL will be: http://${DOCKER_HOST_IP}:${PORT}"
-
       - name: Setup LensCore
         run: |
           npm install -g @accesstime/lenscore@latest
@@ -125,12 +119,10 @@ jobs:
           }
           CONFIG_EOF
           lens-core build
-
       - name: Prepare Dockerfile
         run: |
           PM="${{ steps.detect_pm.outputs.manager }}"
           PORT="${{ steps.extract_port.outputs.port }}"
-
           if [ ! -f Dockerfile ]; then
             echo "Dockerfile not found. Creating a basic Dockerfile for $PM..."
             
@@ -185,11 +177,9 @@ jobs:
           else
             echo "✓ Using existing Dockerfile"
           fi
-
       - name: Start application
         run: |
           PORT="${{ steps.extract_port.outputs.port }}"
-
           if [ -f docker-compose.yml ]; then
             echo "✓ Found docker-compose.yml, using it to start application"
             docker-compose up -d --build
@@ -204,7 +194,6 @@ jobs:
               app-image
             echo "✓ Application container started"
           fi
-
       - name: Wait for LensCore
         run: |
           timeout=120
@@ -220,32 +209,25 @@ jobs:
           echo "::error::LensCore did not become available within timeout"
           docker ps -a | grep lenscore || true
           exit 1
-
       - name: Wait for application
         id: wait_app
         run: |
           DOCKER_HOST_IP="${{ steps.extract_port.outputs.docker_host_ip }}"
           PORT="${{ steps.extract_port.outputs.port }}"
           SCAN_BASE_URL="http://${DOCKER_HOST_IP}:${PORT}"
-
           echo "Docker host IP: ${DOCKER_HOST_IP}"
           echo "Waiting for app on ${SCAN_BASE_URL}..."
-
           curl --retry 30 --retry-delay 3 --retry-connrefused \
                "${SCAN_BASE_URL}" > /dev/null
-
           echo "✓ Application is accessible at ${SCAN_BASE_URL}"
           echo "localhost_url=${SCAN_BASE_URL}" >> $GITHUB_OUTPUT
-
           echo "Previewing application response..."
           RESPONSE=$(curl -sS "$SCAN_BASE_URL" 2>/dev/null || echo "")
           if [ -n "$RESPONSE" ]; then
             echo "Response preview (first 5 lines):"
             echo "$RESPONSE" | head -n 5
           fi
-
           echo "scan_url=${SCAN_BASE_URL}" >> $GITHUB_ENV
-
       - name: Run scan
         run: |
           SCAN_URL="${{ steps.wait_app.outputs.localhost_url }}"
@@ -254,84 +236,13 @@ jobs:
             PORT="${{ steps.extract_port.outputs.port }}"
             SCAN_URL="http://${DOCKER_HOST_IP}:${PORT}"
           fi
-          echo "Scanning: $SCAN_URL"
-          lens-core scan "$SCAN_URL" -u ${{ inputs.max_urls }} -d ${{ inputs.scan_depth }} -t ${{ inputs.timeout }} --skip-cache -o report.json || true
-          if [ ! -f report.json ]; then
-            echo "Scan failed, trying with test command..."
-            lens-core test "$SCAN_URL" -t ${{ inputs.timeout }} --skip-cache > test_output.txt 2>&1 || true
-            if [ -f test_output.txt ]; then
-              if jq empty test_output.txt 2>/dev/null; then
-                cp test_output.txt report-fallback.json
-              else
-                awk '/^\{/,/^\}$/' test_output.txt > report-fallback.json 2>/dev/null || true
-                if [ ! -f report-fallback.json ] || ! jq empty report-fallback.json 2>/dev/null; then
-                  jq -s '.[] | select(type == "object")' test_output.txt > report-fallback.json 2>/dev/null || true
-                fi
-              fi
-              if [ -f report-fallback.json ] && jq empty report-fallback.json 2>/dev/null; then
-                HAS_URL=$(jq -r 'if .url then "yes" else "no" end' report-fallback.json 2>/dev/null || echo "no")
-                VIOLATIONS_COUNT=$(jq '.violations | length' report-fallback.json 2>/dev/null || echo "0")
-                PASSES_COUNT=$(jq '.passes | length' report-fallback.json 2>/dev/null || echo "0")
-                HAS_SCORE=$(jq -r 'if .score then "yes" else "no" end' report-fallback.json 2>/dev/null || echo "no")
-                if [ "$HAS_URL" = "yes" ] && ([ "$VIOLATIONS_COUNT" -gt 0 ] || [ "$PASSES_COUNT" -gt 0 ] || [ "$HAS_SCORE" = "yes" ]); then
-                  jq '{
-                    "crawl": {"pages": [], "totalPages": 1, "crawlTime": 0},
-                    "accessibility": {
-                      "results": [.],
-                      "totalPages": 1,
-                      "testTime": (.metadata.processingTime // 0)
-                    },
-                    "totalTime": (.metadata.processingTime // 0)
-                  }' report-fallback.json > report.json
-                fi
-              fi
-            fi
-          fi
-          if [ ! -f report.json ]; then
-            echo '{"accessibility":{"results":[]}}' > report.json
-          fi
-          VIOLATIONS=$(jq '[.accessibility.results[]? | .violations | length] | add // 0' report.json)
-          echo "Total violations: $VIOLATIONS"
-          if [ "$VIOLATIONS" -gt 0 ]; then
-            echo ""
-            echo "=========================================="
-            echo "ACCESSIBILITY VIOLATIONS DETECTED"
-            echo "=========================================="
-            echo ""
-            PAGE_COUNT=$(jq '.accessibility.results | length' report.json)
-            echo "Pages scanned: $PAGE_COUNT"
-            echo "Total violations: $VIOLATIONS"
-            echo ""
-            echo "--- Violation Details ---"
-            jq -r '.accessibility.results[]? | 
-              "Page: \(.url // "Unknown")",
-              (.violations[]? | 
-                "  ❌ \(.id // "unknown") [\(.impact // "unknown")]",
-                "     Description: \(.description // "N/A")",
-                "     Help: \(.help // "N/A")",
-                "     Help URL: \(.helpUrl // "N/A")",
-                (.nodes[]? | 
-                  "     - Element: \(.target | join(", ") // "N/A")",
-                  "       HTML: \(.html // "N/A" | .[0:100])",
-                  "       Summary: \(.failureSummary // .any[]?[0].message // "N/A" | .[0:200])"
-                ),
-                ""
-              )
-            ' report.json || true
-            echo ""
-            echo "=========================================="
-            echo "How to fix:"
-            echo "  1. Review each violation above"
-            echo "  2. Check the Help URL for detailed guidance"
-            echo "  3. Fix the issues in your code"
-            echo "  4. Re-run the workflow to verify fixes"
-            echo "=========================================="
-            echo ""
-            echo "::error::Accessibility violations detected: $VIOLATIONS"
-          exit 1
-          fi
-          echo "No violations found"
-
+          lens-core scan "$SCAN_URL" \
+            -u ${{ inputs.max_urls }} \
+            -d ${{ inputs.scan_depth }} \
+            -t ${{ inputs.timeout }} \
+            --skip-cache \
+            --ci \
+            -o report.json
       - name: Generate HTML report
         run: |
           SCAN_URL="${{ steps.wait_app.outputs.localhost_url }}"
@@ -341,7 +252,6 @@ jobs:
             SCAN_URL="http://${DOCKER_HOST_IP}:${PORT}"
           fi
           lens-core scan "$SCAN_URL" -u ${{ inputs.max_urls }} -d ${{ inputs.scan_depth }} -t ${{ inputs.timeout }} --skip-cache --web || true
-
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
