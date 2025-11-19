@@ -4,9 +4,17 @@ LensCore CLI adalah antarmuka baris perintah yang powerful untuk testing aksesib
 
 ## Instalasi
 
+LensCore CLI dipublikasikan sebagai paket npm `@accesstime/lenscore` dan membutuhkan **Node.js 20+**.
+
 ```bash
+# Instal global (direkomendasikan)
 npm install -g @accesstime/lenscore
+
+# Atau jalankan tanpa instal global
+npx @accesstime/lenscore --help
 ```
+
+Setelah instal global, CLI tersedia di mana saja sebagai perintah `lens-core`.
 
 ## Panduan Mulai Cepat
 
@@ -66,8 +74,9 @@ lens-core setup
 **Opsi:**
 
 - `--port <port>`: Set port API (default: 3001)
+- `-u, --url <url>`: Set base URL kustom (contoh: `http://localhost:3003`)
 - `--ai`: Aktifkan fitur AI saat setup
-- `--openai-key <key>`: Set OpenAI API key
+- `-k, --openai-key <key>`: Set OpenAI API key
 
 ---
 
@@ -113,6 +122,7 @@ Test aksesibilitas satu halaman.
 - `-r, --rules <rules>`: Rule spesifik untuk di-test (dipisahkan koma)
 - `-g, --tags <tags>`: Tag WCAG untuk di-test (contoh: "wcag2a,wcag2aa")
 - `--no-screenshot`: Skip capture screenshot
+- `--skip-cache`: Lewati cache dan paksa test baru
 
 **Contoh:**
 
@@ -154,6 +164,7 @@ Crawl website dan temukan halaman.
 - `-t, --timeout <ms>`: Timeout load halaman
 - `-j, --concurrency <number>`: Request bersamaan
 - `-l, --wait-until <event>`: Tunggu hingga event (load|domcontentloaded|networkidle)
+- `--skip-cache`: Lewati cache dan paksa crawl baru
 
 **Contoh:**
 
@@ -179,6 +190,11 @@ lens-core scan https://example.com --max-urls 50 --max-depth 3
 lens-core scan https://example.com --project-context "react,tailwind"
 lens-core scan https://example.com --web
 ```
+
+**Ringkasan opsi:**
+
+- Semua opsi `crawl`: `--max-urls`, `--max-depth`, `--timeout`, `--concurrency`, `--wait-until`, `--skip-cache`
+- Semua opsi `test`: `--enable-ai`, `--openai-key`, `--project-context`, `--web`, `--timeout`, `--rules`, `--tags`, `--no-screenshot`
 
 ## Manajemen Docker
 
@@ -228,6 +244,24 @@ Cek API health endpoint.
 
 ```bash
 lens-core health
+```
+
+## Manajemen Cache
+
+### `cache:clear`
+
+Menghapus semua data cache yang digunakan oleh LensCore (baik in-memory maupun cache eksternal tergantung konfigurasi Anda).
+
+```bash
+lens-core cache:clear
+```
+
+### `cache:stats`
+
+Menampilkan statistik cache seperti hit rate dan ukuran cache.
+
+```bash
+lens-core cache:stats
 ```
 
 ## Format Output
@@ -338,6 +372,50 @@ lens-core build
 lens-core health
 lens-core test https://example.com > results.json
 ```
+
+## Alur CI & Rilis
+
+Bagian ini ditujukan untuk kontributor dan maintainer yang mengerjakan LensCore CLI.
+
+### Continuous Integration (GitHub Actions)
+
+Setiap push ke `main` dan setiap pull request akan menjalankan workflow GitHub Actions berikut:
+
+- **Build Check** (`.github/workflows/build.yml`): menjalankan `npm run typecheck` dan `npm run build`
+- **Test Check** (`.github/workflows/test.yml`): menjalankan `npm run test` dan `npm run test:coverage`
+- **Lint Check** (`.github/workflows/lint.yml`): menjalankan `npm run lint` dan `npm run format:check`
+
+Selain itu, workflow **Security Check** (`.github/workflows/security.yml`) berjalan terjadwal untuk:
+
+- Menjalankan `npm audit` dengan threshold severitas _moderate_
+- Menghasilkan laporan dependency yang ketinggalan versi
+
+### Deploy Dokumentasi
+
+Dokumentasi dibuild dan dideploy ke GitHub Pages oleh `.github/workflows/deploy-docs.yml`:
+
+- Terpicu saat push ke `main` yang menyentuh `docs/**`, `package.json`, `package-lock.json`, atau workflow itu sendiri
+- Menjalankan `npm ci` dan `npm run docs:build`
+- Mempublikasikan dokumentasi ke GitHub Pages
+
+### Merilis Versi CLI Baru ke npm
+
+Rilis paket npm `@accesstime/lenscore` saat ini dilakukan secara manual (belum otomatis dari CI). Alur rilis yang umum:
+
+1. **Pastikan branch main hijau**
+   - Semua workflow GitHub Actions (build, test, lint, security) harus lulus.
+2. **Update versi**
+   - Gunakan `npm version patch|minor|major` (disarankan) atau edit `package.json` secara manual.
+   - Perintah `npm version` akan mengupdate field versi dan membuat Git tag.
+3. **Build project**
+   - Jalankan `npm run build` untuk menghasilkan output `dist/`, termasuk `dist/cli.js` yang digunakan oleh `bin/index.js`.
+4. **Publish ke npm**
+   - Login terlebih dahulu dengan `npm login` (sekali per environment).
+   - Untuk paket publik yang sudah pernah dirilis: `npm publish`
+   - Untuk rilis pertama paket scoped ini: `npm publish --access public`
+5. **Verifikasi versi baru**
+   - Instal global di environment bersih: `npm install -g @accesstime/lenscore`
+   - Jalankan `lens-core --version` untuk memastikan versi yang terpasang sama dengan yang dirilis.
 
 ## Troubleshooting
 
