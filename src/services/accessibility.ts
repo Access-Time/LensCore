@@ -1,4 +1,4 @@
-import { chromium, Browser } from 'playwright';
+import { chromium, Browser, LaunchOptions } from 'playwright';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs/promises';
 import {
@@ -25,8 +25,8 @@ export class AccessibilityService {
 
   async initialize(): Promise<void> {
     const executablePath = process.env['PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH'];
-    
-    const launchOptions: any = {
+
+    const launchOptions: LaunchOptions = {
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
     };
@@ -34,7 +34,7 @@ export class AccessibilityService {
     if (executablePath) {
       launchOptions.executablePath = executablePath;
     }
-    
+
     this.browser = await chromium.launch(launchOptions);
   }
 
