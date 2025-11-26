@@ -201,7 +201,9 @@ CMD ["node", "dist/index.js"]`;
     }
 
     if (!packageDirFound) {
-      console.warn('⚠️  Could not find package directory, some files may be missing');
+      console.warn(
+        '⚠️  Could not find package directory, some files may be missing'
+      );
     }
   }
 
@@ -288,7 +290,6 @@ CMD ["node", "dist/index.js"]`;
     };
   }
 
-
   private async copyConfigFiles(
     packageDir: string,
     lenscoreDir: string
@@ -306,8 +307,12 @@ CMD ["node", "dist/index.js"]`;
     }
 
     const packageLockDest = path.join(lenscoreDir, 'package-lock.json');
-    
-    for (const possibleDir of [packageDir, process.cwd(), path.resolve(__filename, '../../../../')]) {
+
+    for (const possibleDir of [
+      packageDir,
+      process.cwd(),
+      path.resolve(__filename, '../../../../'),
+    ]) {
       try {
         const packageLockSrc = path.join(possibleDir, 'package-lock.json');
         await fs.access(packageLockSrc);

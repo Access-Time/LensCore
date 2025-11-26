@@ -1,4 +1,4 @@
-import { chromium, Browser } from 'playwright';
+import { chromium, Browser, LaunchOptions } from 'playwright';
 import * as cheerio from 'cheerio';
 import { CrawlRequest, CrawlResponse, CrawlResult, CrawlRules } from '../types';
 import { env } from '../utils/env';
@@ -18,8 +18,8 @@ export class CrawlingService {
   async initialize(): Promise<void> {
     try {
       const executablePath = process.env['PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH'];
-      
-      const launchOptions: any = {
+
+      const launchOptions: LaunchOptions = {
         headless: true,
         args: [
           '--no-sandbox',
@@ -39,7 +39,7 @@ export class CrawlingService {
       if (executablePath) {
         launchOptions.executablePath = executablePath;
       }
-      
+
       this.browser = await chromium.launch(launchOptions);
 
       logger.info('Browser initialized successfully');
@@ -146,7 +146,8 @@ export class CrawlingService {
 
           await page.setViewportSize({ width: 1280, height: 720 });
           await page.setExtraHTTPHeaders({
-            'User-Agent': 'Mozilla/5.0 (compatible; LensCore/1.0; +https://github.com/accesslens/lenscore)',
+            'User-Agent':
+              'Mozilla/5.0 (compatible; LensCore/1.0; +https://github.com/accesslens/lenscore)',
             ...(request.headers || {}),
           });
 
@@ -164,15 +165,15 @@ export class CrawlingService {
                 request.waitUntil === 'networkidle0'
                   ? 'networkidle'
                   : request.waitUntil === 'networkidle2'
-                  ? 'networkidle'
-                  : request.waitUntil === 'domcontentloaded'
-                  ? 'domcontentloaded'
-                  : (env.CRAWL_WAIT_UNTIL === 'networkidle0' ||
-                    env.CRAWL_WAIT_UNTIL === 'networkidle2'
-                      ? 'networkidle'
-                      : env.CRAWL_WAIT_UNTIL === 'domcontentloaded'
+                    ? 'networkidle'
+                    : request.waitUntil === 'domcontentloaded'
                       ? 'domcontentloaded'
-                      : 'load'),
+                      : env.CRAWL_WAIT_UNTIL === 'networkidle0' ||
+                          env.CRAWL_WAIT_UNTIL === 'networkidle2'
+                        ? 'networkidle'
+                        : env.CRAWL_WAIT_UNTIL === 'domcontentloaded'
+                          ? 'domcontentloaded'
+                          : 'load',
               timeout: Math.min(timeout, 15000),
             });
 

@@ -34,7 +34,8 @@ export class CommandUtils {
         try {
           await client.waitForReady(10000);
         } catch {
-          spinner.text = 'Service responding but may need restart, rebuilding...';
+          spinner.text =
+            'Service responding but may need restart, rebuilding...';
           const dockerService = await this.getDockerService();
           await dockerService.ensureServicesReady();
           await client.waitForReady(60000);
