@@ -84,7 +84,7 @@ export class DockerConfigService {
       - ./cache:/app/cache
       - ./web:/app/web
       - ./storage:/app/storage
-      - node_modules_data:/app/node_modules
+      - \${HOME}/.lenscore/web:/app/.lenscore/web
     depends_on:
       - redis
 
@@ -102,45 +102,63 @@ volumes:
   }
 
   private getDockerfileContent(): string {
-    return `FROM node:20-alpine AS builder
-
+    return `# ---------------------------
+# Builder Stage
+# ---------------------------
+FROM node:22-alpine AS builder
 WORKDIR /app
+
+RUN apk update && apk add --no-cache \\
+    bash \\
+    chromium \\
+    chromium-chromedriver \\
+    nss \\
+    freetype \\
+    harfbuzz \\
+    ca-certificates \\
+    ttf-freefont \\
+    && apk add --no-cache --virtual .build-deps \\
+    gcc g++ make python3 && \\
+    npm install -g cross-env
 
 COPY package*.json ./
+RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
-RUN npm install
+RUN npm install playwright
 
-COPY . .
+COPY tsconfig*.json ./
+COPY src ./src
 
 RUN npm run build
+RUN npm run build:cli
 
-FROM node:20-alpine AS production
-
+# ---------------------------
+# Runtime Stage
+# ---------------------------
+FROM node:22-alpine AS runtime
 WORKDIR /app
 
-RUN apk add --no-cache \\
-  chromium \\
-  nss \\
-  freetype \\
-  freetype-dev \\
-  harfbuzz \\
-  ca-certificates \\
-  ttf-freefont
+RUN apk update && apk add --no-cache \\
+    chromium \\
+    chromium-chromedriver \\
+    nss \\
+    freetype \\
+    harfbuzz \\
+    ca-certificates \\
+    ttf-freefont
 
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \\
-  PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \\
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \\
+  PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium-browser \\
   NODE_ENV=production
 
 COPY package*.json ./
-RUN npm install --production
-
+COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/src/data ./src/data
 
 RUN mkdir -p logs storage
 
-EXPOSE 3001
-
-CMD ["npm", "start"]`;
+CMD ["node", "dist/index.js"]`;
   }
 
   private async setupPackageFiles(lenscoreDir: string): Promise<void> {
@@ -152,13 +170,38 @@ CMD ["npm", "start"]`;
       JSON.stringify(packageJsonContent, null, 2)
     );
 
+    const possiblePackageDirs: string[] = [
+      process.cwd(),
+      path.resolve(__filename, '../../../../'),
+    ];
+
     try {
-      const packageDir = await this.findPackageDirectory();
-      await this.copyConfigFiles(packageDir, lenscoreDir);
-      await this.copySourceFiles(packageDir, lenscoreDir);
-      await this.copyWebTemplates(packageDir, lenscoreDir);
-    } catch (error) {
-      console.warn(`⚠️  Package setup warning: ${error}`);
+      const packagePath = require.resolve('@accesstime/lenscore');
+      possiblePackageDirs.push(
+        path.resolve(packagePath, '../..'),
+        path.dirname(packagePath)
+      );
+    } catch {
+      //
+    }
+
+    let packageDirFound = false;
+    for (const packageDir of possiblePackageDirs) {
+      try {
+        const packageJsonPath = path.join(packageDir, 'package.json');
+        await fs.access(packageJsonPath);
+        await this.copyConfigFiles(packageDir, lenscoreDir);
+        await this.copySourceFiles(packageDir, lenscoreDir);
+        await this.copyWebTemplates(packageDir, lenscoreDir);
+        packageDirFound = true;
+        break;
+      } catch {
+        //
+      }
+    }
+
+    if (!packageDirFound) {
+      console.warn('⚠️  Could not find package directory, some files may be missing');
     }
   }
 
@@ -214,7 +257,7 @@ CMD ["npm", "start"]`;
         marked: '^16.4.1',
         openai: '^6.5.0',
         ora: '^5.4.1',
-        puppeteer: '^24.15.0',
+        playwright: '^1.48.0',
         sharp: '^0.33.0',
         uuid: '^9.0.1',
         winston: '^3.11.0',
@@ -245,34 +288,6 @@ CMD ["npm", "start"]`;
     };
   }
 
-  private async findPackageDirectory(): Promise<string> {
-    const possiblePackageDirs: string[] = [
-      path.resolve(__filename, '../../../../'),
-    ];
-
-    // Try to add global install paths if available
-    try {
-      const packagePath = require.resolve('@accesstime/lenscore');
-      possiblePackageDirs.push(
-        path.resolve(packagePath, '../..'),
-        path.dirname(packagePath)
-      );
-    } catch {
-      // Package not found, skip this path (development mode)
-    }
-
-    for (const dir of possiblePackageDirs) {
-      try {
-        const packageJsonPath = path.join(dir, 'package.json');
-        await fs.access(packageJsonPath);
-        return dir;
-      } catch {
-        //
-      }
-    }
-
-    throw new Error('Could not find package directory');
-  }
 
   private async copyConfigFiles(
     packageDir: string,
@@ -283,18 +298,24 @@ CMD ["npm", "start"]`;
       try {
         const srcPath = path.join(packageDir, tsconfigFile);
         const destPath = path.join(lenscoreDir, tsconfigFile);
+        await fs.access(srcPath);
         await fs.copyFile(srcPath, destPath);
       } catch {
         //
       }
     }
 
-    try {
-      const packageLockSrc = path.join(packageDir, 'package-lock.json');
-      const packageLockDest = path.join(lenscoreDir, 'package-lock.json');
-      await fs.copyFile(packageLockSrc, packageLockDest);
-    } catch {
-      //
+    const packageLockDest = path.join(lenscoreDir, 'package-lock.json');
+    
+    for (const possibleDir of [packageDir, process.cwd(), path.resolve(__filename, '../../../../')]) {
+      try {
+        const packageLockSrc = path.join(possibleDir, 'package-lock.json');
+        await fs.access(packageLockSrc);
+        await fs.copyFile(packageLockSrc, packageLockDest);
+        console.log(`✅ Copied package-lock.json from ${possibleDir}`);
+      } catch {
+        //
+      }
     }
   }
 

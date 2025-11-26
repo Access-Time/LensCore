@@ -35,7 +35,7 @@ features:
 
   - icon: ⚡
     title: High Performance
-    details: Built with TypeScript and Puppeteer for fast, reliable testing at scale
+    details: Built with TypeScript and Playwright for fast, reliable testing at scale
 
   - icon: 🌐
     title: Multi-Language

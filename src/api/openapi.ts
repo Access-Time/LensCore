@@ -99,7 +99,7 @@ export const openApiSpec = {
                       'networkidle0',
                       'networkidle2',
                     ],
-                    description: 'Puppeteer navigation wait condition',
+                    description: 'Playwright navigation wait condition',
                     example: 'networkidle2',
                   },
                 },
