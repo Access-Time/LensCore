@@ -1,4 +1,4 @@
-import puppeteer, { Browser } from 'puppeteer';
+import { chromium, Browser } from 'playwright';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs/promises';
 import {
@@ -24,10 +24,18 @@ export class AccessibilityService {
   }
 
   async initialize(): Promise<void> {
-    this.browser = await puppeteer.launch({
+    const executablePath = process.env['PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH'];
+    
+    const launchOptions: any = {
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
+    };
+
+    if (executablePath) {
+      launchOptions.executablePath = executablePath;
+    }
+    
+    this.browser = await chromium.launch(launchOptions);
   }
 
   async close(): Promise<void> {
@@ -234,7 +242,11 @@ export class AccessibilityService {
       }
     } catch (error) {
       clearTimeout(timeoutId);
-      logger.error('Test accessibility error:', { error });
+      logger.error('Test accessibility error:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        url: request.url,
+      });
       return this.getMockResult(request);
     }
   }

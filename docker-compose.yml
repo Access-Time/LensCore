@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   lenscore-init:
     build:
@@ -7,7 +5,7 @@ services:
       dockerfile: Dockerfile
     volumes:
       - node_modules_data:/app/node_modules
-    profiles: ['init']
+    profiles: ["init"]
 
   lenscore:
     container_name: lenscore-app
@@ -15,7 +13,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - '${LENSCORE_PORT:-3001}:${LENSCORE_PORT:-3001}'
+      - "${LENSCORE_PORT:-3001}:${LENSCORE_PORT:-3001}"
     environment:
       - NODE_ENV=development
       - PORT=${LENSCORE_PORT:-3001}
@@ -36,14 +34,14 @@ services:
       - ./cache:/app/cache
       - ./web:/app/web
       - ./storage:/app/storage
-      - node_modules_data:/app/node_modules
+      - ${HOME}/.lenscore/web:/app/.lenscore/web
     depends_on:
       - redis
 
   redis:
     image: redis:7-alpine
     ports:
-      - '6379:6379'
+      - "6379:6379"
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes

@@ -28,7 +28,17 @@ export class CommandUtils {
         await dockerService.ensureServicesReady();
 
         spinner.text = 'Waiting for LensCore to be ready...';
-        await client.waitForReady();
+        await client.waitForReady(60000);
+      } else {
+        spinner.text = 'Verifying LensCore is fully ready...';
+        try {
+          await client.waitForReady(10000);
+        } catch {
+          spinner.text = 'Service responding but may need restart, rebuilding...';
+          const dockerService = await this.getDockerService();
+          await dockerService.ensureServicesReady();
+          await client.waitForReady(60000);
+        }
       }
 
       spinner.succeed('LensCore ready');

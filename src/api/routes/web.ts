@@ -12,14 +12,16 @@ const router = Router();
  */
 function findWebOutputDir(): string {
   const possiblePaths = [
+    // Docker container - mounted from ~/.lenscore/web
+    path.join('/app', '.lenscore', 'web', 'output'),
+    // Docker container - from app directory
+    path.join('/app', 'web', 'output'),
     // User's home directory (preferred for global usage)
     path.join(os.homedir(), '.lenscore', 'web', 'output'),
     // Current working directory with .lenscore
     path.join(process.cwd(), '.lenscore', 'web', 'output'),
     // Development mode - from source
     path.join(process.cwd(), 'web', 'output'),
-    // Docker container - from app directory
-    path.join('/app', 'web', 'output'),
   ];
 
   // Try to add global install path if available
