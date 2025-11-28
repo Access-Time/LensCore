@@ -133,7 +133,6 @@ export class DockerConfigService {
     }
   }
 
-
   private async copyConfigFiles(
     packageDir: string,
     lenscoreDir: string
