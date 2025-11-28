@@ -12,7 +12,7 @@ const router = Router();
  */
 function findWebOutputDir(): string {
   const possiblePaths = [
-    // Docker container - mounted from ~/.lenscore/web
+    // Docker container - mounted from ./.lenscore/web (project directory)
     path.join('/app', '.lenscore', 'web', 'output'),
     // Docker container - from app directory
     path.join('/app', 'web', 'output'),

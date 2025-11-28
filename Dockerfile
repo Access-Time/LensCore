@@ -18,12 +18,9 @@ RUN apk update && apk add --no-cache \
   npm install -g cross-env
 
 COPY package*.json ./
-RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
+RUN npm ci
 
-RUN npm install playwright
-
-COPY tsconfig*.json ./
-COPY src ./src
+COPY . .
 
 RUN npm run build
 RUN npm run build:cli
@@ -54,4 +51,4 @@ COPY --from=builder /app/src/data ./src/data
 
 RUN mkdir -p logs storage
 
-CMD ["node", "dist/index.js"]
+CMD ["npm", "start"]
