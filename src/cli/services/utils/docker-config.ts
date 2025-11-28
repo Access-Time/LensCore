@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-console */
 import path from 'path';
 import { promises as fs } from 'fs';
@@ -49,127 +48,50 @@ export class DockerConfigService {
     const composePath = path.join(lenscoreDir, 'docker-compose.yml');
     const dockerfilePath = path.join(lenscoreDir, 'Dockerfile');
 
-    const dockerComposeContent = this.getDockerComposeContent();
-    const dockerfileContent = this.getDockerfileContent();
+    const possiblePackageDirs: string[] = [
+      process.cwd(),
+      path.resolve(__filename, '../../../../'),
+    ];
 
-    await fs.writeFile(composePath, dockerComposeContent);
-    await fs.writeFile(dockerfilePath, dockerfileContent);
-  }
+    try {
+      const packagePath = require.resolve('@accesstime/lenscore');
+      possiblePackageDirs.push(
+        path.resolve(packagePath, '../..'),
+        path.dirname(packagePath)
+      );
+    } catch {
+      //
+    }
 
-  private getDockerComposeContent(): string {
-    return `services:
-  lenscore-init:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    volumes:
-      - node_modules_data:/app/node_modules
-    profiles: ['init']
+    let dockerFilesCopied = false;
+    for (const packageDir of possiblePackageDirs) {
+      try {
+        const srcComposePath = path.join(packageDir, 'docker-compose.yml');
+        const srcDockerfilePath = path.join(packageDir, 'Dockerfile');
 
-  lenscore:
-    container_name: lenscore-app
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - '\${LENSCORE_PORT:-3001}:\${LENSCORE_PORT:-3001}'
-    environment:
-      - NODE_ENV=development
-      - PORT=\${LENSCORE_PORT:-3001}
-      - CACHE_TYPE=redis
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-    volumes:
-      - ./logs:/app/logs
-      - ./cache:/app/cache
-      - ./web:/app/web
-      - ./storage:/app/storage
-      - \${HOME}/.lenscore/web:/app/.lenscore/web
-    depends_on:
-      - redis
+        await fs.access(srcComposePath);
+        await fs.access(srcDockerfilePath);
 
-  redis:
-    image: redis:7-alpine
-    ports:
-      - '6379:6379'
-    volumes:
-      - redis_data:/data
-    command: redis-server --appendonly yes
+        await fs.copyFile(srcComposePath, composePath);
+        await fs.copyFile(srcDockerfilePath, dockerfilePath);
 
-volumes:
-  redis_data:
-  node_modules_data:`;
-  }
+        console.log(`✅ Copied Docker files from ${packageDir}`);
+        dockerFilesCopied = true;
+        break;
+      } catch {
+        //
+      }
+    }
 
-  private getDockerfileContent(): string {
-    return `# ---------------------------
-# Builder Stage
-# ---------------------------
-FROM node:22-alpine AS builder
-WORKDIR /app
-
-RUN apk update && apk add --no-cache \\
-    bash \\
-    chromium \\
-    chromium-chromedriver \\
-    nss \\
-    freetype \\
-    harfbuzz \\
-    ca-certificates \\
-    ttf-freefont \\
-    && apk add --no-cache --virtual .build-deps \\
-    gcc g++ make python3 && \\
-    npm install -g cross-env
-
-COPY package*.json ./
-RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
-
-RUN npm install playwright
-
-COPY tsconfig*.json ./
-COPY src ./src
-
-RUN npm run build
-RUN npm run build:cli
-
-# ---------------------------
-# Runtime Stage
-# ---------------------------
-FROM node:22-alpine AS runtime
-WORKDIR /app
-
-RUN apk update && apk add --no-cache \\
-    chromium \\
-    chromium-chromedriver \\
-    nss \\
-    freetype \\
-    harfbuzz \\
-    ca-certificates \\
-    ttf-freefont
-
-ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \\
-  PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium-browser \\
-  NODE_ENV=production
-
-COPY package*.json ./
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/src/data ./src/data
-
-RUN mkdir -p logs storage
-
-CMD ["node", "dist/index.js"]`;
+    if (!dockerFilesCopied) {
+      throw new Error(
+        'Could not find Dockerfile or docker-compose.yml in package directory. Please ensure the package is properly installed.'
+      );
+    }
   }
 
   private async setupPackageFiles(lenscoreDir: string): Promise<void> {
     const packageJsonPath = path.join(lenscoreDir, 'package.json');
-    const packageJsonContent = await this.getPackageJsonContent();
-
-    await fs.writeFile(
-      packageJsonPath,
-      JSON.stringify(packageJsonContent, null, 2)
-    );
-
     const possiblePackageDirs: string[] = [
       process.cwd(),
       path.resolve(__filename, '../../../../'),
@@ -188,8 +110,12 @@ CMD ["node", "dist/index.js"]`;
     let packageDirFound = false;
     for (const packageDir of possiblePackageDirs) {
       try {
-        const packageJsonPath = path.join(packageDir, 'package.json');
-        await fs.access(packageJsonPath);
+        const srcPackageJsonPath = path.join(packageDir, 'package.json');
+        await fs.access(srcPackageJsonPath);
+
+        await fs.copyFile(srcPackageJsonPath, packageJsonPath);
+        console.log(`✅ Copied package.json from ${packageDir}`);
+
         await this.copyConfigFiles(packageDir, lenscoreDir);
         await this.copySourceFiles(packageDir, lenscoreDir);
         await this.copyWebTemplates(packageDir, lenscoreDir);
@@ -201,94 +127,12 @@ CMD ["node", "dist/index.js"]`;
     }
 
     if (!packageDirFound) {
-      console.warn(
-        '⚠️  Could not find package directory, some files may be missing'
+      throw new Error(
+        'Could not find package.json in package directory. Please ensure the package is properly installed.'
       );
     }
   }
 
-  private async getPackageJsonContent(): Promise<any> {
-    try {
-      const currentFile = __filename;
-      const packageDir = path.resolve(currentFile, '../../../../');
-      const originalPackageJsonPath = path.join(packageDir, 'package.json');
-      const originalPackageJson = await fs.readFile(
-        originalPackageJsonPath,
-        'utf8'
-      );
-      const packageJsonContent = JSON.parse(originalPackageJson);
-
-      packageJsonContent.scripts = {
-        start: 'node dist/index.js',
-        build: 'tsc',
-        'build:cli': 'tsc -p tsconfig.cli.json',
-      };
-
-      return packageJsonContent;
-    } catch {
-      return this.getDefaultPackageJson();
-    }
-  }
-
-  private getDefaultPackageJson(): any {
-    return {
-      name: 'lenscore',
-      version: '1.0.0',
-      main: 'dist/index.js',
-      scripts: {
-        start: 'node dist/index.js',
-        build: 'tsc',
-        'build:cli': 'tsc -p tsconfig.cli.json',
-      },
-      dependencies: {
-        '@google-cloud/storage': '^7.7.0',
-        '@types/inquirer': '^9.0.9',
-        '@types/ioredis': '^4.28.10',
-        'aws-sdk': '^2.1490.0',
-        'axe-core': '^4.8.2',
-        chalk: '^4.1.2',
-        cheerio: '^1.0.0',
-        commander: '^11.1.0',
-        cors: '^2.8.5',
-        dotenv: '^16.3.1',
-        express: '^4.18.2',
-        handlebars: '^4.7.8',
-        helmet: '^7.1.0',
-        inquirer: '^12.10.0',
-        ioredis: '^5.8.1',
-        marked: '^16.4.1',
-        openai: '^6.5.0',
-        ora: '^5.4.1',
-        playwright: '^1.48.0',
-        sharp: '^0.33.0',
-        uuid: '^9.0.1',
-        winston: '^3.11.0',
-        zod: '^3.22.4',
-      },
-      devDependencies: {
-        '@types/cors': '^2.8.17',
-        '@types/express': '^4.17.21',
-        '@types/handlebars': '^4.0.40',
-        '@types/jest': '^29.5.8',
-        '@types/marked': '^5.0.2',
-        '@types/multer': '^1.4.11',
-        '@types/node': '^20.10.5',
-        '@types/supertest': '^2.0.16',
-        '@types/uuid': '^9.0.8',
-        '@typescript-eslint/eslint-plugin': '^8.15.0',
-        '@typescript-eslint/parser': '^8.15.0',
-        eslint: '^9.15.0',
-        globals: '^13.24.0',
-        jest: '^29.7.0',
-        nodemon: '^3.0.2',
-        prettier: '^3.1.1',
-        supertest: '^7.1.3',
-        'ts-jest': '^29.1.1',
-        tsx: '^4.6.2',
-        typescript: '^5.3.3',
-      },
-    };
-  }
 
   private async copyConfigFiles(
     packageDir: string,
