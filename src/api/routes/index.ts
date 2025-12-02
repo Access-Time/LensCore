@@ -15,7 +15,7 @@ export const setupRoutes = (app: Express) => {
   app.post('/api/crawl', requestTimeout(120000), crawlHandler);
   app.post('/api/test', requestTimeout(60000), testHandler);
   app.post('/api/test-multiple', requestTimeout(120000), testMultipleHandler);
-  app.post('/api/combined', requestTimeout(180000), combinedHandler);
+  app.post('/api/combined', requestTimeout(600000), combinedHandler);
   app.get('/api/health', healthHandler);
 
   app.get('/api/cache/stats', cacheStatsHandler);

@@ -84,6 +84,10 @@ program
   .option('-t, --timeout <number>', 'Request timeout in milliseconds', '10000')
   .option('-r, --rules <rules>', 'Specific axe-core rules (comma-separated)')
   .option('-g, --tags <tags>', 'WCAG tags (comma-separated)')
+  .option(
+    '--custom-tests <tests>',
+    'Custom tests to run (comma-separated, e.g., responsive)'
+  )
   .option('--no-screenshot', 'Disable screenshot capture')
   .option('--skip-cache', 'Bypass cache and force fresh test')
   .action(testCommand);
@@ -119,6 +123,10 @@ program
   .option('-d, --max-depth <number>', 'Maximum crawl depth', '2')
   .option('-t, --timeout <number>', 'Request timeout in milliseconds', '15000')
   .option('-j, --concurrency <number>', 'Number of concurrent requests', '3')
+  .option(
+    '--custom-tests <tests>',
+    'Custom tests to run (comma-separated, e.g., responsive)'
+  )
   .option('--skip-cache', 'Bypass cache and force fresh scan')
   .action(scanCommand);
 

@@ -4,7 +4,15 @@ import { OpenAIConfig, defaultOpenAIConfig } from '../config/openai';
 
 export interface OpenAIMessage {
   role: 'system' | 'user' | 'assistant';
-  content: string;
+  content:
+    | string
+    | Array<{
+        type: 'text' | 'image_url';
+        text?: string;
+        image_url?: {
+          url: string;
+        };
+      }>;
 }
 
 export interface OpenAIOptions {
@@ -52,7 +60,8 @@ export class OpenAIService {
 
         const response = await this.client.chat.completions.create({
           model: config.model,
-          messages,
+          messages:
+            messages as OpenAI.Chat.Completions.ChatCompletionMessageParam[],
           max_tokens: config.maxTokens,
           temperature: config.temperature,
         });

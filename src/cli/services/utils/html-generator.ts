@@ -71,7 +71,14 @@ export class HtmlGeneratorService {
 
   private static markdownToHtml(text: string): string {
     if (!text) return '';
-    return marked.parse(text) as string;
+    try {
+      if (marked && typeof (marked as any).parse === 'function') {
+        return (marked as any).parse(text) as string;
+      }
+      return String(text);
+    } catch {
+      return String(text);
+    }
   }
 
   private static generateCollapsibleCode(
@@ -424,6 +431,10 @@ export class HtmlGeneratorService {
       const parts = screenshotUrl.split('screenshots/');
       const fileName = parts[parts.length - 1];
       if (fileName && fileName !== screenshotUrl) {
+        if (fileName.startsWith('responsive/')) {
+          const responsiveFileName = fileName.replace('responsive/', '');
+          return `/storage/screenshots/${responsiveFileName}`;
+        }
         return `/storage/screenshots/${fileName}`;
       }
     }
@@ -655,6 +666,8 @@ export class HtmlGeneratorService {
         `
             : ''
         }
+
+        ${result.responsive ? this.generateResponsiveSection(result.responsive) : ''}
       </div>
     `;
       })
@@ -910,9 +923,93 @@ export class HtmlGeneratorService {
         `
             : ''
         }
+
+        ${result.responsive ? this.generateResponsiveSection(result.responsive) : ''}
       </div>
     `
       )
       .join('');
+  }
+
+  static generateResponsiveSection(responsive: any): string {
+    if (!responsive) {
+      return '';
+    }
+
+    if (responsive.error) {
+      return `
+        <div class="card" style="margin-top: 1rem;">
+          <h2 class="section-title">Responsive Test</h2>
+          <div class="error-message">
+            <p><strong>Error:</strong> ${this.escapeHtml(responsive.error)}</p>
+          </div>
+        </div>
+      `;
+    }
+
+    const statusClass = responsive.passed ? 'success' : 'error';
+    const statusIcon = responsive.passed ? '✅' : '❌';
+    const statusText = responsive.passed ? 'Passed' : 'Failed';
+
+    let screenshotsHtml = '';
+    if (responsive.screenshots && responsive.screenshots.length > 0) {
+      screenshotsHtml = responsive.screenshots
+        .map(
+          (screenshot: any) => `
+        <div class="responsive-screenshot-item">
+          <h4 class="responsive-viewport-title">${screenshot.viewport.name.toUpperCase()} (${screenshot.viewport.width}x${screenshot.viewport.height})</h4>
+          <div class="responsive-screenshot-wrapper">
+            <img
+              src="${this.extractScreenshotPath(screenshot.screenshotUrl)}"
+              alt="${screenshot.viewport.name} screenshot"
+              class="responsive-screenshot-image"
+              onclick="window.open('${this.extractScreenshotPath(screenshot.screenshotUrl)}', '_blank')"
+            />
+          </div>
+        </div>
+      `
+        )
+        .join('');
+    }
+
+    let issuesHtml = '';
+    if (responsive.issues && responsive.issues.length > 0) {
+      issuesHtml = responsive.issues
+        .map(
+          (issue: any) => `
+        <div class="responsive-issue">
+          <div class="responsive-issue-header">
+            <span class="responsive-issue-type">${this.escapeHtml(issue.type)}</span>
+            <span class="responsive-issue-severity responsive-severity-${issue.severity}">${this.escapeHtml(issue.severity)}</span>
+            <span class="responsive-issue-viewport">${this.escapeHtml(issue.viewport)}</span>
+          </div>
+          <p class="responsive-issue-description">${this.escapeHtml(issue.description)}</p>
+          ${issue.element ? `<p class="responsive-issue-element"><strong>Element:</strong> ${this.escapeHtml(issue.element)}</p>` : ''}
+          ${issue.remediation ? `<div class="responsive-issue-remediation"><strong>Remediation:</strong> ${this.markdownToHtml(issue.remediation)}</div>` : ''}
+        </div>
+      `
+        )
+        .join('');
+    } else if (responsive.passed) {
+      issuesHtml = `
+        <div class="success">
+          <div class="success-icon">🎉</div>
+          <h3 class="success-title">No responsive issues found!</h3>
+          <p class="success-desc">The page looks good across all viewport sizes.</p>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="responsive-section" style="margin-top: 1.5rem;">
+        <h4 class="responsive-section-title">Responsive Test Results</h4>
+        <div class="responsive-status ${statusClass}">
+          <span class="responsive-status-icon">${statusIcon}</span>
+          <span class="responsive-status-text">${statusText}</span>
+        </div>
+        ${screenshotsHtml ? `<div class="responsive-screenshots">${screenshotsHtml}</div>` : ''}
+        ${issuesHtml ? `<div class="responsive-issues"><h4 class="responsive-issues-title">Issues</h4>${issuesHtml}</div>` : ''}
+      </div>
+    `;
   }
 }
