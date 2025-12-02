@@ -4,6 +4,7 @@ import { AccessibilityService } from '../../services/accessibility';
 import { ResponsiveService } from '../../services/responsive';
 import { aiService } from '../../services/ai';
 import { AccessibilityRequest } from '../../types';
+import { CombinedPageResult } from '../../types/combined';
 import { combinedRequestSchema } from '../schemas';
 import { env } from '../../utils/env';
 import logger from '../../utils/logger';
@@ -70,7 +71,7 @@ export const combinedHandler = async (
           }
         );
 
-        const response: any = {
+        const response: CombinedPageResult = {
           ...result,
           screenshot: result.screenshot,
           violations: aiResult.issues,
@@ -87,7 +88,7 @@ export const combinedHandler = async (
             };
           } else {
             try {
-              if ((req as any).signal?.aborted) {
+              if ((req as Request & { signal?: AbortSignal }).signal?.aborted) {
                 throw new Error('Request aborted');
               }
 
@@ -99,7 +100,7 @@ export const combinedHandler = async (
               });
               response.responsive = responsiveResult;
             } catch (error) {
-              if ((req as any).signal?.aborted) {
+              if ((req as Request & { signal?: AbortSignal }).signal?.aborted) {
                 throw error;
               }
               logger.warn('Responsive test failed for page', {

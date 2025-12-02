@@ -1,3 +1,6 @@
+import { ResponsiveTestResult } from './responsive';
+import { AIProcessedIssue } from './ai';
+
 export interface AccessibilityViolation {
   id: string;
   impact: 'minor' | 'moderate' | 'serious' | 'critical';
@@ -35,4 +38,22 @@ export interface AccessibilityResponse {
   results: AccessibilityResult[];
   totalPages: number;
   testTime: number;
+}
+
+export interface AccessibilityTestResponse
+  extends Omit<AccessibilityResult, 'violations'> {
+  violations: AIProcessedIssue[];
+  aiEnabled?: boolean;
+  aiError?: string;
+  metadata?: {
+    enabled?: boolean;
+    error?: string;
+    processingTime?: number;
+  };
+  responsive?:
+    | ResponsiveTestResult
+    | {
+        error: string;
+        passed: false;
+      };
 }

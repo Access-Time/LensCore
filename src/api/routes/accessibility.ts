@@ -5,7 +5,7 @@ import { aiService } from '../../services/ai';
 import { ResponsiveService } from '../../services/responsive';
 import { accessibilityRequestSchema } from '../schemas';
 import { env } from '../../utils/env';
-import { AccessibilityRequest } from '../../types';
+import { AccessibilityRequest, AccessibilityTestResponse } from '../../types';
 import { ProjectContext } from '../../utils/ai-prompts';
 
 const accessibilityService = new AccessibilityService();
@@ -46,7 +46,7 @@ export const testHandler = async (
         }
       );
 
-      const response: any = {
+      const response: AccessibilityTestResponse = {
         ...testResult,
         violations: aiResult.issues,
         aiEnabled: aiResult.enabled,
@@ -90,7 +90,7 @@ export const testHandler = async (
         }
       );
 
-      const response: any = {
+      const response: AccessibilityTestResponse = {
         ...testResult,
         violations: aiResult.issues,
         aiEnabled: aiResult.enabled,
