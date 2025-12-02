@@ -89,6 +89,12 @@ export class WebReportService {
       );
     });
 
+    Handlebars.registerHelper('responsiveSection', (responsive: any) => {
+      return new Handlebars.SafeString(
+        HtmlGeneratorService.generateResponsiveSection(responsive)
+      );
+    });
+
     this.helpersRegistered = true;
   }
 
@@ -148,7 +154,7 @@ export class WebReportService {
   }
 
   generateTestReport(testData: any, testUrl: string): string {
-    const data = {
+    const data: any = {
       TEST_URL: testUrl,
       SCORE: testData.score || 'N/A',
       PASSED_CHECKS: testData.passes?.length || 0,
@@ -159,6 +165,8 @@ export class WebReportService {
       violations: testData.violations || [],
       passes: testData.passes || [],
     };
+
+    data.responsive = testData.responsive || null;
 
     return this.generateReport('test-results.html', data, 'test');
   }

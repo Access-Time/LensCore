@@ -1,13 +1,16 @@
 import { Request, Response, NextFunction } from 'express';
 import { CrawlingService } from '../../services/crawling';
 import { AccessibilityService } from '../../services/accessibility';
+import { ResponsiveService } from '../../services/responsive';
 import { aiService } from '../../services/ai';
 import { AccessibilityRequest } from '../../types';
 import { combinedRequestSchema } from '../schemas';
 import { env } from '../../utils/env';
+import logger from '../../utils/logger';
 
 const crawlingService = new CrawlingService();
 const accessibilityService = new AccessibilityService();
+const responsiveService = new ResponsiveService();
 
 export const combinedHandler = async (
   req: Request,
@@ -25,11 +28,13 @@ export const combinedHandler = async (
 
     const skipCache =
       req.body.skipCache === true || request.testOptions?.skipCache === true;
+    const customTests = request.testOptions?.customTests || [];
     const testRequests: AccessibilityRequest[] = crawlResult.pages.map(
       (page) => ({
         url: page.url,
         includeScreenshot: true,
         skipCache,
+        customTests,
         ...(request.testOptions || {}),
       })
     );
@@ -65,7 +70,7 @@ export const combinedHandler = async (
           }
         );
 
-        return {
+        const response: any = {
           ...result,
           screenshot: result.screenshot,
           violations: aiResult.issues,
@@ -73,6 +78,43 @@ export const combinedHandler = async (
           aiError: aiResult.error,
           metadata: aiResult.metadata,
         };
+
+        if (customTests.includes('responsive')) {
+          if (!aiApiKey) {
+            response.responsive = {
+              error: 'AI API key is required for responsive testing',
+              passed: false,
+            };
+          } else {
+            try {
+              if ((req as any).signal?.aborted) {
+                throw new Error('Request aborted');
+              }
+
+              const responsiveResult = await responsiveService.testResponsive({
+                url: result.url,
+                timeout: request.testOptions?.timeout || 30000,
+                skipCache,
+                aiApiKey,
+              });
+              response.responsive = responsiveResult;
+            } catch (error) {
+              if ((req as any).signal?.aborted) {
+                throw error;
+              }
+              logger.warn('Responsive test failed for page', {
+                url: result.url,
+                error: error instanceof Error ? error.message : 'Unknown error',
+              });
+              response.responsive = {
+                error: error instanceof Error ? error.message : 'Unknown error',
+                passed: false,
+              };
+            }
+          }
+        }
+
+        return response;
       })
     );
 

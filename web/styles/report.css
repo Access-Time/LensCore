@@ -852,3 +852,188 @@ details summary::-moz-list-bullet,
 .code-collapsible summary::-moz-list-bullet {
   list-style: none;
 }
+
+.responsive-section {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.responsive-section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 1rem;
+}
+
+.responsive-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+}
+
+.responsive-status.success {
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+}
+
+.responsive-status.error {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}
+
+.responsive-status-icon {
+  font-size: 1.25rem;
+}
+
+.responsive-screenshots {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.responsive-screenshot-item {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  background: #fff;
+}
+
+.responsive-viewport-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.responsive-screenshot-wrapper {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  overflow: hidden;
+  background: #f9fafb;
+}
+
+.responsive-screenshot-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.responsive-screenshot-image:hover {
+  opacity: 0.9;
+}
+
+.responsive-issues {
+  margin-top: 2rem;
+}
+
+.responsive-issues-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 1rem;
+}
+
+.responsive-issue {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background: #fff;
+}
+
+.responsive-issue-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.responsive-issue-type {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.responsive-issue-severity {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  text-transform: uppercase;
+}
+
+.responsive-severity-critical {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}
+
+.responsive-severity-serious {
+  background: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+}
+
+.responsive-severity-moderate {
+  background: rgba(251, 191, 36, 0.1);
+  color: #ca8a04;
+}
+
+.responsive-severity-minor {
+  background: rgba(156, 163, 175, 0.1);
+  color: #6b7280;
+}
+
+.responsive-issue-viewport {
+  font-size: 0.75rem;
+  color: #6b7280;
+  padding: 0.25rem 0.5rem;
+  background: #f3f4f6;
+  border-radius: 0.25rem;
+}
+
+.responsive-issue-description {
+  color: #374151;
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+}
+
+.responsive-issue-element {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 0.5rem;
+  font-family: 'Monaco', 'Courier New', monospace;
+}
+
+.responsive-issue-remediation {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: #f9fafb;
+  border-radius: 0.375rem;
+  border-left: 3px solid #3b82f6;
+}
+
+.responsive-issue-remediation strong {
+  color: #111827;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.error-message {
+  padding: 1rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 0.5rem;
+  color: #dc2626;
+}

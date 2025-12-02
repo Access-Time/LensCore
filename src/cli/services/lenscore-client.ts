@@ -121,6 +121,7 @@ export class LensCoreClient {
             timeout: timeout,
             rules: options.rules || [],
             tags: options.tags || [],
+            customTests: options.customTests || [],
             enableAI: options.enableAI,
             aiApiKey: options.openaiKey,
             projectContext: options.projectContext,
@@ -150,6 +151,15 @@ export class LensCoreClient {
     const spinner = ora('Running accessibility scan...').start();
 
     try {
+      const customTests = options.customTests || [];
+      const hasResponsive = customTests.includes('responsive');
+      const maxUrls = options.maxUrls || 10;
+      const baseTimeout = 180000;
+      const responsiveTimeoutPerPage = 60000;
+      const calculatedTimeout = hasResponsive
+        ? baseTimeout + maxUrls * responsiveTimeoutPerPage
+        : baseTimeout;
+
       const response = await this.fetchWithRetry(
         `${this.baseUrl}/api/combined`,
         {
@@ -164,7 +174,7 @@ export class LensCoreClient {
             projectContext: options.projectContext,
             skipCache: options.skipCache || false,
             crawlOptions: {
-              maxUrls: options.maxUrls || 10,
+              maxUrls: maxUrls,
               concurrency: options.concurrency || 3,
               timeout: options.timeout || 15000,
               max_depth: options.maxDepth || 2,
@@ -173,9 +183,12 @@ export class LensCoreClient {
               includeScreenshot: true,
               timeout: options.timeout || 15000,
               skipCache: options.skipCache || false,
+              customTests: customTests,
             },
           }),
-        }
+        },
+        3,
+        calculatedTimeout
       );
 
       if (!response.ok) {
