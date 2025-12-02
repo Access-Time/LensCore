@@ -21,38 +21,86 @@ export interface ResponsiveAIResponse {
 export class ResponsivePromptEngine {
   private static readonly SYSTEM_PROMPT = `You are an expert web developer and UI/UX specialist specializing in responsive design testing. Your task is to analyze screenshots of a webpage at different viewport sizes and detect responsive design issues.
 
-CRITICAL RULES:
-1. You must respond ONLY with valid JSON in this exact format:
-{
-  "passed": boolean,
-  "issues": [
-    {
-      "type": "horizontal-scroll" | "overflow" | "layout-breaking" | "element-clipping" | "other",
-      "severity": "critical" | "serious" | "moderate" | "minor",
-      "viewport": "desktop" | "tablet" | "mobile",
-      "description": "Clear description of the issue",
-      "element": "Optional: CSS selector or element description",
-      "remediation": "Optional: Brief remediation suggestion"
-    }
-  ]
-}
+Issue types:
+- "horizontal-scroll": Page has horizontal scrolling when it shouldn't
+- "overflow": Content overflows its container
+- "layout-breaking": Layout breaks or elements stack incorrectly
+- "element-clipping": Elements are cut off or clipped
+- "other": Any other responsive design issue
 
-2. Issue types:
-   - "horizontal-scroll": Page has horizontal scrolling when it shouldn't
-   - "overflow": Content overflows its container
-   - "layout-breaking": Layout breaks or elements stack incorrectly
-   - "element-clipping": Elements are cut off or clipped
-   - "other": Any other responsive design issue
+Severity levels:
+- "critical": Makes the page unusable on the viewport
+- "serious": Significantly impacts usability
+- "moderate": Noticeable but doesn't break functionality
+- "minor": Minor visual issue
 
-3. Severity levels:
-   - "critical": Makes the page unusable on the viewport
-   - "serious": Significantly impacts usability
-   - "moderate": Noticeable but doesn't break functionality
-   - "minor": Minor visual issue
+Be specific and accurate. Only report actual issues you can see in the screenshots.`;
 
-4. Be specific and accurate. Only report actual issues you can see in the screenshots.
-
-5. If no issues are found, return {"passed": true, "issues": []}`;
+  static getResponseSchema(): Record<string, unknown> {
+    return {
+      type: 'object',
+      properties: {
+        passed: {
+          type: 'boolean',
+          description: 'Whether the page passed responsive design tests',
+        },
+        issues: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              type: {
+                type: 'string',
+                enum: [
+                  'horizontal-scroll',
+                  'overflow',
+                  'layout-breaking',
+                  'element-clipping',
+                  'other',
+                ],
+                description: 'Type of responsive design issue',
+              },
+              severity: {
+                type: 'string',
+                enum: ['critical', 'serious', 'moderate', 'minor'],
+                description: 'Severity level of the issue',
+              },
+              viewport: {
+                type: 'string',
+                enum: ['desktop', 'tablet', 'mobile'],
+                description: 'Viewport where the issue was detected',
+              },
+              description: {
+                type: 'string',
+                description: 'Clear description of the issue',
+              },
+              element: {
+                type: ['string', 'null'],
+                description:
+                  'CSS selector or element description, or null if not applicable',
+              },
+              remediation: {
+                type: ['string', 'null'],
+                description:
+                  'Brief remediation suggestion, or null if not applicable',
+              },
+            },
+            required: [
+              'type',
+              'severity',
+              'viewport',
+              'description',
+              'element',
+              'remediation',
+            ],
+            additionalProperties: false,
+          },
+        },
+      },
+      required: ['passed', 'issues'],
+      additionalProperties: false,
+    };
+  }
 
   static generatePrompt(screenshots: ResponsiveScreenshot[]): OpenAIMessage[] {
     const screenshotDescriptions = screenshots
@@ -81,7 +129,7 @@ For each issue found, provide:
 - Optional: Element identifier or CSS selector
 - Optional: Brief remediation suggestion
 
-If the page looks good across all viewports, return {"passed": true, "issues": []}`;
+If the page looks good across all viewports, set passed to true and issues to an empty array.`;
 
     interface ImageContent {
       type: 'image_url';
@@ -126,71 +174,26 @@ If the page looks good across all viewports, return {"passed": true, "issues": [
     return messages;
   }
 
-  static parseResponse(response: string): ResponsiveAIResponse {
-    try {
-      let cleanResponse = response.trim();
+  static parseStructuredResponse(
+    parsed: ResponsiveAIResponse
+  ): ResponsiveAIResponse {
+    const issues: ResponsiveIssue[] = parsed.issues.map((issue) => ({
+      type: issue.type || 'other',
+      severity: issue.severity || 'moderate',
+      viewport: issue.viewport || 'desktop',
+      description: issue.description || 'Responsive design issue detected',
+      element:
+        issue.element && issue.element !== null ? issue.element : undefined,
+      remediation:
+        issue.remediation && issue.remediation !== null
+          ? issue.remediation
+          : undefined,
+    }));
 
-      cleanResponse = cleanResponse
-        .replace(/```json\s*/g, '')
-        .replace(/```\s*/g, '');
-
-      const jsonMatch = cleanResponse.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        cleanResponse = jsonMatch[0];
-      }
-
-      const parsed = JSON.parse(cleanResponse);
-
-      if (typeof parsed.passed !== 'boolean') {
-        throw new Error('Missing or invalid "passed" field');
-      }
-
-      if (!Array.isArray(parsed.issues)) {
-        throw new Error('Missing or invalid "issues" field');
-      }
-
-      interface ParsedIssue {
-        type?: string;
-        severity?: string;
-        viewport?: string;
-        description?: string;
-        element?: string;
-        remediation?: string;
-      }
-
-      const issues: ResponsiveIssue[] = parsed.issues.map(
-        (issue: ParsedIssue) => ({
-          type: (issue.type as ResponsiveIssue['type']) || 'other',
-          severity:
-            (issue.severity as ResponsiveIssue['severity']) || 'moderate',
-          viewport:
-            (issue.viewport as ResponsiveIssue['viewport']) || 'desktop',
-          description: issue.description || 'Responsive design issue detected',
-          element: issue.element,
-          remediation: issue.remediation,
-        })
-      );
-
-      return {
-        passed: parsed.passed,
-        issues,
-      };
-    } catch {
-      return {
-        passed: false,
-        issues: [
-          {
-            type: 'other',
-            severity: 'moderate',
-            viewport: 'desktop',
-            description:
-              'Failed to parse AI response. Please check the page manually.',
-            remediation:
-              'Review the responsive design manually or retry the test.',
-          },
-        ],
-      };
-    }
+    return {
+      passed: parsed.passed,
+      issues,
+    };
   }
 
   static createFallbackResponse(): ResponsiveAIResponse {

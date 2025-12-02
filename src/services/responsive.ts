@@ -14,7 +14,10 @@ import { CacheService } from './cache';
 import { createCacheConfig } from '../config/cache';
 import crypto from 'crypto';
 import { createOpenAIService } from '../utils/openai';
-import { ResponsivePromptEngine } from '../utils/responsive-prompts';
+import {
+  ResponsivePromptEngine,
+  ResponsiveAIResponse,
+} from '../utils/responsive-prompts';
 import { env } from '../utils/env';
 
 const VIEWPORTS: ResponsiveViewport[] = [
@@ -153,6 +156,60 @@ export class ResponsiveService {
             await page.setViewportSize({
               width: viewport.width,
               height: viewport.height,
+            });
+
+            await page.waitForTimeout(500);
+
+            await page.evaluate(async () => {
+              const scrollHeight = document.documentElement.scrollHeight;
+              const viewportHeight = window.innerHeight;
+
+              if (scrollHeight > viewportHeight) {
+                const scrollSteps = Math.max(
+                  3,
+                  Math.ceil(scrollHeight / viewportHeight)
+                );
+                const stepDelay = 300;
+                const finalDelay = 500;
+
+                for (let i = 0; i <= scrollSteps; i++) {
+                  const progress = i / scrollSteps;
+                  const targetScroll = Math.floor(scrollHeight * progress);
+                  window.scrollTo({
+                    top: targetScroll,
+                    behavior: 'smooth',
+                  });
+                  await new Promise((resolve) =>
+                    setTimeout(resolve, stepDelay)
+                  );
+                }
+
+                window.scrollTo({
+                  top: scrollHeight,
+                  behavior: 'smooth',
+                });
+                await new Promise((resolve) => setTimeout(resolve, finalDelay));
+
+                for (let i = scrollSteps; i >= 0; i--) {
+                  const progress = i / scrollSteps;
+                  const targetScroll = Math.floor(scrollHeight * progress);
+                  window.scrollTo({
+                    top: targetScroll,
+                    behavior: 'smooth',
+                  });
+                  await new Promise((resolve) =>
+                    setTimeout(resolve, stepDelay)
+                  );
+                }
+
+                window.scrollTo({
+                  top: 0,
+                  behavior: 'smooth',
+                });
+                await new Promise((resolve) => setTimeout(resolve, finalDelay));
+              } else {
+                await new Promise((resolve) => setTimeout(resolve, 500));
+              }
             });
 
             await page.waitForTimeout(500);
@@ -297,13 +354,24 @@ export class ResponsiveService {
         });
       }
 
-      const response = await openaiService.generateResponse(messages, {
-        model,
-        maxTokens: 2000,
-        temperature: 0.3,
-      });
+      const response =
+        await openaiService.generateStructuredResponse<ResponsiveAIResponse>(
+          messages,
+          {
+            name: 'responsive_test_result',
+            schema: ResponsivePromptEngine.getResponseSchema(),
+            strict: true,
+          },
+          {
+            model,
+            maxTokens: 2000,
+            temperature: 0.3,
+          }
+        );
 
-      const parsed = ResponsivePromptEngine.parseResponse(response.content);
+      const parsed = ResponsivePromptEngine.parseStructuredResponse(
+        response.content
+      );
 
       return {
         passed: parsed.passed,
