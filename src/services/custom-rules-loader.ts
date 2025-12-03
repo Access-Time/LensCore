@@ -21,7 +21,7 @@ export class CustomRulesLoader {
     this.projectRoot = projectRoot || process.cwd();
     const currentDir =
       typeof __dirname !== 'undefined' ? __dirname : process.cwd();
-    
+
     const possiblePaths = [
       join(currentDir, '..', '..', 'src', 'data', 'approved-rules'),
       join(currentDir, '..', 'data', 'approved-rules'),
@@ -29,7 +29,7 @@ export class CustomRulesLoader {
       join(process.cwd(), 'src', 'data', 'approved-rules'),
       join(process.cwd(), 'data', 'approved-rules'),
     ];
-    
+
     let foundPath: string | null = null;
     for (const path of possiblePaths) {
       if (existsSync(path) && existsSync(join(path, 'manifest.json'))) {
@@ -37,8 +37,9 @@ export class CustomRulesLoader {
         break;
       }
     }
-    
-    this.approvedRulesPath = foundPath || join(process.cwd(), 'src', 'data', 'approved-rules');
+
+    this.approvedRulesPath =
+      foundPath || join(process.cwd(), 'src', 'data', 'approved-rules');
   }
 
   async loadCustomRules(
