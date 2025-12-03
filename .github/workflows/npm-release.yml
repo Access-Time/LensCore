@@ -8,6 +8,13 @@ on:
       - '**.md'
       - 'docs/**'
       - '.gitignore'
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
 
 jobs:
   publish:
@@ -47,12 +54,14 @@ jobs:
           fi
 
       - name: Install dependencies
-        if: steps.check-version.outputs.exists == 'false'
         run: npm ci
 
       - name: Build project
-        if: steps.check-version.outputs.exists == 'false'
         run: npm run build
+
+      - name: Build check (PR only)
+        if: github.event_name == 'pull_request'
+        run: echo "Build successful - ready for merge"
 
       - name: Publish to NPM
         if: github.event_name != 'pull_request' && steps.check-version.outputs.exists == 'false'

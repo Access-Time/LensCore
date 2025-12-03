@@ -8,6 +8,13 @@ on:
       - '**.md'
       - 'docs/**'
       - '.gitignore'
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
 
 env:
   REGISTRY: docker.io
@@ -41,7 +48,7 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-      - name: Build and push Docker image
+      - name: Build Docker image
         id: build-and-push
         uses: docker/build-push-action@v5
         with:
@@ -54,3 +61,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
+
+      - name: Build check (PR only)
+        if: github.event_name == 'pull_request'
+        run: echo "Docker build successful - ready for merge"
