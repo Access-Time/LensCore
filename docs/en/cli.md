@@ -455,6 +455,7 @@ LensCore supports additional custom tests for deeper analysis. Currently availab
 Test website layout responsiveness using AI to detect responsive design issues across different viewport sizes.
 
 **Requirements:**
+
 - Requires `--enable-ai` or `--openai-key` to enable AI analysis
 - Uses OpenAI models that support Vision API (automatically uses `gpt-4o` if needed)
 
@@ -472,11 +473,13 @@ lens-core test https://example.com --custom-tests=responsive --enable-ai --web
 ```
 
 **What It Does:**
+
 - Captures screenshots at various viewports (mobile, tablet, desktop)
 - Analyzes screenshots using AI to detect responsive issues
 - Generates a report with screenshots and remediation recommendations
 
 **Test Results:**
+
 - Screenshots for each viewport
 - List of detected responsive issues
 - Remediation recommendations for each issue
@@ -484,7 +487,96 @@ lens-core test https://example.com --custom-tests=responsive --enable-ai --web
 
 ### Custom Rules
 
-Test specific accessibility rules:
+LensCore supports custom rules to add additional accessibility rules. Custom rules can be Axe-core rules or Playwright tests.
+
+#### Approved Rules
+
+LensCore provides a curated set of approved rules available by default:
+
+- `button-has-accessible-name` - Ensures buttons have accessible names
+- `link-has-accessible-name` - Ensures links have accessible names
+- `heading-order` - Ensures headings have logical hierarchy
+- `page-has-heading-one` - Ensures page has a level 1 heading
+- `image-alt-text` - Ensures images have appropriate alt text
+
+Approved rules run automatically during tests. To disable:
+
+```bash
+lens-core test https://example.com --no-approved-rules
+```
+
+#### Custom Rules from Project
+
+Create custom rules in your project by placing files in one of these locations:
+
+- `.lenscore/rules/`
+- `lenscore-rules/`
+- `.lenscore-rules/`
+
+**Example Axe Rule:**
+
+Create file `.lenscore/rules/my-rule.json`:
+
+```json
+{
+  "id": "my-custom-rule",
+  "enabled": true,
+  "metadata": {
+    "description": "Custom rule description",
+    "help": "Help text for the rule"
+  },
+  "rule": {
+    "id": "color-contrast",
+    "enabled": true,
+    "tags": ["wcag2aa"]
+  },
+  "severity": "serious"
+}
+```
+
+**Example Playwright Test:**
+
+Create file `.lenscore/rules/my-test.js`:
+
+```javascript
+export default {
+  id: 'my-test',
+  name: 'My Custom Test',
+  enabled: true,
+  severity: 'moderate',
+  run: async (context) => {
+    const { page } = context;
+    const elements = await page.$$eval('button', (buttons) => buttons.length);
+    return {
+      id: 'my-test',
+      name: 'My Custom Test',
+      passed: elements > 0,
+      severity: 'moderate',
+      description: elements > 0 
+        ? `Found ${elements} buttons`
+        : 'No buttons found',
+    };
+  }
+};
+```
+
+#### Custom Rules Options
+
+```bash
+# Use custom rules from specific paths
+lens-core test https://example.com --custom-rules-paths ./my-rules,./team-rules
+
+# Use custom rules from config file
+lens-core test https://example.com --custom-rules-config ./rules-config.json
+
+# Disable default rules
+lens-core test https://example.com --disable-default-rules color-contrast,keyboard
+
+# Enable specific default rules
+lens-core test https://example.com --enable-default-rules color-contrast
+```
+
+### Test Specific Accessibility Rules
 
 ```bash
 lens-core test https://example.com --rules "color-contrast,keyboard"

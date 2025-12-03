@@ -55,6 +55,19 @@ export async function scanCommand(url: string, options: any) {
       projectContext,
       skipCache: options.skipCache || false,
       customTests,
+      customRulesConfig: CommandUtils.parseCommaSeparated(
+        options.customRulesConfig
+      ),
+      customRulesPaths: CommandUtils.parseCommaSeparated(
+        options.customRulesPaths
+      ),
+      disableDefaultRules: CommandUtils.parseCommaSeparated(
+        options.disableDefaultRules
+      ),
+      enableDefaultRules: CommandUtils.parseCommaSeparated(
+        options.enableDefaultRules
+      ),
+      includeApprovedRules: options.approvedRules !== false,
       ...numericOptions,
     };
 

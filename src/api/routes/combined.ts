@@ -36,6 +36,12 @@ export const combinedHandler = async (
         includeScreenshot: true,
         skipCache,
         customTests,
+        customRulesConfig: request.testOptions?.customRulesConfig,
+        customRulesPaths: request.testOptions?.customRulesPaths,
+        disableDefaultRules: request.testOptions?.disableDefaultRules,
+        enableDefaultRules: request.testOptions?.enableDefaultRules,
+        includeApprovedRules:
+          request.testOptions?.includeApprovedRules !== false,
         ...(request.testOptions || {}),
       })
     );
