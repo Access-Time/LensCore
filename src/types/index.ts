@@ -5,4 +5,5 @@ export * from './storage';
 export * from './api';
 export * from './ai';
 export * from './cache';
+export * from './custom-rules';
 export * from './responsive';

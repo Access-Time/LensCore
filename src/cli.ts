@@ -88,6 +88,26 @@ program
     '--custom-tests <tests>',
     'Custom tests to run (comma-separated, e.g., responsive)'
   )
+  .option(
+    '--custom-rules-config <paths>',
+    'Paths to custom rules config files (comma-separated)'
+  )
+  .option(
+    '--custom-rules-paths <paths>',
+    'Paths to custom rules directories (comma-separated)'
+  )
+  .option(
+    '--disable-default-rules <rules>',
+    'Disable default axe rules (comma-separated)'
+  )
+  .option(
+    '--enable-default-rules <rules>',
+    'Enable default axe rules (comma-separated)'
+  )
+  .option(
+    '--no-approved-rules',
+    'Disable approved rules from LensCore repository'
+  )
   .option('--no-screenshot', 'Disable screenshot capture')
   .option('--skip-cache', 'Bypass cache and force fresh test')
   .action(testCommand);
@@ -126,6 +146,26 @@ program
   .option(
     '--custom-tests <tests>',
     'Custom tests to run (comma-separated, e.g., responsive)'
+  )
+  .option(
+    '--custom-rules-config <paths>',
+    'Paths to custom rules config files (comma-separated)'
+  )
+  .option(
+    '--custom-rules-paths <paths>',
+    'Paths to custom rules directories (comma-separated)'
+  )
+  .option(
+    '--disable-default-rules <rules>',
+    'Disable default axe rules (comma-separated)'
+  )
+  .option(
+    '--enable-default-rules <rules>',
+    'Enable default axe rules (comma-separated)'
+  )
+  .option(
+    '--no-approved-rules',
+    'Disable approved rules from LensCore repository'
   )
   .option('--skip-cache', 'Bypass cache and force fresh scan')
   .action(scanCommand);

@@ -13,14 +13,54 @@ import logger from '../utils/logger';
 import { CacheService } from './cache';
 import { createCacheConfig } from '../config/cache';
 import crypto from 'crypto';
+import { CustomRulesLoader } from './custom-rules-loader';
+import { CustomRulesRunner } from './custom-rules-runner';
+import { CustomRuleResult } from '../types/custom-rules';
+
+interface AxeRuleConfigValue {
+  enabled: boolean;
+  tags?: string[];
+  matches?: string;
+  excludeHidden?: boolean;
+  all?: string[];
+  any?: string[];
+  none?: string[];
+}
+
+interface WindowWithAxe extends Window {
+  axe?: {
+    run: (document?: Document, options?: {
+      rules?: Record<string, AxeRuleConfigValue>;
+      tags?: string[];
+    }) => Promise<{
+      violations: Array<{
+        id: string;
+        impact?: 'minor' | 'moderate' | 'serious' | 'critical';
+        description?: string;
+        nodes?: Array<{
+          target?: string[];
+          html?: string;
+          failureSummary?: string;
+        }>;
+      }>;
+      passes?: unknown[];
+      incomplete?: unknown[];
+      inapplicable?: unknown[];
+    }>;
+  };
+}
 
 export class AccessibilityService {
   private browser: Browser | null = null;
   private storageService = createStorageService();
   private cacheService: CacheService;
+  private customRulesLoader: CustomRulesLoader;
+  private customRulesRunner: CustomRulesRunner;
 
   constructor() {
     this.cacheService = CacheService.getInstance(createCacheConfig());
+    this.customRulesLoader = new CustomRulesLoader();
+    this.customRulesRunner = new CustomRulesRunner();
   }
 
   async initialize(): Promise<void> {
@@ -52,6 +92,11 @@ export class AccessibilityService {
       includeScreenshot: request.includeScreenshot,
       rules: request.rules || [],
       tags: request.tags || [],
+      customRulesConfig: request.customRulesConfig || [],
+      customRulesPaths: request.customRulesPaths || [],
+      disableDefaultRules: request.disableDefaultRules || [],
+      enableDefaultRules: request.enableDefaultRules || [],
+      includeApprovedRules: request.includeApprovedRules !== false,
     };
 
     return `accessibility:${crypto.createHash('md5').update(JSON.stringify(keyData)).digest('hex')}`;
@@ -117,6 +162,29 @@ export class AccessibilityService {
           throw new Error('Operation aborted');
         }
 
+        const customRules = await this.customRulesLoader.loadCustomRules(
+          request.customRulesConfig,
+          request.customRulesPaths,
+          request.includeApprovedRules !== false
+        );
+
+        const axeRulesConfig: Record<string, AxeRuleConfigValue> = {};
+        if (request.disableDefaultRules) {
+          for (const ruleId of request.disableDefaultRules) {
+            axeRulesConfig[ruleId] = { enabled: false };
+          }
+        }
+        if (request.enableDefaultRules) {
+          for (const ruleId of request.enableDefaultRules) {
+            axeRulesConfig[ruleId] = { enabled: true };
+          }
+        }
+        if (request.rules) {
+          for (const ruleId of request.rules) {
+            axeRulesConfig[ruleId] = { enabled: true };
+          }
+        }
+
         const axeResults = await Promise.race([
           page.evaluate(
             async (options) => {
@@ -144,7 +212,7 @@ export class AccessibilityService {
               }
             },
             {
-              rules: request.rules,
+              rules: axeRulesConfig,
               tags: request.tags,
             }
           ),
@@ -154,6 +222,51 @@ export class AccessibilityService {
             });
           }),
         ]);
+
+        const customRuleResults: CustomRuleResult[] = [];
+
+        if (
+          customRules.axeRules.length > 0 ||
+          customRules.playwrightTests.length > 0
+        ) {
+          try {
+            if (customRules.axeRules.length > 0) {
+              const axe = await page.evaluate(() => {
+                const windowWithAxe = window as unknown as WindowWithAxe;
+                return windowWithAxe.axe;
+              });
+
+              if (axe) {
+                const axeRuleResults = await this.customRulesRunner.runAxeRules(
+                  customRules.axeRules,
+                  page,
+                  axe
+                );
+                customRuleResults.push(...axeRuleResults);
+              }
+            }
+
+            if (customRules.playwrightTests.length > 0) {
+              const playwrightContext = {
+                page,
+                url: request.url,
+                browser: this.browser,
+                timeout: request.timeout,
+              };
+
+              const playwrightResults =
+                await this.customRulesRunner.runPlaywrightTests(
+                  customRules.playwrightTests,
+                  playwrightContext
+                );
+              customRuleResults.push(...playwrightResults);
+            }
+          } catch (error) {
+            logger.warn('Error running custom rules', {
+              error: error instanceof Error ? error.message : String(error),
+            });
+          }
+        }
 
         let screenshotUrl: string | undefined;
 
@@ -260,20 +373,78 @@ export class AccessibilityService {
         let result: AccessibilityResult;
 
         if (axeResults && axeResults.violations) {
-          const score = this.calculateScore(axeResults.violations);
+          const normalizedCustom =
+            this.customRulesRunner.normalizeResults(customRuleResults);
+
+          const allViolations: AccessibilityViolation[] = [
+            ...axeResults.violations,
+            ...normalizedCustom.violations.map((v) => {
+              const impact: 'minor' | 'moderate' | 'serious' | 'critical' =
+                v.severity === 'minor' ||
+                v.severity === 'moderate' ||
+                v.severity === 'serious' ||
+                v.severity === 'critical'
+                  ? v.severity
+                  : 'moderate';
+
+              return {
+                id: v.id,
+                impact,
+                description: v.description,
+                help: v.description,
+                helpUrl: '',
+                tags: ['custom'],
+                nodes: v.nodes || [],
+              };
+            }),
+          ];
+
+          const score = this.calculateScore(allViolations);
 
           result = {
             url: request.url,
             score,
-            violations: axeResults.violations,
+            violations: allViolations,
             passes: axeResults.passes || [],
             incomplete: axeResults.incomplete || [],
             inapplicable: axeResults.inapplicable || [],
             screenshot: screenshotUrl,
             timestamp: new Date(),
+            customRules: customRuleResults,
           };
         } else {
           result = this.getMockResult(request, screenshotUrl);
+          result.customRules = customRuleResults;
+          
+          if (customRuleResults.length > 0) {
+            const normalizedCustom =
+              this.customRulesRunner.normalizeResults(customRuleResults);
+            if (normalizedCustom.violations.length > 0) {
+              result.violations = [
+                ...result.violations,
+                ...normalizedCustom.violations.map((v) => {
+                  const impact: 'minor' | 'moderate' | 'serious' | 'critical' =
+                    v.severity === 'minor' ||
+                    v.severity === 'moderate' ||
+                    v.severity === 'serious' ||
+                    v.severity === 'critical'
+                      ? v.severity
+                      : 'moderate';
+
+                  return {
+                    id: v.id,
+                    impact,
+                    description: v.description,
+                    help: v.description,
+                    helpUrl: '',
+                    tags: ['custom'],
+                    nodes: v.nodes || [],
+                  };
+                }),
+              ];
+              result.score = this.calculateScore(result.violations);
+            }
+          }
         }
 
         try {

@@ -1,0 +1,19 @@
+{
+  "id": "heading-order",
+  "enabled": true,
+  "metadata": {
+    "description": "Ensures headings have a logical hierarchy",
+    "help": "Headings must be in logical order",
+    "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/heading-order"
+  },
+  "rule": {
+    "id": "heading-order",
+    "enabled": true,
+    "tags": [
+      "cat.semantics",
+      "best-practice"
+    ]
+  },
+  "severity": "moderate"
+}
+

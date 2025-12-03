@@ -450,6 +450,7 @@ LensCore mendukung custom tests tambahan untuk analisis yang lebih mendalam. Saa
 Test responsivitas layout website menggunakan AI untuk mendeteksi masalah desain responsif di berbagai ukuran viewport.
 
 **Persyaratan:**
+
 - Memerlukan `--enable-ai` atau `--openai-key` untuk mengaktifkan analisis AI
 - Menggunakan model OpenAI yang mendukung Vision API (otomatis menggunakan `gpt-4o` jika diperlukan)
 
@@ -467,19 +468,110 @@ lens-core test https://example.com --custom-tests=responsive --enable-ai --web
 ```
 
 **Apa yang Dilakukan:**
+
 - Mengambil screenshot di berbagai viewport (mobile, tablet, desktop)
 - Menganalisis screenshot menggunakan AI untuk mendeteksi masalah responsif
 - Menghasilkan laporan dengan screenshot dan rekomendasi perbaikan
 
 **Hasil Test:**
+
 - Screenshot untuk setiap viewport
 - Daftar masalah responsif yang terdeteksi
 - Rekomendasi perbaikan untuk setiap masalah
 - Status pass/fail untuk setiap viewport
 
-### Rule Kustom
+### Custom Rules
 
-Test rule aksesibilitas spesifik:
+LensCore mendukung custom rules untuk menambahkan aturan aksesibilitas tambahan. Custom rules dapat berupa Axe-core rules atau Playwright tests.
+
+#### Approved Rules
+
+LensCore menyediakan set approved rules yang sudah dikurasi dan tersedia secara default:
+
+- `button-has-accessible-name` - Memastikan button punya accessible name
+- `link-has-accessible-name` - Memastikan link punya accessible name
+- `heading-order` - Memastikan heading punya hierarchy yang logis
+- `page-has-heading-one` - Memastikan halaman punya heading level 1
+- `image-alt-text` - Memastikan image punya alt text yang sesuai
+
+Approved rules otomatis dijalankan saat test. Untuk menonaktifkan:
+
+```bash
+lens-core test https://example.com --no-approved-rules
+```
+
+#### Custom Rules dari Project
+
+Buat custom rules di project dengan membuat file di salah satu lokasi berikut:
+
+- `.lenscore/rules/`
+- `lenscore-rules/`
+- `.lenscore-rules/`
+
+**Contoh Axe Rule:**
+
+Buat file `.lenscore/rules/my-rule.json`:
+
+```json
+{
+  "id": "my-custom-rule",
+  "enabled": true,
+  "metadata": {
+    "description": "Custom rule description",
+    "help": "Help text for the rule"
+  },
+  "rule": {
+    "id": "color-contrast",
+    "enabled": true,
+    "tags": ["wcag2aa"]
+  },
+  "severity": "serious"
+}
+```
+
+**Contoh Playwright Test:**
+
+Buat file `.lenscore/rules/my-test.js`:
+
+```javascript
+export default {
+  id: 'my-test',
+  name: 'My Custom Test',
+  enabled: true,
+  severity: 'moderate',
+  run: async (context) => {
+    const { page } = context;
+    const elements = await page.$$eval('button', (buttons) => buttons.length);
+    return {
+      id: 'my-test',
+      name: 'My Custom Test',
+      passed: elements > 0,
+      severity: 'moderate',
+      description: elements > 0 
+        ? `Found ${elements} buttons`
+        : 'No buttons found',
+    };
+  }
+};
+```
+
+#### Opsi Custom Rules
+
+```bash
+# Gunakan custom rules dari path tertentu
+lens-core test https://example.com --custom-rules-paths ./my-rules,./team-rules
+
+# Gunakan custom rules dari config file
+lens-core test https://example.com --custom-rules-config ./rules-config.json
+
+# Nonaktifkan default rules
+lens-core test https://example.com --disable-default-rules color-contrast,keyboard
+
+# Aktifkan specific default rules
+lens-core test https://example.com --enable-default-rules color-contrast
+```
+
+### Test Rule Aksesibilitas Spesifik
 
 ```bash
 lens-core test https://example.com --rules "color-contrast,keyboard"

@@ -38,34 +38,10 @@ export class UserStoryService {
     if (this.loaded) return;
 
     try {
-      let dataPath: string;
-      const distDataPath = path.join(__dirname, '..', 'data', 'rulesData.json');
-      const srcDataPath = path.join(
-        __dirname,
-        '..',
-        '..',
-        'src',
-        'data',
-        'rulesData.json'
-      );
-
-      try {
-        await fs.access(distDataPath);
-        dataPath = distDataPath;
-      } catch {
-        try {
-          await fs.access(srcDataPath);
-          dataPath = srcDataPath;
-        } catch {
-          const rootDataPath = path.join(
-            process.cwd(),
-            'src',
-            'data',
-            'rulesData.json'
-          );
-          dataPath = rootDataPath;
-        }
-      }
+      const dataPath =
+        process.env['NODE_ENV'] === 'production'
+          ? path.join(__dirname, '..', '..', 'src', 'data', 'rules-data.json')
+          : path.join(__dirname, '..', 'data', 'rules-data.json');
       const data = await fs.readFile(dataPath, 'utf8');
       this.rulesData = JSON.parse(data);
 

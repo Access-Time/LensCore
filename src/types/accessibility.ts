@@ -1,5 +1,6 @@
 import { ResponsiveTestResult } from './responsive';
 import { AIProcessedIssue } from './ai';
+import { CustomRuleResult } from './custom-rules';
 
 export interface AccessibilityViolation {
   id: string;
@@ -24,6 +25,7 @@ export interface AccessibilityResult {
   inapplicable: AccessibilityViolation[];
   screenshot?: string | undefined;
   timestamp: Date;
+  customRules?: CustomRuleResult[];
 }
 
 export interface AccessibilityRequest {
@@ -32,6 +34,11 @@ export interface AccessibilityRequest {
   includeScreenshot?: boolean;
   rules?: string[];
   tags?: string[];
+  customRulesConfig?: string[];
+  customRulesPaths?: string[];
+  disableDefaultRules?: string[];
+  enableDefaultRules?: string[];
+  includeApprovedRules?: boolean;
 }
 
 export interface AccessibilityResponse {

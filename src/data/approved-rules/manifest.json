@@ -1,0 +1,45 @@
+{
+  "version": "1.0.0",
+  "rules": [
+    {
+      "id": "button-has-accessible-name",
+      "type": "axe",
+      "name": "Button Has Accessible Name",
+      "description": "Ensures buttons have accessible names",
+      "enabled": true,
+      "source": "axe/button-has-accessible-name.json"
+    },
+    {
+      "id": "link-has-accessible-name",
+      "type": "axe",
+      "name": "Link Has Accessible Name",
+      "description": "Ensures links have accessible names",
+      "enabled": true,
+      "source": "axe/link-has-accessible-name.json"
+    },
+    {
+      "id": "heading-order",
+      "type": "axe",
+      "name": "Heading Order",
+      "description": "Ensures headings have a logical hierarchy",
+      "enabled": true,
+      "source": "axe/heading-order.json"
+    },
+    {
+      "id": "page-has-heading-one",
+      "type": "axe",
+      "name": "Page Has Heading One",
+      "description": "Ensures the page has a main heading",
+      "enabled": true,
+      "source": "axe/page-has-heading-one.json"
+    },
+    {
+      "id": "image-alt-text",
+      "type": "playwright",
+      "name": "Image Alt Text Check",
+      "description": "Checks that images have appropriate alt text",
+      "enabled": true,
+      "source": "playwright/image-alt-text.js"
+    }
+  ]
+}

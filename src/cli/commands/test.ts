@@ -55,6 +55,19 @@ export async function testCommand(url: string, options: any) {
       rules: CommandUtils.parseCommaSeparated(options.rules),
       tags: CommandUtils.parseCommaSeparated(options.tags),
       customTests,
+      customRulesConfig: CommandUtils.parseCommaSeparated(
+        options.customRulesConfig
+      ),
+      customRulesPaths: CommandUtils.parseCommaSeparated(
+        options.customRulesPaths
+      ),
+      disableDefaultRules: CommandUtils.parseCommaSeparated(
+        options.disableDefaultRules
+      ),
+      enableDefaultRules: CommandUtils.parseCommaSeparated(
+        options.enableDefaultRules
+      ),
+      includeApprovedRules: options.approvedRules !== false,
       ...numericOptions,
     };
 

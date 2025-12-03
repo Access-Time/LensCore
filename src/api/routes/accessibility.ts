@@ -33,7 +33,17 @@ export const testHandler = async (
       return;
     }
 
-    const testResult = await accessibilityService.testAccessibility(request);
+    const accessibilityRequest: AccessibilityRequest = {
+      ...request,
+      customRulesConfig: request.customRulesConfig,
+      customRulesPaths: request.customRulesPaths,
+      disableDefaultRules: request.disableDefaultRules,
+      enableDefaultRules: request.enableDefaultRules,
+      includeApprovedRules: request.includeApprovedRules !== false,
+    };
+
+    const testResult =
+      await accessibilityService.testAccessibility(accessibilityRequest);
 
     if (testResult.violations && testResult.violations.length > 0) {
       const aiResult = await aiService.processAccessibilityIssues(
@@ -52,6 +62,7 @@ export const testHandler = async (
         aiEnabled: aiResult.enabled,
         aiError: aiResult.error,
         metadata: aiResult.metadata,
+        customRules: testResult.customRules || [],
       };
 
       if (customTests.includes('responsive')) {
@@ -96,6 +107,7 @@ export const testHandler = async (
         aiEnabled: aiResult.enabled,
         aiError: aiResult.error,
         metadata: aiResult.metadata,
+        customRules: testResult.customRules || [],
       };
 
       if (customTests.includes('responsive')) {
