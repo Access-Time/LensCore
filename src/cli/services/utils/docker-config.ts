@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
-import path from 'path';
+import { join, dirname, resolve } from 'path';
 import { promises as fs } from 'fs';
-import os from 'os';
+import { PathConfig } from '../../../config/paths';
 
 export class DockerConfigService {
   private dockerComposePath: string | null = null;
@@ -11,30 +11,20 @@ export class DockerConfigService {
       return this.dockerComposePath;
     }
 
-    const currentDirPath = path.join(process.cwd(), 'docker-compose.yml');
-    try {
-      await fs.access(currentDirPath);
-      this.dockerComposePath = currentDirPath;
-      return this.dockerComposePath;
-    } catch {
-      //
+    const possiblePaths = PathConfig.getDockerComposePaths();
+
+    for (const composePath of possiblePaths) {
+      try {
+        await fs.access(composePath);
+        this.dockerComposePath = composePath;
+        return this.dockerComposePath;
+      } catch {
+        continue;
+      }
     }
 
-    try {
-      const packagePath = require.resolve('@accesstime/lenscore');
-      const packageDir = path.dirname(packagePath);
-      const packageComposePath = path.join(packageDir, 'docker-compose.yml');
-
-      await fs.access(packageComposePath);
-      this.dockerComposePath = packageComposePath;
-      return this.dockerComposePath;
-    } catch {
-      // Package not found or docker-compose.yml not found, continue to next option
-    }
-
-    const homeDir = os.homedir();
-    const lenscoreDir = path.join(homeDir, '.lenscore');
-    const composePath = path.join(lenscoreDir, 'docker-compose.yml');
+    const lenscoreDir = PathConfig.getLenscoreHomeDir();
+    const composePath = join(lenscoreDir, 'docker-compose.yml');
 
     await fs.mkdir(lenscoreDir, { recursive: true });
     await this.createDockerFiles(lenscoreDir);
@@ -45,19 +35,19 @@ export class DockerConfigService {
   }
 
   private async createDockerFiles(lenscoreDir: string): Promise<void> {
-    const composePath = path.join(lenscoreDir, 'docker-compose.yml');
-    const dockerfilePath = path.join(lenscoreDir, 'Dockerfile');
+    const composePath = join(lenscoreDir, 'docker-compose.yml');
+    const dockerfilePath = join(lenscoreDir, 'Dockerfile');
 
     const possiblePackageDirs: string[] = [
       process.cwd(),
-      path.resolve(__filename, '../../../../'),
+      resolve(__filename, '../../../../'),
     ];
 
     try {
       const packagePath = require.resolve('@accesstime/lenscore');
       possiblePackageDirs.push(
-        path.resolve(packagePath, '../..'),
-        path.dirname(packagePath)
+        resolve(packagePath, '../..'),
+        dirname(packagePath)
       );
     } catch {
       //
@@ -66,8 +56,8 @@ export class DockerConfigService {
     let dockerFilesCopied = false;
     for (const packageDir of possiblePackageDirs) {
       try {
-        const srcComposePath = path.join(packageDir, 'docker-compose.yml');
-        const srcDockerfilePath = path.join(packageDir, 'Dockerfile');
+        const srcComposePath = join(packageDir, 'docker-compose.yml');
+        const srcDockerfilePath = join(packageDir, 'Dockerfile');
 
         await fs.access(srcComposePath);
         await fs.access(srcDockerfilePath);
@@ -91,17 +81,17 @@ export class DockerConfigService {
   }
 
   private async setupPackageFiles(lenscoreDir: string): Promise<void> {
-    const packageJsonPath = path.join(lenscoreDir, 'package.json');
+    const packageJsonPath = join(lenscoreDir, 'package.json');
     const possiblePackageDirs: string[] = [
       process.cwd(),
-      path.resolve(__filename, '../../../../'),
+      resolve(__filename, '../../../../'),
     ];
 
     try {
       const packagePath = require.resolve('@accesstime/lenscore');
       possiblePackageDirs.push(
-        path.resolve(packagePath, '../..'),
-        path.dirname(packagePath)
+        resolve(packagePath, '../..'),
+        dirname(packagePath)
       );
     } catch {
       //
@@ -110,7 +100,7 @@ export class DockerConfigService {
     let packageDirFound = false;
     for (const packageDir of possiblePackageDirs) {
       try {
-        const srcPackageJsonPath = path.join(packageDir, 'package.json');
+        const srcPackageJsonPath = join(packageDir, 'package.json');
         await fs.access(srcPackageJsonPath);
 
         await fs.copyFile(srcPackageJsonPath, packageJsonPath);
@@ -140,8 +130,8 @@ export class DockerConfigService {
     const tsconfigFiles = ['tsconfig.json', 'tsconfig.cli.json'];
     for (const tsconfigFile of tsconfigFiles) {
       try {
-        const srcPath = path.join(packageDir, tsconfigFile);
-        const destPath = path.join(lenscoreDir, tsconfigFile);
+        const srcPath = join(packageDir, tsconfigFile);
+        const destPath = join(lenscoreDir, tsconfigFile);
         await fs.access(srcPath);
         await fs.copyFile(srcPath, destPath);
       } catch {
@@ -149,15 +139,15 @@ export class DockerConfigService {
       }
     }
 
-    const packageLockDest = path.join(lenscoreDir, 'package-lock.json');
+    const packageLockDest = join(lenscoreDir, 'package-lock.json');
 
     for (const possibleDir of [
       packageDir,
       process.cwd(),
-      path.resolve(__filename, '../../../../'),
+      resolve(__filename, '../../../../'),
     ]) {
       try {
-        const packageLockSrc = path.join(possibleDir, 'package-lock.json');
+        const packageLockSrc = join(possibleDir, 'package-lock.json');
         await fs.access(packageLockSrc);
         await fs.copyFile(packageLockSrc, packageLockDest);
         console.log(`✅ Copied package-lock.json from ${possibleDir}`);
@@ -171,8 +161,8 @@ export class DockerConfigService {
     packageDir: string,
     lenscoreDir: string
   ): Promise<void> {
-    const srcDir = path.join(packageDir, 'src');
-    const destSrcDir = path.join(lenscoreDir, 'src');
+    const srcDir = join(packageDir, 'src');
+    const destSrcDir = join(lenscoreDir, 'src');
     try {
       await fs.access(srcDir);
       await this.copyDirectory(srcDir, destSrcDir);
@@ -194,17 +184,17 @@ export class DockerConfigService {
     packageDir: string,
     lenscoreDir: string
   ): Promise<void> {
-    const webDir = path.join(packageDir, 'web');
-    const destWebDir = path.join(lenscoreDir, 'web');
+    const webDir = join(packageDir, 'web');
+    const destWebDir = join(lenscoreDir, 'web');
 
     try {
       await fs.access(webDir);
       await this.copyDirectory(webDir, destWebDir);
       console.log(`✅ Copied web templates from ${webDir} to ${destWebDir}`);
 
-      const stylesDir = path.join(destWebDir, 'styles');
-      const stylesSource = path.join(webDir, 'styles');
-      const reportCssPath = path.join(stylesDir, 'report.css');
+      const stylesDir = join(destWebDir, 'styles');
+      const stylesSource = join(webDir, 'styles');
+      const reportCssPath = join(stylesDir, 'report.css');
 
       if (!(await this.fileExists(reportCssPath))) {
         if (await this.fileExists(stylesSource)) {
@@ -219,7 +209,7 @@ export class DockerConfigService {
       console.warn(`⚠️  Could not copy web templates: ${error}`);
     }
 
-    const outputDir = path.join(destWebDir, 'output');
+    const outputDir = join(destWebDir, 'output');
     try {
       await fs.mkdir(outputDir, { recursive: true });
       console.log(`✅ Created output directory: ${outputDir}`);
@@ -233,8 +223,8 @@ export class DockerConfigService {
     const entries = await fs.readdir(src, { withFileTypes: true });
 
     for (const entry of entries) {
-      const srcPath = path.join(src, entry.name);
-      const destPath = path.join(dest, entry.name);
+      const srcPath = join(src, entry.name);
+      const destPath = join(dest, entry.name);
 
       if (entry.isDirectory()) {
         await this.copyDirectory(srcPath, destPath);

@@ -2,11 +2,10 @@
 /* eslint-disable no-console */
 import chalk from 'chalk';
 import { promises as fs } from 'fs';
-import path from 'path';
-import os from 'os';
+import { PathConfig } from '../../config/paths';
 
 export async function configCommand(options: any) {
-  const configPath = path.join(os.homedir(), '.lenscore', 'config.json');
+  const configPath = PathConfig.getConfigPath();
 
   try {
     let config: any = {};

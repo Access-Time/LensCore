@@ -4,8 +4,8 @@ import chalk from 'chalk';
 import ora from 'ora';
 import inquirer from 'inquirer';
 import { promises as fs } from 'fs';
-import path from 'path';
-import os from 'os';
+import { dirname } from 'path';
+import { PathConfig } from '../../config/paths';
 import { DockerService } from '../services/docker';
 
 const GPT_MODELS = [
@@ -176,9 +176,9 @@ export async function setupCommand(options: any) {
     };
 
     // Save configuration
-    const configDir = path.join(os.homedir(), '.lenscore');
+    const configPath = PathConfig.getConfigPath();
+    const configDir = dirname(configPath);
     await fs.mkdir(configDir, { recursive: true });
-    const configPath = path.join(configDir, 'config.json');
     await fs.writeFile(configPath, JSON.stringify(config, null, 2));
 
     console.log(chalk.green('\n✅ Setup completed successfully!'));

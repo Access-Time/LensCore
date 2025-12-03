@@ -1,42 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Router, static as expressStatic } from 'express';
-import path from 'path';
+import { join } from 'path';
 import fs from 'fs';
-import os from 'os';
 import { env } from '../../utils/env';
+import { PathConfig } from '../../config/paths';
 
 const router = Router();
 
-/**
- * Find web output directory with multiple fallback paths
- */
 function findWebOutputDir(): string {
-  const possiblePaths = [
-    // Docker container - mounted from ./.lenscore/web (project directory)
-    path.join('/app', '.lenscore', 'web', 'output'),
-    // Docker container - from app directory
-    path.join('/app', 'web', 'output'),
-    // User's home directory (preferred for global usage)
-    path.join(os.homedir(), '.lenscore', 'web', 'output'),
-    // Current working directory with .lenscore
-    path.join(process.cwd(), '.lenscore', 'web', 'output'),
-    // Development mode - from source
-    path.join(process.cwd(), 'web', 'output'),
-  ];
-
-  // Try to add global install path if available
-  try {
-    const globalPath = path.join(
-      path.dirname(require.resolve('@accesstime/lenscore')),
-      'web',
-      'output'
-    );
-    possiblePaths.unshift(globalPath);
-  } catch {
-    // Package not found, skip this path
-  }
-
-  // Find the first existing path or use the first one
+  const possiblePaths = PathConfig.getWebOutputPaths();
   const foundPath = possiblePaths.find((p) => {
     try {
       return fs.existsSync(p);
@@ -44,65 +16,23 @@ function findWebOutputDir(): string {
       return false;
     }
   });
-
   return foundPath || possiblePaths[0]!;
 }
 
-/**
- * Find styles directory with multiple fallback paths
- */
 function findStylesDir(): string {
-  const possiblePaths = [
-    path.join(os.homedir(), '.lenscore', 'web', 'styles'),
-    path.join(process.cwd(), '.lenscore', 'web', 'styles'),
-    path.join(process.cwd(), 'web', 'styles'),
-    path.join('/app', 'web', 'styles'),
-  ];
-
-  try {
-    const globalPath = path.join(
-      path.dirname(require.resolve('@accesstime/lenscore')),
-      'web',
-      'styles'
-    );
-    possiblePaths.unshift(globalPath);
-  } catch {
-    // Package not found, skip this path
-  }
-
+  const possiblePaths = PathConfig.getWebStylesPaths();
   const foundPath = possiblePaths.find((p) => {
     try {
-      return fs.existsSync(p);
+      return fs.existsSync(p) && fs.existsSync(join(p, 'report.css'));
     } catch {
       return false;
     }
   });
-
   return foundPath || possiblePaths[0]!;
 }
 
-/**
- * Find screenshots directory with multiple fallback paths
- */
 function findScreenshotsDir(): string {
-  const possiblePaths = [
-    // User's home directory (preferred for global usage) - CLI default
-    path.join(os.homedir(), '.lenscore', 'storage', 'screenshots'),
-    // Current working directory with .lenscore
-    path.join(process.cwd(), '.lenscore', 'storage', 'screenshots'),
-    // Use STORAGE_PATH from env if set
-    env.STORAGE_PATH
-      ? path.join(path.resolve(env.STORAGE_PATH), 'screenshots')
-      : null,
-    // Standard storage path (default)
-    path.join(path.resolve(env.STORAGE_PATH || './storage'), 'screenshots'),
-    // Development mode - from source
-    path.join(process.cwd(), 'storage', 'screenshots'),
-    // Docker container - from app directory
-    path.join('/app', 'storage', 'screenshots'),
-  ].filter((p): p is string => p !== null);
-
-  // Find the first existing path that has files or use the first one
+  const possiblePaths = PathConfig.getScreenshotsPaths(env.STORAGE_PATH);
   const foundPath = possiblePaths.find((p) => {
     try {
       if (fs.existsSync(p) && fs.statSync(p).isDirectory()) {
@@ -116,7 +46,6 @@ function findScreenshotsDir(): string {
       return false;
     }
   });
-
   return foundPath || possiblePaths[0]!;
 }
 
@@ -138,7 +67,7 @@ router.get('/web/:filename', (req: any, res: any) => {
     }
 
     const webOutputDir = findWebOutputDir();
-    const filePath = path.join(webOutputDir, filename);
+    const filePath = join(webOutputDir, filename);
 
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({ error: 'Report not found' });
@@ -162,7 +91,7 @@ router.get('/web/:filename', (req: any, res: any) => {
 router.get('/styles/report.css', (_req: any, res: any) => {
   try {
     const stylesDir = findStylesDir();
-    const filePath = path.join(stylesDir, 'report.css');
+    const filePath = join(stylesDir, 'report.css');
 
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({ error: 'CSS file not found' });
@@ -190,10 +119,10 @@ router.get('/storage/screenshots/:filename', (req: any, res: any) => {
     }
 
     const screenshotsDir = findScreenshotsDir();
-    let filePath = path.join(screenshotsDir, filename);
+    let filePath = join(screenshotsDir, filename);
 
     if (!fs.existsSync(filePath)) {
-      const responsivePath = path.join(screenshotsDir, 'responsive', filename);
+      const responsivePath = join(screenshotsDir, 'responsive', filename);
       if (fs.existsSync(responsivePath)) {
         filePath = responsivePath;
       } else {
@@ -213,15 +142,15 @@ router.get('/storage/screenshots/:filename', (req: any, res: any) => {
 /**
  * Serve static documentation and assets
  */
-router.use('/pages', expressStatic(path.join(process.cwd(), 'pages')));
-router.use('/public', expressStatic(path.join(process.cwd(), 'public')));
+router.use('/pages', expressStatic(join(process.cwd(), 'pages')));
+router.use('/public', expressStatic(join(process.cwd(), 'public')));
 
 /**
  * Serve root index.html
  */
 router.get('/', (_req: any, res: any) => {
   try {
-    const indexPath = path.join(process.cwd(), 'index.html');
+    const indexPath = join(process.cwd(), 'index.html');
     if (fs.existsSync(indexPath)) {
       res.setHeader('Content-Type', 'text/html');
       res.sendFile(indexPath);
@@ -249,7 +178,7 @@ router.get('/web', (_req: any, res: any) => {
       .readdirSync(webOutputDir)
       .filter((file) => file.endsWith('.html'))
       .map((file) => {
-        const filePath = path.join(webOutputDir, file);
+        const filePath = join(webOutputDir, file);
         const stats = fs.statSync(filePath);
 
         return {

@@ -265,8 +265,9 @@ export class AccessibilityService {
               customRuleResults.push(...playwrightResults);
             }
           } catch (error) {
-            logger.warn('Error running custom rules', {
+            logger.error('Error running custom rules', {
               error: error instanceof Error ? error.message : String(error),
+              stack: error instanceof Error ? error.stack : undefined,
             });
           }
         }
