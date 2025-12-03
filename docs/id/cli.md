@@ -121,6 +121,7 @@ Test aksesibilitas satu halaman.
 - `-t, --timeout <ms>`: Timeout load halaman (default: 30000)
 - `-r, --rules <rules>`: Rule spesifik untuk di-test (dipisahkan koma)
 - `-g, --tags <tags>`: Tag WCAG untuk di-test (contoh: "wcag2a,wcag2aa")
+- `--custom-tests <tests>`: Custom tests untuk dijalankan (dipisahkan koma, contoh: "responsive")
 - `--no-screenshot`: Skip capture screenshot
 - `--skip-cache`: Lewati cache dan paksa test baru
 
@@ -134,6 +135,7 @@ lens-core test https://example.com --rules "color-contrast,keyboard"
 lens-core test https://example.com --project-context "react,tailwind"
 lens-core test https://example.com --web
 lens-core test https://example.com --no-screenshot
+lens-core test https://example.com --custom-tests=responsive --enable-ai
 ```
 
 ---
@@ -189,12 +191,13 @@ lens-core scan https://example.com --enable-ai
 lens-core scan https://example.com --max-urls 50 --max-depth 3
 lens-core scan https://example.com --project-context "react,tailwind"
 lens-core scan https://example.com --web
+lens-core scan https://example.com --custom-tests=responsive --enable-ai --max-urls 10
 ```
 
 **Ringkasan opsi:**
 
 - Semua opsi `crawl`: `--max-urls`, `--max-depth`, `--timeout`, `--concurrency`, `--wait-until`, `--skip-cache`
-- Semua opsi `test`: `--enable-ai`, `--openai-key`, `--project-context`, `--web`, `--timeout`, `--rules`, `--tags`, `--no-screenshot`
+- Semua opsi `test`: `--enable-ai`, `--openai-key`, `--project-context`, `--web`, `--timeout`, `--rules`, `--tags`, `--custom-tests`, `--no-screenshot`
 
 ## Manajemen Docker
 
@@ -442,6 +445,42 @@ lens-core config --reset
 - Review logs di `~/.lenscore/logs/`
 
 ## Penggunaan Lanjutan
+
+### Custom Tests
+
+LensCore mendukung custom tests tambahan untuk analisis yang lebih mendalam. Saat ini tersedia:
+
+#### Responsive Test
+
+Test responsivitas layout website menggunakan AI untuk mendeteksi masalah desain responsif di berbagai ukuran viewport.
+
+**Persyaratan:**
+- Memerlukan `--enable-ai` atau `--openai-key` untuk mengaktifkan analisis AI
+- Menggunakan model OpenAI yang mendukung Vision API (otomatis menggunakan `gpt-4o` jika diperlukan)
+
+**Cara Menggunakan:**
+
+```bash
+# Test responsivitas satu halaman
+lens-core test https://example.com --custom-tests=responsive --enable-ai
+
+# Test responsivitas dengan scan
+lens-core scan https://example.com --custom-tests=responsive --enable-ai --max-urls 10
+
+# Dengan web report
+lens-core test https://example.com --custom-tests=responsive --enable-ai --web
+```
+
+**Apa yang Dilakukan:**
+- Mengambil screenshot di berbagai viewport (mobile, tablet, desktop)
+- Menganalisis screenshot menggunakan AI untuk mendeteksi masalah responsif
+- Menghasilkan laporan dengan screenshot dan rekomendasi perbaikan
+
+**Hasil Test:**
+- Screenshot untuk setiap viewport
+- Daftar masalah responsif yang terdeteksi
+- Rekomendasi perbaikan untuk setiap masalah
+- Status pass/fail untuk setiap viewport
 
 ### Rule Kustom
 
