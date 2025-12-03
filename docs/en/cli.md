@@ -121,6 +121,7 @@ Test accessibility of a single page.
 - `-t, --timeout <ms>`: Page load timeout (default: 30000)
 - `-r, --rules <rules>`: Specific rules to test (comma-separated)
 - `-g, --tags <tags>`: WCAG tags to test (e.g., "wcag2a,wcag2aa")
+- `--custom-tests <tests>`: Custom tests to run (comma-separated, e.g., "responsive")
 - `--no-screenshot`: Skip screenshot capture
 - `--skip-cache`: Bypass cache and force a fresh test
 
@@ -134,6 +135,7 @@ lens-core test https://example.com --rules "color-contrast,keyboard"
 lens-core test https://example.com --project-context "react,tailwind"
 lens-core test https://example.com --web
 lens-core test https://example.com --no-screenshot
+lens-core test https://example.com --custom-tests=responsive --enable-ai
 ```
 
 ---
@@ -189,12 +191,13 @@ lens-core scan https://example.com --enable-ai
 lens-core scan https://example.com --max-urls 50 --max-depth 3
 lens-core scan https://example.com --project-context "react,tailwind"
 lens-core scan https://example.com --web
+lens-core scan https://example.com --custom-tests=responsive --enable-ai --max-urls 10
 ```
 
 **Options (summary):**
 
 - All `crawl` options: `--max-urls`, `--max-depth`, `--timeout`, `--concurrency`, `--wait-until`, `--skip-cache`
-- All `test` options: `--enable-ai`, `--openai-key`, `--project-context`, `--web`, `--timeout`, `--rules`, `--tags`, `--no-screenshot`
+- All `test` options: `--enable-ai`, `--openai-key`, `--project-context`, `--web`, `--timeout`, `--rules`, `--tags`, `--custom-tests`, `--no-screenshot`
 
 ## Docker Management
 
@@ -437,6 +440,42 @@ lens-core config --reset
 - Review logs in `~/.lenscore/logs/`
 
 ## Advanced Usage
+
+### Custom Tests
+
+LensCore supports additional custom tests for deeper analysis. Currently available:
+
+#### Responsive Test
+
+Test website layout responsiveness using AI to detect responsive design issues across different viewport sizes.
+
+**Requirements:**
+- Requires `--enable-ai` or `--openai-key` to enable AI analysis
+- Uses OpenAI models that support Vision API (automatically uses `gpt-4o` if needed)
+
+**Usage:**
+
+```bash
+# Test responsiveness of a single page
+lens-core test https://example.com --custom-tests=responsive --enable-ai
+
+# Test responsiveness with scan
+lens-core scan https://example.com --custom-tests=responsive --enable-ai --max-urls 10
+
+# With web report
+lens-core test https://example.com --custom-tests=responsive --enable-ai --web
+```
+
+**What It Does:**
+- Captures screenshots at various viewports (mobile, tablet, desktop)
+- Analyzes screenshots using AI to detect responsive issues
+- Generates a report with screenshots and remediation recommendations
+
+**Test Results:**
+- Screenshots for each viewport
+- List of detected responsive issues
+- Remediation recommendations for each issue
+- Pass/fail status for each viewport
 
 ### Custom Rules
 
