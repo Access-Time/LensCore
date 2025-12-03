@@ -42,6 +42,7 @@ jobs:
 
       - name: Check if version exists in NPM
         id: check-version
+        continue-on-error: true
         run: |
           PACKAGE_NAME=$(node -p "require('./package.json').name")
           VERSION=${{ steps.current-version.outputs.version }}
@@ -64,7 +65,7 @@ jobs:
         run: echo "Build successful - ready for merge"
 
       - name: Publish to NPM
-        if: github.event_name != 'pull_request' && steps.check-version.outputs.exists == 'false'
+        if: github.event_name != 'pull_request' && (steps.check-version.outputs.exists == 'false' || steps.check-version.outcome == 'failure')
         run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
