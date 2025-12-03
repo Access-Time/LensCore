@@ -9,11 +9,7 @@
   "rule": {
     "id": "heading-order",
     "enabled": true,
-    "tags": [
-      "cat.semantics",
-      "best-practice"
-    ]
+    "tags": ["cat.semantics", "best-practice"]
   },
   "severity": "moderate"
 }
-

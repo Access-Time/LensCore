@@ -7,7 +7,6 @@ import {
 } from '../types/custom-rules';
 import type { Page } from 'playwright';
 
-
 interface AxeRuleConfigValue {
   enabled: boolean;
   tags?: string[];
@@ -51,9 +50,12 @@ interface WindowWithAxe extends Window {
       rules?: Record<string, AxeRuleConfigValue>;
       checks?: Record<string, AxeCheckConfig>;
     }) => void;
-    run: (context?: Document | Element, options?: {
-      rules?: Record<string, { enabled: boolean }>;
-    }) => Promise<AxeResults>;
+    run: (
+      context?: Document | Element,
+      options?: {
+        rules?: Record<string, { enabled: boolean }>;
+      }
+    ) => Promise<AxeResults>;
   };
 }
 
@@ -101,7 +103,7 @@ export class CustomRulesRunner {
     _axe: unknown
   ): Promise<CustomRuleResult> {
     const ruleIdToCheck = rule.rule?.id || rule.id;
-    
+
     if (rule.checks) {
       await page.evaluate(
         (checks: Record<string, AxeCheckConfig>) => {

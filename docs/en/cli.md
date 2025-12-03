@@ -547,11 +547,10 @@ export default {
       name: 'My Custom Test',
       passed: elements > 0,
       severity: 'moderate',
-      description: elements > 0 
-        ? `Found ${elements} buttons`
-        : 'No buttons found',
+      description:
+        elements > 0 ? `Found ${elements} buttons` : 'No buttons found',
     };
-  }
+  },
 };
 ```
 

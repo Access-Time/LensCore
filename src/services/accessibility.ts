@@ -29,10 +29,13 @@ interface AxeRuleConfigValue {
 
 interface WindowWithAxe extends Window {
   axe?: {
-    run: (document?: Document, options?: {
-      rules?: Record<string, AxeRuleConfigValue>;
-      tags?: string[];
-    }) => Promise<{
+    run: (
+      document?: Document,
+      options?: {
+        rules?: Record<string, AxeRuleConfigValue>;
+        tags?: string[];
+      }
+    ) => Promise<{
       violations: Array<{
         id: string;
         impact?: 'minor' | 'moderate' | 'serious' | 'critical';
@@ -415,7 +418,7 @@ export class AccessibilityService {
         } else {
           result = this.getMockResult(request, screenshotUrl);
           result.customRules = customRuleResults;
-          
+
           if (customRuleResults.length > 0) {
             const normalizedCustom =
               this.customRulesRunner.normalizeResults(customRuleResults);
