@@ -76,6 +76,7 @@ export default defineConfig({
         nav: [
           { text: 'Home', link: '/en/' },
           { text: 'Documentation', link: '/en/getting-started' },
+          { text: 'Docker Hub', link: '/en/docker-hub' },
           { text: 'API', link: '/en/api' },
           { text: 'CLI', link: '/en/cli' },
           { text: 'Contributing', link: '/en/contributing' },
@@ -94,6 +95,10 @@ export default defineConfig({
                 {
                   text: 'Quick Start',
                   link: '/en/getting-started#quick-start',
+                },
+                {
+                  text: 'Docker Hub',
+                  link: '/en/docker-hub',
                 },
               ],
             },
@@ -147,6 +152,7 @@ export default defineConfig({
         nav: [
           { text: 'Beranda', link: '/id/' },
           { text: 'Dokumentasi', link: '/id/getting-started' },
+          { text: 'Docker Hub', link: '/id/docker-hub' },
           { text: 'API', link: '/id/api' },
           { text: 'CLI', link: '/id/cli' },
           { text: 'Kontribusi', link: '/id/contributing' },
@@ -162,6 +168,10 @@ export default defineConfig({
                 {
                   text: 'Mulai Cepat',
                   link: '/id/getting-started#mulai-cepat',
+                },
+                {
+                  text: 'Docker Hub',
+                  link: '/id/docker-hub',
                 },
               ],
             },
