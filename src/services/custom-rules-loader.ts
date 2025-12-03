@@ -1,7 +1,6 @@
 import { readFile, readdir } from 'fs/promises';
 import { join, extname, basename } from 'path';
 import { existsSync } from 'fs';
-import logger from '../utils/logger';
 import {
   CustomRuleConfig,
   CustomAxeRule,
@@ -10,8 +9,7 @@ import {
   PlaywrightTestContext,
   CustomTestResult,
 } from '../types/custom-rules';
-
-declare const __dirname: string;
+import { PathConfig } from '../config/paths';
 
 export class CustomRulesLoader {
   private projectRoot: string;
@@ -19,27 +17,7 @@ export class CustomRulesLoader {
 
   constructor(projectRoot?: string) {
     this.projectRoot = projectRoot || process.cwd();
-    const currentDir =
-      typeof __dirname !== 'undefined' ? __dirname : process.cwd();
-
-    const possiblePaths = [
-      join(currentDir, '..', '..', 'src', 'data', 'approved-rules'),
-      join(currentDir, '..', 'data', 'approved-rules'),
-      join(currentDir, '..', 'src', 'data', 'approved-rules'),
-      join(process.cwd(), 'src', 'data', 'approved-rules'),
-      join(process.cwd(), 'data', 'approved-rules'),
-    ];
-
-    let foundPath: string | null = null;
-    for (const path of possiblePaths) {
-      if (existsSync(path) && existsSync(join(path, 'manifest.json'))) {
-        foundPath = path;
-        break;
-      }
-    }
-
-    this.approvedRulesPath =
-      foundPath || join(process.cwd(), 'src', 'data', 'approved-rules');
+    this.approvedRulesPath = PathConfig.getApprovedRulesPath();
   }
 
   async loadCustomRules(
@@ -79,8 +57,8 @@ export class CustomRulesLoader {
             playwrightTests.push(...tests);
           }
           Object.assign(config, loaded);
-        } catch (error) {
-          logger.warn(`Failed to load config from ${configPath}`, { error });
+        } catch {
+          // Ignore failed config loads
         }
       }
     }
@@ -91,8 +69,8 @@ export class CustomRulesLoader {
           const loaded = await this.loadRulesFromDirectory(rulePath);
           axeRules.push(...loaded.axeRules);
           playwrightTests.push(...loaded.playwrightTests);
-        } catch (error) {
-          logger.warn(`Failed to load rules from ${rulePath}`, { error });
+        } catch {
+          // Ignore failed rule loads
         }
       }
     }
@@ -146,10 +124,8 @@ export class CustomRulesLoader {
             if (ruleData.enabled) {
               axeRules.push(ruleData);
             }
-          } catch (error) {
-            logger.warn(`Failed to load approved axe rule ${rule.id}`, {
-              error,
-            });
+          } catch {
+            // Ignore failed rule loads
           }
         } else if (rule.type === 'playwright') {
           try {
@@ -157,18 +133,13 @@ export class CustomRulesLoader {
             if (test && test.enabled) {
               playwrightTests.push(test);
             }
-          } catch (error) {
-            logger.warn(`Failed to load approved playwright test ${rule.id}`, {
-              error,
-            });
+          } catch {
+            // Ignore failed test loads
           }
         }
       }
-    } catch (error) {
-      logger.warn('Failed to load approved rules', {
-        error,
-        path: this.approvedRulesPath,
-      });
+    } catch {
+      // Ignore errors during rule loading
     }
 
     return { axeRules, playwrightTests };
@@ -181,11 +152,7 @@ export class CustomRulesLoader {
     const axeRules: CustomAxeRule[] = [];
     const playwrightTests: CustomPlaywrightTest[] = [];
 
-    const possiblePaths = [
-      join(this.projectRoot, '.lenscore', 'rules'),
-      join(this.projectRoot, 'lenscore-rules'),
-      join(this.projectRoot, '.lenscore-rules'),
-    ];
+    const possiblePaths = PathConfig.getProjectRulesPaths(this.projectRoot);
 
     for (const rulesPath of possiblePaths) {
       if (existsSync(rulesPath)) {
@@ -193,8 +160,8 @@ export class CustomRulesLoader {
           const loaded = await this.loadRulesFromDirectory(rulesPath);
           axeRules.push(...loaded.axeRules);
           playwrightTests.push(...loaded.playwrightTests);
-        } catch (error) {
-          logger.warn(`Failed to load rules from ${rulesPath}`, { error });
+        } catch {
+          // Ignore failed rule loads
         }
       }
     }
@@ -249,10 +216,8 @@ export class CustomRulesLoader {
                   }
                 }
               }
-            } catch (error) {
-              logger.warn(`Failed to parse JSON rule file ${fullPath}`, {
-                error,
-              });
+            } catch {
+              // Ignore failed JSON parsing
             }
           } else if (ext === '.js' || ext === '.ts' || ext === '.mjs') {
             try {
@@ -260,16 +225,14 @@ export class CustomRulesLoader {
               if (test) {
                 playwrightTests.push(test);
               }
-            } catch (error) {
-              logger.warn(`Failed to load Playwright test file ${fullPath}`, {
-                error,
-              });
+            } catch {
+              // Ignore failed test loads
             }
           }
         }
       }
-    } catch (error) {
-      logger.warn(`Failed to read directory ${dirPath}`, { error });
+    } catch {
+      // Ignore directory read errors
     }
 
     return { axeRules, playwrightTests };
@@ -318,7 +281,9 @@ export class CustomRulesLoader {
       }
     } else if (ext === '.js' || ext === '.mjs') {
       const module = await import(configPath);
-      const config = (module.default || module) as Partial<CustomRuleConfig>;
+      const config = (module.default ||
+        (module as { exports?: unknown }).exports ||
+        module) as Partial<CustomRuleConfig>;
       return config;
     }
 
@@ -336,8 +301,8 @@ export class CustomRulesLoader {
         if (test) {
           tests.push(test);
         }
-      } catch (error) {
-        logger.warn(`Failed to load Playwright test ${testPath}`, { error });
+      } catch {
+        // Ignore failed test loads
       }
     }
 
@@ -353,11 +318,39 @@ export class CustomRulesLoader {
 
     try {
       const pathModule = await import('path');
-      const fileUrl = pathModule.default.isAbsolute(filePath)
-        ? `file://${filePath}`
-        : `file://${pathModule.default.resolve(filePath)}`;
-      const module = await import(fileUrl);
-      const test = (module.default || module) as
+      const urlModule = await import('url');
+      const resolvedPath = pathModule.default.isAbsolute(filePath)
+        ? filePath
+        : pathModule.default.resolve(filePath);
+
+      let module: { default?: unknown; [key: string]: unknown };
+      const ext = extname(resolvedPath);
+
+      if (ext === '.mjs') {
+        try {
+          const fileUrl = urlModule.pathToFileURL(resolvedPath).href;
+          module = await import(fileUrl);
+        } catch {
+          try {
+            module = await import(resolvedPath);
+          } catch {
+            const absolutePath = pathModule.default.resolve(resolvedPath);
+            const fileUrl2 = urlModule.pathToFileURL(absolutePath).toString();
+            module = await import(fileUrl2);
+          }
+        }
+      } else {
+        try {
+          const fileUrl = urlModule.pathToFileURL(resolvedPath).href;
+          module = await import(fileUrl);
+        } catch {
+          module = await import(resolvedPath);
+        }
+      }
+
+      const test = (module.default ||
+        (module as { exports?: unknown }).exports ||
+        module) as
         | ((context: PlaywrightTestContext) => Promise<CustomTestResult>)
         | CustomPlaywrightTest;
 
@@ -388,11 +381,8 @@ export class CustomRulesLoader {
           run: customTest.run,
         };
       }
-    } catch (error) {
-      logger.warn(`Failed to import Playwright test from ${filePath}`, {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-      });
+    } catch {
+      // Ignore import errors
     }
 
     return null;

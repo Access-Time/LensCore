@@ -199,7 +199,9 @@ export class CustomRulesRunner {
     const results: CustomRuleResult[] = [];
 
     for (const test of tests) {
-      if (!test.enabled) continue;
+      if (!test.enabled) {
+        continue;
+      }
 
       try {
         const result = await this.runPlaywrightTest(test, context);
@@ -248,7 +250,7 @@ export class CustomRulesRunner {
       });
     }
 
-    return {
+    const result: CustomRuleResult = {
       type: 'playwright',
       id: test.id,
       name: test.name,
@@ -256,6 +258,8 @@ export class CustomRulesRunner {
       violations,
       metadata: testResult.metadata,
     };
+
+    return result;
   }
 
   normalizeResults(results: CustomRuleResult[]): {

@@ -63,4 +63,5 @@ export interface AccessibilityTestResponse
         error: string;
         passed: false;
       };
+  customRules?: CustomRuleResult[];
 }

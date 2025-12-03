@@ -39,6 +39,19 @@ module.exports = [
     },
   },
   {
-    ignores: ['dist/**', 'node_modules/**', 'coverage/**', '*.js'],
+    files: ['**/*.js'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+      ecmaVersion: 2022,
+      sourceType: 'commonjs',
+    },
+    rules: {
+      'no-undef': 'off', // CommonJS globals are available
+    },
+  },
+  {
+    ignores: ['dist/**', 'node_modules/**', 'coverage/**'],
   },
 ];

@@ -3,8 +3,7 @@
 import chalk from 'chalk';
 import ora from 'ora';
 import { promises as fs } from 'fs';
-import path from 'path';
-import os from 'os';
+import { PathConfig } from '../../config/paths';
 import { LensCoreClient } from '../services/lenscore-client';
 import { DockerService } from '../services/docker';
 import { WebReportService } from '../services/web-report';
@@ -228,7 +227,7 @@ export class CommandUtils {
    */
   static async loadConfig(): Promise<any> {
     try {
-      const configPath = path.join(os.homedir(), '.lenscore', 'config.json');
+      const configPath = PathConfig.getConfigPath();
       const configData = await fs.readFile(configPath, 'utf8');
       return JSON.parse(configData);
     } catch {

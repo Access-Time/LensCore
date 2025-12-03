@@ -1,4 +1,5 @@
-export default {
+/* eslint-env node */
+module.exports = {
   id: 'image-alt-text',
   name: 'Image Alt Text Check',
   description: 'Checks that images have appropriate alt text',
@@ -19,33 +20,26 @@ export default {
       }));
     });
 
-    const violations = images
-      .filter((img) => !img.hasAlt && !img.isDecorative)
-      .map((img) => ({
-        id: 'image-alt-text',
-        name: 'Image Alt Text Check',
-        passed: false,
-        severity: 'moderate',
-        description: `Image at ${img.src} is missing alt text`,
-        nodes: [
-          {
-            target: [`img:nth-of-type(${img.index + 1})`],
-            html: `<img src="${img.src}">`,
-            failureSummary: `Image is missing alt text. Add alt attribute or mark as decorative with role="presentation"`,
-          },
-        ],
-      }));
+    const imagesWithoutAlt = images.filter(
+      (img) => !img.hasAlt && !img.isDecorative
+    );
+
+    const violationNodes = imagesWithoutAlt.map((img) => ({
+      target: [`img:nth-of-type(${img.index + 1})`],
+      html: `<img src="${img.src}">`,
+      failureSummary: `Image is missing alt text. Add alt attribute or mark as decorative with role="presentation"`,
+    }));
 
     return {
       id: 'image-alt-text',
       name: 'Image Alt Text Check',
-      passed: violations.length === 0,
+      passed: imagesWithoutAlt.length === 0,
       severity: 'moderate',
       description:
-        violations.length === 0
+        imagesWithoutAlt.length === 0
           ? 'All images have appropriate alt text'
-          : `Found ${violations.length} images without alt text`,
-      nodes: violations.length > 0 ? violations[0].nodes : undefined,
+          : `Found ${imagesWithoutAlt.length} image${imagesWithoutAlt.length > 1 ? 's' : ''} without alt text`,
+      nodes: violationNodes.length > 0 ? violationNodes : undefined,
     };
   },
 };
