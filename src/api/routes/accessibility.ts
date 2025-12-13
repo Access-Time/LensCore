@@ -211,6 +211,7 @@ export const testMultipleHandler = async (
           aiEnabled: aiResult.enabled,
           aiError: aiResult.error,
           metadata: aiResult.metadata,
+          customRules: result.customRules || [],
         };
       })
     );

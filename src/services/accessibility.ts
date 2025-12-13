@@ -1,4 +1,4 @@
-import { chromium, Browser, LaunchOptions } from 'playwright';
+import { chromium, Browser, Page, LaunchOptions } from 'playwright';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs/promises';
 import {
@@ -164,6 +164,8 @@ export class AccessibilityService {
         if (controller.signal.aborted) {
           throw new Error('Operation aborted');
         }
+
+        await this.scrollPageToWaitForAnimations(page);
 
         const customRules = await this.customRulesLoader.loadCustomRules(
           request.customRulesConfig,
@@ -382,25 +384,15 @@ export class AccessibilityService {
 
           const allViolations: AccessibilityViolation[] = [
             ...axeResults.violations,
-            ...normalizedCustom.violations.map((v) => {
-              const impact: 'minor' | 'moderate' | 'serious' | 'critical' =
-                v.severity === 'minor' ||
-                v.severity === 'moderate' ||
-                v.severity === 'serious' ||
-                v.severity === 'critical'
-                  ? v.severity
-                  : 'moderate';
-
-              return {
-                id: v.id,
-                impact,
-                description: v.description,
-                help: v.description,
-                helpUrl: '',
-                tags: ['custom'],
-                nodes: v.nodes || [],
-              };
-            }),
+            ...normalizedCustom.violations.map((v) => ({
+              id: v.id,
+              impact: v.severity,
+              description: v.description,
+              help: v.description,
+              helpUrl: '',
+              tags: ['custom'],
+              nodes: v.nodes || [],
+            })),
           ];
 
           const score = this.calculateScore(allViolations);
@@ -426,25 +418,15 @@ export class AccessibilityService {
             if (normalizedCustom.violations.length > 0) {
               result.violations = [
                 ...result.violations,
-                ...normalizedCustom.violations.map((v) => {
-                  const impact: 'minor' | 'moderate' | 'serious' | 'critical' =
-                    v.severity === 'minor' ||
-                    v.severity === 'moderate' ||
-                    v.severity === 'serious' ||
-                    v.severity === 'critical'
-                      ? v.severity
-                      : 'moderate';
-
-                  return {
-                    id: v.id,
-                    impact,
-                    description: v.description,
-                    help: v.description,
-                    helpUrl: '',
-                    tags: ['custom'],
-                    nodes: v.nodes || [],
-                  };
-                }),
+                ...normalizedCustom.violations.map((v) => ({
+                  id: v.id,
+                  impact: v.severity,
+                  description: v.description,
+                  help: v.description,
+                  helpUrl: '',
+                  tags: ['custom'],
+                  nodes: v.nodes || [],
+                })),
               ];
               result.score = this.calculateScore(result.violations);
             }
@@ -532,6 +514,45 @@ export class AccessibilityService {
     const score = Math.max(0, 100 - (totalWeight / maxPossibleWeight) * 100);
 
     return Math.round(score);
+  }
+
+  private async scrollPageToWaitForAnimations(page: Page): Promise<void> {
+    try {
+      await page.evaluate(async () => {
+        const scrollHeight = document.documentElement.scrollHeight;
+        const viewportHeight = window.innerHeight;
+
+        if (scrollHeight > viewportHeight) {
+          const scrollSteps = Math.max(3, Math.ceil(scrollHeight / viewportHeight));
+          const stepDelay = 300;
+          const finalDelay = 500;
+
+          for (let i = 0; i <= scrollSteps; i++) {
+            const progress = i / scrollSteps;
+            const targetScroll = Math.floor(scrollHeight * progress);
+            window.scrollTo(0, targetScroll);
+            await new Promise((resolve) => setTimeout(resolve, stepDelay));
+          }
+
+          await new Promise((resolve) => setTimeout(resolve, finalDelay));
+
+          for (let i = scrollSteps; i >= 0; i--) {
+            const progress = i / scrollSteps;
+            const targetScroll = Math.floor(scrollHeight * progress);
+            window.scrollTo(0, targetScroll);
+            await new Promise((resolve) => setTimeout(resolve, stepDelay));
+          }
+
+          await new Promise((resolve) => setTimeout(resolve, finalDelay));
+        } else {
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        }
+      });
+    } catch (error) {
+      logger.warn('Scroll animation wait error:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 
   async testMultiplePages(

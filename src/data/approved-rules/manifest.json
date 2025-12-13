@@ -33,13 +33,13 @@
       "enabled": true,
       "source": "axe/page-has-heading-one.json"
     },
-    {
-      "id": "image-alt-text",
+      {
       "type": "playwright",
-      "name": "Image Alt Text Check",
-      "description": "Checks that images have appropriate alt text",
+      "id": "form-label-association",
+      "name": "Form Label Association",
+      "description": "Ensures form elements have associated labels",
       "enabled": true,
-      "source": "playwright/image-alt-text.js"
+      "source": "playwright/form-label-association.js"
     }
   ]
 }

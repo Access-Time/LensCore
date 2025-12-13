@@ -84,6 +84,7 @@ export const combinedHandler = async (
           aiEnabled: aiResult.enabled,
           aiError: aiResult.error,
           metadata: aiResult.metadata,
+          customRules: result.customRules || [],
         };
 
         if (customTests.includes('responsive')) {
