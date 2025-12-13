@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Router, static as expressStatic } from 'express';
-import { join } from 'path';
+import { join, dirname } from 'path';
 import fs from 'fs';
 import { env } from '../../utils/env';
 import { PathConfig } from '../../config/paths';
@@ -11,12 +11,24 @@ function findWebOutputDir(): string {
   const possiblePaths = PathConfig.getWebOutputPaths();
   const foundPath = possiblePaths.find((p) => {
     try {
-      return fs.existsSync(p);
+      if (fs.existsSync(p)) {
+        return true;
+      }
+      const parentDir = dirname(p);
+      if (fs.existsSync(parentDir)) {
+        fs.mkdirSync(p, { recursive: true });
+        return true;
+      }
+      return false;
     } catch {
       return false;
     }
   });
-  return foundPath || possiblePaths[0]!;
+  const outputDir = foundPath || possiblePaths[0]!;
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir, { recursive: true });
+  }
+  return outputDir;
 }
 
 function findStylesDir(): string {

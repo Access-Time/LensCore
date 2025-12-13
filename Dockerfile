@@ -47,7 +47,7 @@ ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
 COPY package*.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/src/data ./src/data
+COPY --from=builder /app/src/data ./dist/data
 
 RUN mkdir -p logs storage
 

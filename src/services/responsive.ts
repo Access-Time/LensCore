@@ -282,7 +282,7 @@ export class ResponsiveService {
           logger.warn('Failed to cache responsive test result', { error });
         }
 
-        return result;
+        return this.removeBase64FromResult(result);
       } finally {
         await page.close();
         clearTimeout(timeoutId);
@@ -392,5 +392,15 @@ export class ResponsiveService {
         processingTime: Date.now() - startTime,
       };
     }
+  }
+
+  private removeBase64FromResult(result: ResponsiveTestResult): ResponsiveTestResult {
+    return {
+      ...result,
+      screenshots: result.screenshots.map((screenshot) => ({
+        viewport: screenshot.viewport,
+        screenshotUrl: screenshot.screenshotUrl,
+      })),
+    };
   }
 }

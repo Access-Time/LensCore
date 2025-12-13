@@ -34,21 +34,21 @@ export class PathConfig {
   static getApprovedRulesPath(): string {
     const currentDir =
       typeof __dirname !== 'undefined' ? __dirname : process.cwd();
-    const pathFromDist = join(
-      currentDir,
-      '..',
-      '..',
-      'src',
-      'data',
-      this.APPROVED_RULES_DIR
-    );
-    const pathFromRoot = join(
-      process.cwd(),
-      'src',
-      'data',
-      this.APPROVED_RULES_DIR
-    );
-    return existsSync(pathFromDist) ? pathFromDist : pathFromRoot;
+    
+    const possiblePaths = [
+      join(currentDir, '..', 'data', this.APPROVED_RULES_DIR),
+      join(currentDir, '..', '..', 'dist', 'data', this.APPROVED_RULES_DIR),
+      join(process.cwd(), 'dist', 'data', this.APPROVED_RULES_DIR),
+      join(process.cwd(), 'src', 'data', this.APPROVED_RULES_DIR),
+    ];
+
+    for (const path of possiblePaths) {
+      if (existsSync(path)) {
+        return path;
+      }
+    }
+
+    return possiblePaths[0]!;
   }
 
   static getProjectRulesPaths(projectRoot: string): string[] {
