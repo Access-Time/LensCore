@@ -34,7 +34,7 @@ export class PathConfig {
   static getApprovedRulesPath(): string {
     const currentDir =
       typeof __dirname !== 'undefined' ? __dirname : process.cwd();
-    
+
     const possiblePaths = [
       join(currentDir, '..', 'data', this.APPROVED_RULES_DIR),
       join(currentDir, '..', '..', 'dist', 'data', this.APPROVED_RULES_DIR),

@@ -1,4 +1,8 @@
-import { CustomPlaywrightTest, PlaywrightTestContext, CustomTestResult } from '../../../types/custom-rules';
+import {
+  CustomPlaywrightTest,
+  PlaywrightTestContext,
+  CustomTestResult,
+} from '../../../types/custom-rules';
 
 interface FormLabelData {
   inputId: string;
@@ -27,7 +31,10 @@ const formLabelAssociationRule: CustomPlaywrightTest = {
       'input[type="text"], input[type="email"], input[type="password"], input[type="number"], textarea, select',
       (elements: HTMLElement[]): FormLabelData[] => {
         return elements.map((element) => {
-          const input = element as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+          const input = element as
+            | HTMLInputElement
+            | HTMLTextAreaElement
+            | HTMLSelectElement;
           const inputId = input.id || '';
           const inputName = input.name || '';
 
@@ -35,7 +42,9 @@ const formLabelAssociationRule: CustomPlaywrightTest = {
           let labelText = '';
 
           if (inputId) {
-            const label = document.querySelector(`label[for="${inputId}"]`) as HTMLLabelElement | null;
+            const label = document.querySelector(
+              `label[for="${inputId}"]`
+            ) as HTMLLabelElement | null;
             if (label) {
               hasLabel = true;
               labelText = label.textContent || '';
@@ -43,7 +52,9 @@ const formLabelAssociationRule: CustomPlaywrightTest = {
           }
 
           if (!hasLabel && inputName) {
-            const label = document.querySelector(`label[for="${inputName}"]`) as HTMLLabelElement | null;
+            const label = document.querySelector(
+              `label[for="${inputName}"]`
+            ) as HTMLLabelElement | null;
             if (label) {
               hasLabel = true;
               labelText = label.textContent || '';
@@ -64,14 +75,21 @@ const formLabelAssociationRule: CustomPlaywrightTest = {
     );
 
     const inputsWithoutLabel: FormLabelData[] = formInputs.filter(
-      (input): boolean => !input.hasLabel && !!(input.inputId || input.inputName)
+      (input): boolean =>
+        !input.hasLabel && !!(input.inputId || input.inputName)
     );
 
-    const violationNodes: FormLabelViolationNode[] = inputsWithoutLabel.map((input) => ({
-      target: [input.inputId ? `input[id="${input.inputId}"]` : `input[name="${input.inputName}"]`],
-      html: `<input type="${input.inputType}" ${input.inputId ? `id="${input.inputId}"` : ''} ${input.inputName ? `name="${input.inputName}"` : ''} />`,
-      failureSummary: 'Form input does not have an associated label element',
-    }));
+    const violationNodes: FormLabelViolationNode[] = inputsWithoutLabel.map(
+      (input) => ({
+        target: [
+          input.inputId
+            ? `input[id="${input.inputId}"]`
+            : `input[name="${input.inputName}"]`,
+        ],
+        html: `<input type="${input.inputType}" ${input.inputId ? `id="${input.inputId}"` : ''} ${input.inputName ? `name="${input.inputName}"` : ''} />`,
+        failureSummary: 'Form input does not have an associated label element',
+      })
+    );
 
     const result: CustomTestResult = {
       id: 'form-label-association',
