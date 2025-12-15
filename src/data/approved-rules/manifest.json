@@ -33,7 +33,7 @@
       "enabled": true,
       "source": "axe/page-has-heading-one.json"
     },
-      {
+    {
       "type": "playwright",
       "id": "form-label-association",
       "name": "Form Label Association",

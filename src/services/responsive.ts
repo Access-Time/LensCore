@@ -394,7 +394,9 @@ export class ResponsiveService {
     }
   }
 
-  private removeBase64FromResult(result: ResponsiveTestResult): ResponsiveTestResult {
+  private removeBase64FromResult(
+    result: ResponsiveTestResult
+  ): ResponsiveTestResult {
     return {
       ...result,
       screenshots: result.screenshots.map((screenshot) => ({

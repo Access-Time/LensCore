@@ -523,7 +523,10 @@ export class AccessibilityService {
         const viewportHeight = window.innerHeight;
 
         if (scrollHeight > viewportHeight) {
-          const scrollSteps = Math.max(3, Math.ceil(scrollHeight / viewportHeight));
+          const scrollSteps = Math.max(
+            3,
+            Math.ceil(scrollHeight / viewportHeight)
+          );
           const stepDelay = 300;
           const finalDelay = 500;
 
