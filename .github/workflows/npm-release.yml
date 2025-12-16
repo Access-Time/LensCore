@@ -45,14 +45,27 @@ jobs:
         run: |
           PACKAGE_NAME=$(node -p "require('./package.json').name")
           VERSION=${{ steps.current-version.outputs.version }}
-          if npm view "${PACKAGE_NAME}@${VERSION}" version > /dev/null 2>&1; then
+          npm view "${PACKAGE_NAME}@${VERSION}" version > /dev/null 2>&1
+          EXIT_CODE=$?
+          if [ $EXIT_CODE -eq 0 ]; then
             echo "exists=true" >> $GITHUB_OUTPUT
             echo "Version $VERSION already exists in NPM registry"
             exit 0
-          else
+          elif [ $EXIT_CODE -eq 1 ]; then
             echo "exists=false" >> $GITHUB_OUTPUT
             echo "Version $VERSION is new, will publish"
             exit 0
+          else
+            echo "::error::Failed to check version in NPM registry (exit code: $EXIT_CODE). Check authentication and network connectivity."
+            exit $EXIT_CODE
+          fi
+
+      - name: Validate NPM token
+        if: github.event_name != 'pull_request' && steps.check-version.outputs.exists == 'false'
+        run: |
+          if [ -z "${{ secrets.NPM_TOKEN }}" ]; then
+            echo "::error::NPM_TOKEN secret is missing. Please check NPM_TOKEN secret."
+            exit 1
           fi
 
       - name: Install dependencies

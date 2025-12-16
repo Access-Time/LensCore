@@ -6,7 +6,6 @@ on:
 
 env:
   REGISTRY: docker.io
-  IMAGE_NAME: ${{ secrets.DOCKER_HUB_USERNAME }}/lenscore
 
 jobs:
   build-and-push:
@@ -36,6 +35,11 @@ jobs:
             exit 1
           fi
 
+      - name: Set image name
+        id: image-name
+        run: |
+          echo "name=${{ secrets.DOCKER_HUB_USERNAME }}/lenscore" >> $GITHUB_OUTPUT
+
       - name: Log in to Docker Hub
         id: docker-login
         continue-on-error: true
@@ -57,8 +61,8 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ steps.image-name.outputs.name }}:${{ steps.version.outputs.version }}
+            ${{ env.REGISTRY }}/${{ steps.image-name.outputs.name }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
