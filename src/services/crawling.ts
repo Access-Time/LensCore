@@ -75,9 +75,12 @@ export class CrawlingService {
     return `crawl:${crypto.createHash('md5').update(JSON.stringify(keyData)).digest('hex')}`;
   }
 
-  private mapWaitUntilOption(waitUntil?: string): 'load' | 'domcontentloaded' | 'networkidle' {
+  private mapWaitUntilOption(
+    waitUntil?: string
+  ): 'load' | 'domcontentloaded' | 'networkidle' {
     const value = waitUntil || env.CRAWL_WAIT_UNTIL;
-    if (value === 'networkidle0' || value === 'networkidle2') return 'networkidle';
+    if (value === 'networkidle0' || value === 'networkidle2')
+      return 'networkidle';
     if (value === 'domcontentloaded') return 'domcontentloaded';
     return 'load';
   }
