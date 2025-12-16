@@ -75,6 +75,13 @@ export class CrawlingService {
     return `crawl:${crypto.createHash('md5').update(JSON.stringify(keyData)).digest('hex')}`;
   }
 
+  private mapWaitUntilOption(waitUntil?: string): 'load' | 'domcontentloaded' | 'networkidle' {
+    const value = waitUntil || env.CRAWL_WAIT_UNTIL;
+    if (value === 'networkidle0' || value === 'networkidle2') return 'networkidle';
+    if (value === 'domcontentloaded') return 'domcontentloaded';
+    return 'load';
+  }
+
   async crawlWebsite(request: CrawlRequest): Promise<CrawlResponse> {
     const startTime = Date.now();
     const cacheKey = this.generateCacheKey(request);
@@ -161,27 +168,7 @@ export class CrawlingService {
 
           try {
             const response = await page.goto(url, {
-              waitUntil:
-                request.waitUntil === 'networkidle0' ||
-                request.waitUntil === 'networkidle2'
-                  ? 'networkidle'
-                  : request.waitUntil === 'domcontentloaded'
-                    ? 'domcontentloaded'
-                    : request.waitUntil === 'load' || !request.waitUntil
-                      ? env.CRAWL_WAIT_UNTIL === 'networkidle0' ||
-                        env.CRAWL_WAIT_UNTIL === 'networkidle2'
-                        ? 'networkidle'
-                        : env.CRAWL_WAIT_UNTIL === 'domcontentloaded'
-                          ? 'domcontentloaded'
-                          : 'load'
-                      : env.CRAWL_WAIT_UNTIL === 'networkidle0' ||
-                          env.CRAWL_WAIT_UNTIL === 'networkidle2'
-                        ? 'networkidle'
-                        : env.CRAWL_WAIT_UNTIL === 'domcontentloaded'
-                          ? 'domcontentloaded'
-                          : env.CRAWL_WAIT_UNTIL === 'load'
-                            ? 'load'
-                            : 'load',
+              waitUntil: this.mapWaitUntilOption(request.waitUntil),
               timeout: Math.min(timeout, 15000),
             });
 
