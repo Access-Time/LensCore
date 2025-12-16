@@ -29,11 +29,26 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Extracted version: $VERSION"
 
+      - name: Validate Docker Hub credentials
+        run: |
+          if [ -z "${{ secrets.DOCKER_HUB_USERNAME }}" ] || [ -z "${{ secrets.DOCKER_HUB_TOKEN }}" ]; then
+            echo "::error::Docker Hub credentials are missing. Please check DOCKER_HUB_USERNAME and DOCKER_HUB_TOKEN secrets."
+            exit 1
+          fi
+
       - name: Log in to Docker Hub
+        id: docker-login
+        continue-on-error: true
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Verify Docker Hub login
+        if: steps.docker-login.outcome != 'success'
+        run: |
+          echo "::error::Docker Hub login failed. Please verify DOCKER_HUB_USERNAME and DOCKER_HUB_TOKEN secrets are correct and have proper permissions."
+          exit 1
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
