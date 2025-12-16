@@ -162,18 +162,26 @@ export class CrawlingService {
           try {
             const response = await page.goto(url, {
               waitUntil:
-                request.waitUntil === 'networkidle0'
+                request.waitUntil === 'networkidle0' ||
+                request.waitUntil === 'networkidle2'
                   ? 'networkidle'
-                  : request.waitUntil === 'networkidle2'
-                    ? 'networkidle'
-                    : request.waitUntil === 'domcontentloaded'
-                      ? 'domcontentloaded'
+                  : request.waitUntil === 'domcontentloaded'
+                    ? 'domcontentloaded'
+                    : request.waitUntil === 'load' || !request.waitUntil
+                      ? env.CRAWL_WAIT_UNTIL === 'networkidle0' ||
+                        env.CRAWL_WAIT_UNTIL === 'networkidle2'
+                        ? 'networkidle'
+                        : env.CRAWL_WAIT_UNTIL === 'domcontentloaded'
+                          ? 'domcontentloaded'
+                          : 'load'
                       : env.CRAWL_WAIT_UNTIL === 'networkidle0' ||
                           env.CRAWL_WAIT_UNTIL === 'networkidle2'
                         ? 'networkidle'
                         : env.CRAWL_WAIT_UNTIL === 'domcontentloaded'
                           ? 'domcontentloaded'
-                          : 'load',
+                          : env.CRAWL_WAIT_UNTIL === 'load'
+                            ? 'load'
+                            : 'load',
               timeout: Math.min(timeout, 15000),
             });
 
