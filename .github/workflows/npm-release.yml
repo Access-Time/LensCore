@@ -65,7 +65,7 @@ jobs:
         run: echo "Build successful - ready for merge"
 
       - name: Publish to NPM
-        if: github.event_name != 'pull_request' && (steps.check-version.outputs.exists == 'false' || steps.check-version.outcome == 'failure')
+        if: github.event_name != 'pull_request' && steps.check-version.outputs.exists == 'false'
         run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
