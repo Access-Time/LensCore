@@ -165,8 +165,10 @@ export class HtmlGeneratorService {
         (violation) => `
       <div class="violation">
         <div>
-          <h4 class="violation-title">${violation.id}</h4>
+          <h4 class="violation-title">${violation.title || violation.id}</h4>
+          ${violation.summary ? `<p class="violation-summary">${this.escapeHtml(violation.summary)}</p>` : ''}
           <p class="violation-desc">${violation.description}</p>
+          ${violation.explanation ? `<div class="violation-explanation"><p>${this.escapeHtml(violation.explanation)}</p></div>` : ''}
           <div class="mt-1">
             <div class="violation-item-meta">
               <span class="violation-impact">${violation.impact || 'unknown'} impact</span>
@@ -175,6 +177,67 @@ export class HtmlGeneratorService {
               </div>
             </div>
           </div>
+          ${
+            violation.wcag && violation.wcag.length > 0
+              ? `
+            <div class="wcag-section ai-section">
+              <h5 class="ai-section-title">WCAG Standards</h5>
+              <ul class="wcag-list">
+                ${violation.wcag
+                  .map(
+                    (wcag: any) => `
+                  <li>
+                    <strong>${this.escapeHtml(wcag.level)}</strong>: 
+                    <a href="${this.escapeHtml(wcag.link)}" target="_blank" class="violation-url-link">${this.escapeHtml(wcag.name)}</a>
+                  </li>
+                `
+                  )
+                  .join('')}
+              </ul>
+            </div>
+          `
+              : ''
+          }
+          ${
+            violation.act_rules && violation.act_rules.length > 0
+              ? `
+            <div class="act-rules-section ai-section">
+              <h5 class="ai-section-title">ACT Rules</h5>
+              <ul class="wcag-list">
+                ${violation.act_rules
+                  .map(
+                    (rule: any) => `
+                  <li>
+                    <a href="${this.escapeHtml(rule.link)}" target="_blank" class="violation-url-link">${this.escapeHtml(rule.name)}</a>
+                  </li>
+                `
+                  )
+                  .join('')}
+              </ul>
+            </div>
+          `
+              : ''
+          }
+          ${
+            violation.supporting_links && violation.supporting_links.length > 0
+              ? `
+            <div class="supporting-links-section ai-section">
+              <h5 class="ai-section-title">Additional Resources</h5>
+              <ul class="wcag-list">
+                ${violation.supporting_links
+                  .map(
+                    (link: any) => `
+                  <li>
+                    <a href="${this.escapeHtml(link.link)}" target="_blank" class="violation-url-link">${this.escapeHtml(link.name)}</a>
+                  </li>
+                `
+                  )
+                  .join('')}
+              </ul>
+            </div>
+          `
+              : ''
+          }
           ${
             violation.nodes && violation.nodes.length > 0
               ? this.generateCollapsibleCode(violation.nodes, 'problem')
@@ -233,16 +296,76 @@ export class HtmlGeneratorService {
         (violation) => `
       <div class="violation">
         <div>
-          <h4 class="violation-title">${violation.id}</h4>
+          <h4 class="violation-title">${violation.title || violation.id}</h4>
+          ${violation.summary ? `<p class="violation-summary">${this.escapeHtml(violation.summary)}</p>` : ''}
           <p class="violation-desc">${violation.description}</p>
+          ${violation.explanation ? `<div class="violation-explanation"><p>${this.escapeHtml(violation.explanation)}</p></div>` : ''}
           <div class="mt-1">
             <div class="violation-item-meta">
               <span class="violation-impact">${violation.impact || 'unknown'} impact</span>
-              <div class="violation-url">
-                Help: <a href="${violation.helpUrl}" target="_blank" class="violation-url-link">${violation.help}</a>
-              </div>
             </div>
           </div>
+          ${
+            violation.wcag && violation.wcag.length > 0
+              ? `
+            <div class="wcag-section ai-section">
+              <h5 class="ai-section-title">WCAG Standards</h5>
+              <ul class="wcag-list">
+                ${violation.wcag
+                  .map(
+                    (wcag: any) => `
+                  <li>
+                    <strong>${this.escapeHtml(wcag.level)}</strong>: 
+                    <a href="${this.escapeHtml(wcag.link)}" target="_blank" class="violation-url-link">${this.escapeHtml(wcag.name)}</a>
+                  </li>
+                `
+                  )
+                  .join('')}
+              </ul>
+            </div>
+          `
+              : ''
+          }
+          ${
+            violation.act_rules && violation.act_rules.length > 0
+              ? `
+            <div class="act-rules-section ai-section">
+              <h5 class="ai-section-title">ACT Rules</h5>
+              <ul class="wcag-list">
+                ${violation.act_rules
+                  .map(
+                    (rule: any) => `
+                  <li>
+                    <a href="${this.escapeHtml(rule.link)}" target="_blank" class="violation-url-link">${this.escapeHtml(rule.name)}</a>
+                  </li>
+                `
+                  )
+                  .join('')}
+              </ul>
+            </div>
+          `
+              : ''
+          }
+          ${
+            violation.supporting_links && violation.supporting_links.length > 0
+              ? `
+            <div class="supporting-links-section ai-section">
+              <h5 class="ai-section-title">Additional Resources</h5>
+              <ul class="wcag-list">
+                ${violation.supporting_links
+                  .map(
+                    (link: any) => `
+                  <li>
+                    <a href="${this.escapeHtml(link.link)}" target="_blank" class="violation-url-link">${this.escapeHtml(link.name)}</a>
+                  </li>
+                `
+                  )
+                  .join('')}
+              </ul>
+            </div>
+          `
+              : ''
+          }
           ${
             violation.nodes && violation.nodes.length > 0
               ? this.generateCollapsibleCode(violation.nodes, 'problem')
@@ -385,36 +508,107 @@ export class HtmlGeneratorService {
               .map(
                 (violation: any) => `
               <div class="violation-item">
-                <h5 class="violation-item-id">${this.escapeHtml(violation.id)}</h5>
+                <h5 class="violation-item-id">${this.escapeHtml(violation.title || violation.id)}</h5>
+                ${violation.summary ? `<p class="violation-item-summary">${this.escapeHtml(violation.summary)}</p>` : ''}
                 <p class="violation-item-desc">${this.escapeHtml(violation.description)}</p>
+                ${violation.explanation ? `<div class="violation-explanation"><p>${this.escapeHtml(violation.explanation)}</p></div>` : ''}
                 <div class="violation-item-meta">
                   <span class="violation-impact">${violation.impact || 'unknown'} impact</span>
-                  <a href="${this.escapeHtml(violation.helpUrl)}" target="_blank" class="violation-help">
-                    Help: ${this.escapeHtml(violation.help)}
-                  </a>
                 </div>
+                ${
+                  violation.wcag && violation.wcag.length > 0
+                    ? `
+                  <div class="wcag-section ai-section">
+                    <h5 class="ai-section-title">WCAG Standards</h5>
+                    <ul class="wcag-list">
+                      ${violation.wcag
+                        .map(
+                          (wcag: any) => `
+                        <li>
+                          <strong>${this.escapeHtml(wcag.level)}</strong>: 
+                          <a href="${this.escapeHtml(wcag.link)}" target="_blank" class="violation-url-link">${this.escapeHtml(wcag.name)}</a>
+                        </li>
+                      `
+                        )
+                        .join('')}
+                    </ul>
+                  </div>
+                `
+                    : ''
+                }
+                ${
+                  violation.act_rules && violation.act_rules.length > 0
+                    ? `
+                  <div class="act-rules-section ai-section">
+                    <h5 class="ai-section-title">ACT Rules</h5>
+                    <ul class="wcag-list">
+                      ${violation.act_rules
+                        .map(
+                          (rule: any) => `
+                        <li>
+                          <a href="${this.escapeHtml(rule.link)}" target="_blank" class="violation-url-link">${this.escapeHtml(rule.name)}</a>
+                        </li>
+                      `
+                        )
+                        .join('')}
+                    </ul>
+                  </div>
+                `
+                    : ''
+                }
+                ${
+                  violation.supporting_links &&
+                  violation.supporting_links.length > 0
+                    ? `
+                  <div class="supporting-links-section ai-section">
+                    <h5 class="ai-section-title">Additional Resources</h5>
+                    <ul class="wcag-list">
+                      ${violation.supporting_links
+                        .map(
+                          (link: any) => `
+                        <li>
+                          <a href="${this.escapeHtml(link.link)}" target="_blank" class="violation-url-link">${this.escapeHtml(link.name)}</a>
+                        </li>
+                      `
+                        )
+                        .join('')}
+                    </ul>
+                  </div>
+                `
+                    : ''
+                }
                 ${
                   violation.nodes && violation.nodes.length > 0
                     ? this.generateCollapsibleCode(violation.nodes, 'problem')
                     : ''
                 }
                 ${
+                  violation.userStory
+                    ? `
+                  <div class="ai-explanation ai-section">
+                    <h5 class="ai-section-title">User Story</h5>
+                    <div class="ai-section-text">${this.escapeHtml(violation.userStory)}</div>
+                  </div>
+                `
+                    : ''
+                }
+                ${
                   violation.aiExplanation
                     ? `
-                <div class="ai-explanation ai-section">
-                  <h5 class="ai-section-title">AI Explanation</h5>
-                  <div class="ai-section-text">${this.markdownToHtml(violation.aiExplanation)}</div>
-                </div>
+                  <div class="ai-explanation ai-section">
+                    <h5 class="ai-section-title">AI Explanation</h5>
+                    <div class="ai-section-text">${this.markdownToHtml(violation.aiExplanation)}</div>
+                  </div>
                 `
                     : ''
                 }
                 ${
                   violation.aiRemediation
                     ? `
-                <div class="ai-remediation ai-section">
-                  <h5 class="ai-section-title">Solution</h5>
-                  <div class="ai-section-text">${this.markdownToHtml(violation.aiRemediation)}</div>
-                </div>
+                  <div class="ai-remediation ai-section">
+                    <h5 class="ai-section-title">Solution</h5>
+                    <div class="ai-section-text">${this.markdownToHtml(violation.aiRemediation)}</div>
+                  </div>
                 `
                     : ''
                 }
@@ -567,11 +761,75 @@ export class HtmlGeneratorService {
                 .map(
                   (violation: any) => `
                 <div class="violation">
-                  <h5 class="violation-title">${violation.id}</h5>
-                  <p class="violation-desc">${violation.description}</p>
+                  <h5 class="violation-title">${this.escapeHtml(violation.title || violation.id)}</h5>
+                  ${violation.summary ? `<p class="violation-summary">${this.escapeHtml(violation.summary)}</p>` : ''}
+                  <p class="violation-desc">${this.escapeHtml(violation.description)}</p>
+                  ${violation.explanation ? `<div class="violation-explanation"><p>${this.escapeHtml(violation.explanation)}</p></div>` : ''}
                   <div class="mt-1">
                     <span class="violation-impact">${violation.impact || 'unknown'} impact</span>
                   </div>
+                  ${
+                    violation.wcag && violation.wcag.length > 0
+                      ? `
+                    <div class="wcag-section ai-section">
+                      <h5 class="ai-section-title">WCAG Standards</h5>
+                      <ul class="wcag-list">
+                        ${violation.wcag
+                          .map(
+                            (wcag: any) => `
+                          <li>
+                            <strong>${this.escapeHtml(wcag.level)}</strong>: 
+                            <a href="${this.escapeHtml(wcag.link)}" target="_blank" class="violation-url-link">${this.escapeHtml(wcag.name)}</a>
+                          </li>
+                        `
+                          )
+                          .join('')}
+                      </ul>
+                    </div>
+                  `
+                      : ''
+                  }
+                  ${
+                    violation.act_rules && violation.act_rules.length > 0
+                      ? `
+                    <div class="act-rules-section ai-section">
+                      <h5 class="ai-section-title">ACT Rules</h5>
+                      <ul class="wcag-list">
+                        ${violation.act_rules
+                          .map(
+                            (rule: any) => `
+                          <li>
+                            <a href="${this.escapeHtml(rule.link)}" target="_blank" class="violation-url-link">${this.escapeHtml(rule.name)}</a>
+                          </li>
+                        `
+                          )
+                          .join('')}
+                      </ul>
+                    </div>
+                  `
+                      : ''
+                  }
+                  ${
+                    violation.supporting_links &&
+                    violation.supporting_links.length > 0
+                      ? `
+                    <div class="supporting-links-section ai-section">
+                      <h5 class="ai-section-title">Additional Resources</h5>
+                      <ul class="wcag-list">
+                        ${violation.supporting_links
+                          .map(
+                            (link: any) => `
+                          <li>
+                            <a href="${this.escapeHtml(link.link)}" target="_blank" class="violation-url-link">${this.escapeHtml(link.name)}</a>
+                          </li>
+                        `
+                          )
+                          .join('')}
+                      </ul>
+                    </div>
+                  `
+                      : ''
+                  }
                   ${
                     violation.nodes && violation.nodes.length > 0
                       ? this.generateCollapsibleCode(violation.nodes, 'problem')

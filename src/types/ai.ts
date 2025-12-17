@@ -3,7 +3,7 @@ export interface AccessibilityIssue {
   impact: string;
   description: string;
   help: string;
-  helpUrl: string;
+  helpUrl?: string;
   nodes: Array<{
     target: string[];
     html: string;
@@ -12,6 +12,12 @@ export interface AccessibilityIssue {
 }
 
 export interface AIProcessedIssue extends AccessibilityIssue {
+  title?: string;
+  summary?: string;
+  explanation?: string;
+  wcag?: Array<{ level: string; name: string; link: string }>;
+  act_rules?: Array<{ name: string; link: string }>;
+  supporting_links?: Array<{ name: string; link: string }>;
   aiExplanation?: string;
   aiRemediation?: string;
   userStory?: string;
