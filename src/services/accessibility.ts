@@ -167,113 +167,6 @@ export class AccessibilityService {
 
         await this.scrollPageToWaitForAnimations(page);
 
-        const customRules = await this.customRulesLoader.loadCustomRules(
-          request.customRulesConfig,
-          request.customRulesPaths,
-          request.includeApprovedRules !== false
-        );
-
-        const axeRulesConfig: Record<string, AxeRuleConfigValue> = {};
-        if (request.disableDefaultRules) {
-          for (const ruleId of request.disableDefaultRules) {
-            axeRulesConfig[ruleId] = { enabled: false };
-          }
-        }
-        if (request.enableDefaultRules) {
-          for (const ruleId of request.enableDefaultRules) {
-            axeRulesConfig[ruleId] = { enabled: true };
-          }
-        }
-        if (request.rules) {
-          for (const ruleId of request.rules) {
-            axeRulesConfig[ruleId] = { enabled: true };
-          }
-        }
-
-        const axeResults = await Promise.race([
-          page.evaluate(
-            async (options) => {
-              try {
-                const script = eval('document').createElement('script');
-                script.src = 'https://unpkg.com/axe-core@4.8.2/axe.min.js';
-                eval('document').head.appendChild(script);
-
-                await new Promise((resolve) => {
-                  script.onload = resolve;
-                });
-
-                const axeOptions = {
-                  rules: options.rules || {},
-                  tags: options.tags || [],
-                };
-
-                return await eval('window').axe.run(
-                  eval('document'),
-                  axeOptions
-                );
-              } catch (error) {
-                logger.error('Axe error:', { error });
-                return null;
-              }
-            },
-            {
-              rules: axeRulesConfig,
-              tags: request.tags,
-            }
-          ),
-          new Promise((_, reject) => {
-            controller.signal.addEventListener('abort', () => {
-              reject(new Error('Axe evaluation timeout'));
-            });
-          }),
-        ]);
-
-        const customRuleResults: CustomRuleResult[] = [];
-
-        if (
-          customRules.axeRules.length > 0 ||
-          customRules.playwrightTests.length > 0
-        ) {
-          try {
-            if (customRules.axeRules.length > 0) {
-              const axe = await page.evaluate(() => {
-                const windowWithAxe = window as unknown as WindowWithAxe;
-                return windowWithAxe.axe;
-              });
-
-              if (axe) {
-                const axeRuleResults = await this.customRulesRunner.runAxeRules(
-                  customRules.axeRules,
-                  page,
-                  axe
-                );
-                customRuleResults.push(...axeRuleResults);
-              }
-            }
-
-            if (customRules.playwrightTests.length > 0) {
-              const playwrightContext = {
-                page,
-                url: request.url,
-                browser: this.browser,
-                timeout: request.timeout,
-              };
-
-              const playwrightResults =
-                await this.customRulesRunner.runPlaywrightTests(
-                  customRules.playwrightTests,
-                  playwrightContext
-                );
-              customRuleResults.push(...playwrightResults);
-            }
-          } catch (error) {
-            logger.error('Error running custom rules', {
-              error: error instanceof Error ? error.message : String(error),
-              stack: error instanceof Error ? error.stack : undefined,
-            });
-          }
-        }
-
         let screenshotUrl: string | undefined;
 
         if (request.includeScreenshot && !controller.signal.aborted) {
@@ -373,6 +266,131 @@ export class AccessibilityService {
           } catch (error) {
             logger.error('Screenshot error:', { error, url: request.url });
             screenshotUrl = undefined;
+          }
+        }
+
+        const customRules = await this.customRulesLoader.loadCustomRules(
+          request.customRulesConfig,
+          request.customRulesPaths,
+          request.includeApprovedRules !== false
+        );
+
+        const axeRulesConfig: Record<string, AxeRuleConfigValue> = {};
+        if (request.disableDefaultRules) {
+          for (const ruleId of request.disableDefaultRules) {
+            axeRulesConfig[ruleId] = { enabled: false };
+          }
+        }
+        if (request.enableDefaultRules) {
+          for (const ruleId of request.enableDefaultRules) {
+            axeRulesConfig[ruleId] = { enabled: true };
+          }
+        }
+        if (request.rules) {
+          for (const ruleId of request.rules) {
+            axeRulesConfig[ruleId] = { enabled: true };
+          }
+        }
+
+        const axeResults = await Promise.race([
+          page.evaluate(
+            async (options) => {
+              try {
+                const script = eval('document').createElement('script');
+                script.src = 'https://unpkg.com/axe-core@4.8.2/axe.min.js';
+                eval('document').head.appendChild(script);
+
+                await new Promise((resolve) => {
+                  script.onload = resolve;
+                });
+
+                const axeOptions = {
+                  rules: options.rules || {},
+                  tags: options.tags || [],
+                };
+
+                return await eval('window').axe.run(
+                  eval('document'),
+                  axeOptions
+                );
+              } catch (error) {
+                logger.error('Axe error:', { error });
+                return null;
+              }
+            },
+            {
+              rules: axeRulesConfig,
+              tags: request.tags,
+            }
+          ),
+          new Promise((_, reject) => {
+            controller.signal.addEventListener('abort', () => {
+              reject(new Error('Axe evaluation timeout'));
+            });
+          }),
+        ]);
+
+        const customRuleResults: CustomRuleResult[] = [];
+
+        if (
+          customRules.axeRules.length > 0 ||
+          customRules.playwrightTests.length > 0
+        ) {
+          try {
+            if (customRules.axeRules.length > 0) {
+              const axe = await page.evaluate(() => {
+                const windowWithAxe = window as unknown as WindowWithAxe;
+                return windowWithAxe.axe;
+              });
+
+              if (axe) {
+                const axeRuleResults = await this.customRulesRunner.runAxeRules(
+                  customRules.axeRules,
+                  page,
+                  axe
+                );
+                customRuleResults.push(...axeRuleResults);
+              }
+            }
+
+            if (customRules.playwrightTests.length > 0) {
+              let testsToRun = customRules.playwrightTests;
+
+              if (
+                request.customTests !== undefined &&
+                request.customTests.length > 0
+              ) {
+                testsToRun = customRules.playwrightTests.filter((test) =>
+                  request.customTests!.includes(test.id)
+                );
+              }
+
+              if (testsToRun.length > 0) {
+                const playwrightContext = {
+                  page,
+                  url: request.url,
+                  browser: this.browser,
+                  timeout: request.timeout,
+                  enableAI: request.enableAI,
+                  aiApiKey: request.aiApiKey,
+                  model: request.model,
+                  storageService: this.storageService,
+                  cacheService: this.cacheService,
+                };
+
+                const playwrightResults =
+                  await this.customRulesRunner.runPlaywrightTests(
+                    testsToRun,
+                    playwrightContext
+                  );
+                customRuleResults.push(...playwrightResults);
+              }
+            }
+          } catch (error) {
+            logger.error('Error running custom rules', {
+              error: error instanceof Error ? error.message : String(error),
+              stack: error instanceof Error ? error.stack : undefined,
+            });
           }
         }
 

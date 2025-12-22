@@ -1,5 +1,4 @@
 import { AccessibilityResult } from './accessibility';
-import { ResponsiveTestResult } from './responsive';
 import { AIProcessedIssue } from './ai';
 
 export interface CombinedRequest {
@@ -18,12 +17,6 @@ export interface CombinedPageResult
     error?: string;
     processingTime?: number;
   };
-  responsive?:
-    | ResponsiveTestResult
-    | {
-        error: string;
-        passed: false;
-      };
 }
 
 export interface CombinedResponse {

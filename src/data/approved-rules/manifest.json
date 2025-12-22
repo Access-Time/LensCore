@@ -40,6 +40,14 @@
       "description": "Ensures form elements have associated labels",
       "enabled": true,
       "source": "playwright/form-label-association.js"
+    },
+    {
+      "type": "playwright",
+      "id": "responsive",
+      "name": "Responsive Design Test",
+      "description": "Tests responsive design by taking screenshots at different viewport sizes and analyzing them with AI",
+      "enabled": true,
+      "source": "playwright/responsive.js"
     }
   ]
 }

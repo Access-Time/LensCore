@@ -1,17 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
 import { CrawlingService } from '../../services/crawling';
 import { AccessibilityService } from '../../services/accessibility';
-import { ResponsiveService } from '../../services/responsive';
 import { aiService } from '../../services/ai';
 import { AccessibilityRequest } from '../../types';
 import { CombinedPageResult } from '../../types/combined';
 import { combinedRequestSchema } from '../schemas';
 import { env } from '../../utils/env';
-import logger from '../../utils/logger';
 
 const crawlingService = new CrawlingService();
 const accessibilityService = new AccessibilityService();
-const responsiveService = new ResponsiveService();
 
 export const combinedHandler = async (
   req: Request,
@@ -29,20 +26,25 @@ export const combinedHandler = async (
 
     const skipCache =
       req.body.skipCache === true || request.testOptions?.skipCache === true;
-    const customTests = request.testOptions?.customTests || [];
+    const enableAI = req.body.enableAI === true;
+    const aiApiKey = req.body.aiApiKey || env.OPENAI_API_KEY;
     const testRequests: AccessibilityRequest[] = crawlResult.pages.map(
       (page) => ({
         url: page.url,
-        includeScreenshot: true,
         skipCache,
-        customTests,
+        customTests: request.testOptions?.customTests,
         customRulesConfig: request.testOptions?.customRulesConfig,
         customRulesPaths: request.testOptions?.customRulesPaths,
         disableDefaultRules: request.testOptions?.disableDefaultRules,
         enableDefaultRules: request.testOptions?.enableDefaultRules,
         includeApprovedRules:
           request.testOptions?.includeApprovedRules !== false,
+        enableAI,
+        aiApiKey: enableAI ? aiApiKey : undefined,
+        model: req.body.model || env.OPENAI_MODEL,
         ...(request.testOptions || {}),
+        includeScreenshot:
+          request.testOptions?.includeScreenshot !== false,
       })
     );
 
@@ -51,8 +53,6 @@ export const combinedHandler = async (
 
     const totalTime = Date.now() - startTime;
 
-    const enableAI = req.body.enableAI === true;
-    const aiApiKey = req.body.aiApiKey || env.OPENAI_API_KEY;
     const projectContext = req.body.projectContext;
 
     if (enableAI && !aiApiKey) {
@@ -86,41 +86,6 @@ export const combinedHandler = async (
           metadata: aiResult.metadata,
           customRules: result.customRules || [],
         };
-
-        if (customTests.includes('responsive')) {
-          if (!aiApiKey) {
-            response.responsive = {
-              error: 'AI API key is required for responsive testing',
-              passed: false,
-            };
-          } else {
-            try {
-              if ((req as Request & { signal?: AbortSignal }).signal?.aborted) {
-                throw new Error('Request aborted');
-              }
-
-              const responsiveResult = await responsiveService.testResponsive({
-                url: result.url,
-                timeout: request.testOptions?.timeout || 30000,
-                skipCache,
-                aiApiKey,
-              });
-              response.responsive = responsiveResult;
-            } catch (error) {
-              if ((req as Request & { signal?: AbortSignal }).signal?.aborted) {
-                throw error;
-              }
-              logger.warn('Responsive test failed for page', {
-                url: result.url,
-                error: error instanceof Error ? error.message : 'Unknown error',
-              });
-              response.responsive = {
-                error: error instanceof Error ? error.message : 'Unknown error',
-                passed: false,
-              };
-            }
-          }
-        }
 
         return response;
       })

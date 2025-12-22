@@ -1,4 +1,3 @@
-import { ResponsiveTestResult } from './responsive';
 import { AIProcessedIssue } from './ai';
 import { CustomRuleResult } from './custom-rules';
 
@@ -34,11 +33,15 @@ export interface AccessibilityRequest {
   includeScreenshot?: boolean;
   rules?: string[];
   tags?: string[];
+  customTests?: string[];
   customRulesConfig?: string[];
   customRulesPaths?: string[];
   disableDefaultRules?: string[];
   enableDefaultRules?: string[];
   includeApprovedRules?: boolean;
+  enableAI?: boolean;
+  aiApiKey?: string;
+  model?: string;
 }
 
 export interface AccessibilityResponse {
@@ -57,11 +60,5 @@ export interface AccessibilityTestResponse
     error?: string;
     processingTime?: number;
   };
-  responsive?:
-    | ResponsiveTestResult
-    | {
-        error: string;
-        passed: false;
-      };
   customRules?: CustomRuleResult[];
 }
