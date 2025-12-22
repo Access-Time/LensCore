@@ -76,11 +76,11 @@ export class CustomRulesRunner {
     try {
       const approvedRulesPath = PathConfig.getApprovedRulesPath();
       const manifestPath = join(approvedRulesPath, 'manifest.json');
-      
+
       if (existsSync(manifestPath)) {
         const manifestContent = await readFile(manifestPath, 'utf-8');
         const manifest: CustomRulesManifest = JSON.parse(manifestContent);
-        
+
         for (const rule of manifest.rules) {
           if (rule.enabled && rule.type === 'axe') {
             approvedIds.add(rule.id);

@@ -5,6 +5,8 @@ import {
 } from '../../../types/custom-rules';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs/promises';
+import os from 'os';
+import { join } from 'path';
 import { createOpenAIService } from '../../../utils/openai';
 
 interface Viewport {
@@ -135,7 +137,10 @@ const responsiveRule: CustomPlaywrightTest = {
         const screenshot = await page.screenshot({ fullPage: true });
         const screenshotId = uuidv4();
         const screenshotKey = `screenshots/responsive/${screenshotId}-${viewport.name}.png`;
-        const tempPath = `/tmp/${screenshotId}-${viewport.name}.png`;
+        const tempPath = join(
+          os.tmpdir(),
+          `${screenshotId}-${viewport.name}.png`
+        );
 
         await fs.writeFile(tempPath, screenshot);
         const screenshotUrl = await storageService.uploadFile(
