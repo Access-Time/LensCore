@@ -59,7 +59,7 @@ docker run -d \
   --name lenscore \
   -p 3001:3001 \
   --env-file .env \
-  accesstime/lenscore:latest
+  accesstimeco/lenscore:latest
 ```
 
 ### Using Docker (Recommended)

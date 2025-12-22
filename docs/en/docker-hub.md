@@ -12,7 +12,7 @@ docker run -d \
   -p 3001:3001 \
   -e PORT=3001 \
   -e NODE_ENV=production \
-  accesstime/lenscore:latest
+  accesstimeco/lenscore:latest
 ```
 
 ### Using Environment File
@@ -24,7 +24,7 @@ docker run -d \
   --name lenscore \
   -p 3001:3001 \
   --env-file .env \
-  accesstime/lenscore:latest
+  accesstimeco/lenscore:latest
 ```
 
 ### With Persistent Storage
@@ -38,7 +38,7 @@ docker run -d \
   -v $(pwd)/storage:/app/storage \
   -v $(pwd)/logs:/app/logs \
   --env-file .env \
-  accesstime/lenscore:latest
+  accesstimeco/lenscore:latest
 ```
 
 ### Using Specific Version
@@ -49,7 +49,7 @@ Use a specific version tag instead of `latest`:
 docker run -d \
   --name lenscore \
   -p 3001:3001 \
-  accesstime/lenscore:0.1.68
+  accesstimeco/lenscore:0.1.68
 ```
 
 ## Verify Installation
@@ -88,12 +88,12 @@ docker rm lenscore
 ```bash
 docker stop lenscore
 docker rm lenscore
-docker pull accesstime/lenscore:latest
+docker pull accesstimeco/lenscore:latest
 docker run -d \
   --name lenscore \
   -p 3001:3001 \
   --env-file .env \
-  accesstime/lenscore:latest
+  accesstimeco/lenscore:latest
 ```
 
 ### Update to Specific Version
@@ -101,12 +101,12 @@ docker run -d \
 ```bash
 docker stop lenscore
 docker rm lenscore
-docker pull accesstime/lenscore:0.1.76
+docker pull accesstimeco/lenscore:0.1.76
 docker run -d \
   --name lenscore \
   -p 3001:3001 \
   --env-file .env \
-  accesstime/lenscore:0.1.76
+  accesstimeco/lenscore:0.1.76
 ```
 
 ## Using Docker Compose
@@ -118,7 +118,7 @@ version: '3.9'
 
 services:
   lenscore:
-    image: accesstime/lenscore:latest
+    image: accesstimeco/lenscore:latest
     container_name: lenscore-app
     ports:
       - '3001:3001'
@@ -151,7 +151,7 @@ version: '3.9'
 
 services:
   lenscore:
-    image: accesstime/lenscore:latest
+    image: accesstimeco/lenscore:latest
     container_name: lenscore-app
     ports:
       - '3001:3001'
@@ -265,7 +265,7 @@ Change the port mapping:
 docker run -d \
   --name lenscore \
   -p 3002:3001 \
-  accesstime/lenscore:latest
+  accesstimeco/lenscore:latest
 ```
 
 ### Permission Issues

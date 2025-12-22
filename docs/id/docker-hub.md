@@ -12,7 +12,7 @@ docker run -d \
   -p 3001:3001 \
   -e PORT=3001 \
   -e NODE_ENV=production \
-  accesstime/lenscore:latest
+  accesstimeco/lenscore:latest
 ```
 
 ### Menggunakan File Environment
@@ -24,7 +24,7 @@ docker run -d \
   --name lenscore \
   -p 3001:3001 \
   --env-file .env \
-  accesstime/lenscore:latest
+  accesstimeco/lenscore:latest
 ```
 
 ### Dengan Persistent Storage
@@ -38,7 +38,7 @@ docker run -d \
   -v $(pwd)/storage:/app/storage \
   -v $(pwd)/logs:/app/logs \
   --env-file .env \
-  accesstime/lenscore:latest
+  accesstimeco/lenscore:latest
 ```
 
 ### Menggunakan Versi Spesifik
@@ -49,7 +49,7 @@ Gunakan tag versi spesifik daripada `latest`:
 docker run -d \
   --name lenscore \
   -p 3001:3001 \
-  accesstime/lenscore:0.1.68
+  accesstimeco/lenscore:0.1.68
 ```
 
 ## Verifikasi Instalasi
@@ -88,12 +88,12 @@ docker rm lenscore
 ```bash
 docker stop lenscore
 docker rm lenscore
-docker pull accesstime/lenscore:latest
+docker pull accesstimeco/lenscore:latest
 docker run -d \
   --name lenscore \
   -p 3001:3001 \
   --env-file .env \
-  accesstime/lenscore:latest
+  accesstimeco/lenscore:latest
 ```
 
 ### Update ke Versi Spesifik
@@ -101,12 +101,12 @@ docker run -d \
 ```bash
 docker stop lenscore
 docker rm lenscore
-docker pull accesstime/lenscore:0.1.76
+docker pull accesstimeco/lenscore:0.1.76
 docker run -d \
   --name lenscore \
   -p 3001:3001 \
   --env-file .env \
-  accesstime/lenscore:0.1.76
+  accesstimeco/lenscore:0.1.76
 ```
 
 ## Menggunakan Docker Compose
@@ -118,7 +118,7 @@ version: '3.9'
 
 services:
   lenscore:
-    image: accesstime/lenscore:latest
+    image: accesstimeco/lenscore:latest
     container_name: lenscore-app
     ports:
       - '3001:3001'
@@ -151,7 +151,7 @@ version: '3.9'
 
 services:
   lenscore:
-    image: accesstime/lenscore:latest
+    image: accesstimeco/lenscore:latest
     container_name: lenscore-app
     ports:
       - '3001:3001'
@@ -265,7 +265,7 @@ Ubah port mapping:
 docker run -d \
   --name lenscore \
   -p 3002:3001 \
-  accesstime/lenscore:latest
+  accesstimeco/lenscore:latest
 ```
 
 ### Masalah Permission
