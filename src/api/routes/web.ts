@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Router, static as expressStatic } from 'express';
-import { join, dirname } from 'path';
+import { join, dirname, resolve, normalize } from 'path';
 import fs from 'fs';
 import { env } from '../../utils/env';
 import { PathConfig } from '../../config/paths';
@@ -59,6 +59,23 @@ function findScreenshotsDir(): string {
     }
   });
   return foundPath || possiblePaths[0]!;
+}
+
+function sanitizeFilename(filename: string): string {
+  // Decode URL-encoded characters
+  try {
+    filename = decodeURIComponent(filename);
+  } catch {
+    // If decoding fails, use original
+  }
+  // Normalize path to resolve any traversal attempts
+  return normalize(filename).replace(/\\/g, '/');
+}
+
+function isPathSafe(filePath: string, baseDir: string): boolean {
+  const resolvedPath = resolve(filePath);
+  const resolvedBase = resolve(baseDir);
+  return resolvedPath.startsWith(resolvedBase);
 }
 
 /**
@@ -128,17 +145,26 @@ router.get(
     try {
       const { filename } = req.params;
 
+      if (!filename) {
+        return res.status(400).json({ error: 'Invalid filename' });
+      }
+
+      const sanitizedFilename = sanitizeFilename(filename);
       if (
-        !filename ||
-        filename.includes('..') ||
-        filename.includes('\\') ||
-        filename.includes('/')
+        sanitizedFilename.includes('..') ||
+        sanitizedFilename.includes('\\') ||
+        sanitizedFilename.includes('/')
       ) {
         return res.status(400).json({ error: 'Invalid filename' });
       }
 
       const screenshotsDir = findScreenshotsDir();
-      const filePath = join(screenshotsDir, 'responsive', filename);
+      const filePath = join(screenshotsDir, 'responsive', sanitizedFilename);
+
+      // Validate path is within screenshots directory
+      if (!isPathSafe(filePath, screenshotsDir)) {
+        return res.status(400).json({ error: 'Invalid filename' });
+      }
 
       if (!fs.existsSync(filePath)) {
         return res.status(404).json({ error: 'Screenshot not found' });
@@ -162,17 +188,26 @@ router.get('/storage/screenshots/:filename', (req: any, res: any) => {
   try {
     const { filename } = req.params;
 
+    if (!filename) {
+      return res.status(400).json({ error: 'Invalid filename' });
+    }
+
+    const sanitizedFilename = sanitizeFilename(filename);
     if (
-      !filename ||
-      filename.includes('..') ||
-      filename.includes('\\') ||
-      filename.includes('/')
+      sanitizedFilename.includes('..') ||
+      sanitizedFilename.includes('\\') ||
+      sanitizedFilename.includes('/')
     ) {
       return res.status(400).json({ error: 'Invalid filename' });
     }
 
     const screenshotsDir = findScreenshotsDir();
-    const filePath = join(screenshotsDir, filename);
+    const filePath = join(screenshotsDir, sanitizedFilename);
+
+    // Validate path is within screenshots directory
+    if (!isPathSafe(filePath, screenshotsDir)) {
+      return res.status(400).json({ error: 'Invalid filename' });
+    }
 
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({ error: 'Screenshot not found' });

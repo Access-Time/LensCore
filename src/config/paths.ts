@@ -167,12 +167,10 @@ export class PathConfig {
 
     if (storagePath) {
       paths.unshift(join(resolve(storagePath), this.SCREENSHOTS_DIR));
-      paths.push(
-        join(resolve(storagePath || './storage'), this.SCREENSHOTS_DIR)
-      );
+      paths.push(join(resolve(storagePath), this.SCREENSHOTS_DIR));
     }
 
-    return paths.filter((p): p is string => p !== null);
+    return paths;
   }
 
   static getDockerComposePaths(): string[] {

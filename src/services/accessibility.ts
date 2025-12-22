@@ -1,6 +1,8 @@
 import { chromium, Browser, Page, LaunchOptions } from 'playwright';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs/promises';
+import os from 'os';
+import { join } from 'path';
 import {
   AccessibilityRequest,
   AccessibilityResponse,
@@ -171,63 +173,11 @@ export class AccessibilityService {
 
         if (request.includeScreenshot && !controller.signal.aborted) {
           try {
-            await page.evaluate(async () => {
-              const scrollHeight = document.documentElement.scrollHeight;
-              const viewportHeight = window.innerHeight;
-
-              if (scrollHeight > viewportHeight) {
-                const scrollSteps = Math.max(
-                  3,
-                  Math.ceil(scrollHeight / viewportHeight)
-                );
-                const stepDelay = 300;
-                const finalDelay = 500;
-
-                for (let i = 0; i <= scrollSteps; i++) {
-                  const progress = i / scrollSteps;
-                  const targetScroll = Math.floor(scrollHeight * progress);
-                  window.scrollTo({
-                    top: targetScroll,
-                    behavior: 'smooth',
-                  });
-                  await new Promise((resolve) =>
-                    setTimeout(resolve, stepDelay)
-                  );
-                }
-
-                window.scrollTo({
-                  top: scrollHeight,
-                  behavior: 'smooth',
-                });
-                await new Promise((resolve) => setTimeout(resolve, finalDelay));
-
-                for (let i = scrollSteps; i >= 0; i--) {
-                  const progress = i / scrollSteps;
-                  const targetScroll = Math.floor(scrollHeight * progress);
-                  window.scrollTo({
-                    top: targetScroll,
-                    behavior: 'smooth',
-                  });
-                  await new Promise((resolve) =>
-                    setTimeout(resolve, stepDelay)
-                  );
-                }
-
-                window.scrollTo({
-                  top: 0,
-                  behavior: 'smooth',
-                });
-                await new Promise((resolve) => setTimeout(resolve, finalDelay));
-              } else {
-                await new Promise((resolve) => setTimeout(resolve, 500));
-              }
-            });
-
             await page.waitForTimeout(500);
 
             const screenshot = await page.screenshot({ fullPage: true });
             const screenshotKey = `screenshots/${uuidv4()}.png`;
-            const tempPath = `/tmp/${uuidv4()}.png`;
+            const tempPath = join(os.tmpdir(), `${uuidv4()}.png`);
 
             await fs.writeFile(tempPath, screenshot);
             screenshotUrl = await this.storageService.uploadFile(

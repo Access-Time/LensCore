@@ -1,6 +1,7 @@
 import { readFile, readdir } from 'fs/promises';
-import { join, extname, basename } from 'path';
+import { join, extname, basename, isAbsolute, resolve } from 'path';
 import { existsSync } from 'fs';
+import { pathToFileURL } from 'url';
 import {
   CustomRuleConfig,
   CustomAxeRule,
@@ -111,7 +112,22 @@ export class CustomRulesLoader {
           continue;
         }
 
-        const rulePath = join(this.approvedRulesPath, rule.source);
+        let rulePath = join(this.approvedRulesPath, rule.source);
+
+        // Try alternate extension if file doesn't exist
+        if (!existsSync(rulePath)) {
+          if (rule.source.endsWith('.js')) {
+            const tsPath = rulePath.replace(/\.js$/, '.ts');
+            if (existsSync(tsPath)) {
+              rulePath = tsPath;
+            }
+          } else if (rule.source.endsWith('.ts')) {
+            const jsPath = rulePath.replace(/\.ts$/, '.js');
+            if (existsSync(jsPath)) {
+              rulePath = jsPath;
+            }
+          }
+        }
 
         if (!existsSync(rulePath)) {
           continue;
@@ -317,31 +333,27 @@ export class CustomRulesLoader {
     }
 
     try {
-      const pathModule = await import('path');
-      const urlModule = await import('url');
-      const resolvedPath = pathModule.default.isAbsolute(filePath)
-        ? filePath
-        : pathModule.default.resolve(filePath);
+      const resolvedPath = isAbsolute(filePath) ? filePath : resolve(filePath);
 
       let module: { default?: unknown; [key: string]: unknown };
       const ext = extname(resolvedPath);
 
       if (ext === '.mjs') {
         try {
-          const fileUrl = urlModule.pathToFileURL(resolvedPath).href;
+          const fileUrl = pathToFileURL(resolvedPath).href;
           module = await import(fileUrl);
         } catch {
           try {
             module = await import(resolvedPath);
           } catch {
-            const absolutePath = pathModule.default.resolve(resolvedPath);
-            const fileUrl2 = urlModule.pathToFileURL(absolutePath).toString();
+            const absolutePath = resolve(resolvedPath);
+            const fileUrl2 = pathToFileURL(absolutePath).toString();
             module = await import(fileUrl2);
           }
         }
       } else {
         try {
-          const fileUrl = urlModule.pathToFileURL(resolvedPath).href;
+          const fileUrl = pathToFileURL(resolvedPath).href;
           module = await import(fileUrl);
         } catch {
           module = await import(resolvedPath);

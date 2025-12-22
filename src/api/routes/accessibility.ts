@@ -32,10 +32,6 @@ export const testHandler = async (
 
     const accessibilityRequest: AccessibilityRequest = {
       ...request,
-      customRulesConfig: request.customRulesConfig,
-      customRulesPaths: request.customRulesPaths,
-      disableDefaultRules: request.disableDefaultRules,
-      enableDefaultRules: request.enableDefaultRules,
       includeApprovedRules: request.includeApprovedRules !== false,
       enableAI,
       aiApiKey: enableAI ? aiApiKey : undefined,

@@ -52,12 +52,13 @@ const formLabelAssociationRule: CustomPlaywrightTest = {
           }
 
           if (!hasLabel && inputName) {
-            const label = document.querySelector(
-              `label[for="${inputName}"]`
+            // Check if input is nested within a label element
+            const parentLabel = (element as HTMLElement).closest(
+              'label'
             ) as HTMLLabelElement | null;
-            if (label) {
+            if (parentLabel) {
               hasLabel = true;
-              labelText = label.textContent || '';
+              labelText = parentLabel.textContent || '';
             }
           }
 

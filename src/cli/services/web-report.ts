@@ -64,9 +64,6 @@ export class WebReportService {
         const parts = url.split('screenshots/');
         const fileName = parts[parts.length - 1];
         if (fileName && fileName !== url) {
-          if (fileName.startsWith('responsive/')) {
-            return `/storage/screenshots/${fileName}`;
-          }
           return `/storage/screenshots/${fileName}`;
         }
       }
