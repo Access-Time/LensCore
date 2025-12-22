@@ -119,6 +119,34 @@ router.get('/styles/report.css', (_req: any, res: any) => {
 });
 
 /**
+ * Serve responsive screenshots
+ * GET /storage/screenshots/responsive/:filename
+ */
+router.get('/storage/screenshots/responsive/:filename', (req: any, res: any) => {
+  try {
+    const { filename } = req.params;
+
+    if (!filename || filename.includes('..') || filename.includes('\\') || filename.includes('/')) {
+      return res.status(400).json({ error: 'Invalid filename' });
+    }
+
+    const screenshotsDir = findScreenshotsDir();
+    const filePath = join(screenshotsDir, 'responsive', filename);
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'Screenshot not found' });
+    }
+
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+
+    res.sendFile(filePath);
+  } catch {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
  * Serve screenshots
  * GET /storage/screenshots/:filename
  */
@@ -126,20 +154,15 @@ router.get('/storage/screenshots/:filename', (req: any, res: any) => {
   try {
     const { filename } = req.params;
 
-    if (!filename || filename.includes('..') || filename.includes('\\')) {
+    if (!filename || filename.includes('..') || filename.includes('\\') || filename.includes('/')) {
       return res.status(400).json({ error: 'Invalid filename' });
     }
 
     const screenshotsDir = findScreenshotsDir();
-    let filePath = join(screenshotsDir, filename);
+    const filePath = join(screenshotsDir, filename);
 
     if (!fs.existsSync(filePath)) {
-      const responsivePath = join(screenshotsDir, 'responsive', filename);
-      if (fs.existsSync(responsivePath)) {
-        filePath = responsivePath;
-      } else {
-        return res.status(404).json({ error: 'Screenshot not found' });
-      }
+      return res.status(404).json({ error: 'Screenshot not found' });
     }
 
     res.setHeader('Content-Type', 'image/png');

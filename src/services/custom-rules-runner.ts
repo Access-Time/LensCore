@@ -238,16 +238,48 @@ export class CustomRulesRunner {
     const violations: CustomTestResult[] = [];
 
     if (!testResult.passed) {
-      violations.push({
-        id: testResult.id,
-        name: testResult.name,
-        passed: false,
-        severity: testResult.severity,
-        description: testResult.description,
-        nodes: testResult.nodes,
-        error: testResult.error,
-        metadata: testResult.metadata,
-      });
+      if (
+        testResult.metadata &&
+        Array.isArray(testResult.metadata['issues']) &&
+        testResult.metadata['issues'].length > 0
+      ) {
+        for (const issue of testResult.metadata['issues']) {
+          violations.push({
+            id: testResult.id,
+            name: testResult.name,
+            passed: false,
+            severity: issue.severity || testResult.severity,
+            description: `${issue.type} on ${issue.viewport}: ${issue.description}`,
+            nodes: issue.element
+              ? [
+                  {
+                    target: [issue.element],
+                    html: '',
+                    failureSummary: `${issue.type} on ${issue.viewport}: ${issue.description}${issue.remediation ? ` - ${issue.remediation}` : ''}`,
+                  },
+                ]
+              : undefined,
+            metadata: {
+              type: issue.type,
+              viewport: issue.viewport,
+              element: issue.element,
+              remediation: issue.remediation,
+              ...testResult.metadata,
+            },
+          });
+        }
+      } else {
+        violations.push({
+          id: testResult.id,
+          name: testResult.name,
+          passed: false,
+          severity: testResult.severity,
+          description: testResult.description,
+          nodes: testResult.nodes,
+          error: testResult.error,
+          metadata: testResult.metadata,
+        });
+      }
     }
 
     const result: CustomRuleResult = {

@@ -49,6 +49,11 @@ export interface PlaywrightTestContext {
   url: string;
   browser: any;
   timeout?: number;
+  enableAI?: boolean;
+  aiApiKey?: string;
+  model?: string;
+  storageService?: any;
+  cacheService?: any;
 }
 
 export interface CustomTestResult {

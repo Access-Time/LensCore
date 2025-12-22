@@ -2,14 +2,12 @@ import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { AccessibilityService } from '../../services/accessibility';
 import { aiService } from '../../services/ai';
-import { ResponsiveService } from '../../services/responsive';
 import { accessibilityRequestSchema } from '../schemas';
 import { env } from '../../utils/env';
 import { AccessibilityRequest, AccessibilityTestResponse } from '../../types';
 import { ProjectContext } from '../../utils/ai-prompts';
 
 const accessibilityService = new AccessibilityService();
-const responsiveService = new ResponsiveService();
 
 export const testHandler = async (
   req: Request,
@@ -22,7 +20,6 @@ export const testHandler = async (
     const enableAI = req.body.enableAI === true;
     const aiApiKey = req.body.aiApiKey || env.OPENAI_API_KEY;
     const projectContext = req.body.projectContext;
-    const customTests = request.customTests || [];
 
     if (enableAI && !aiApiKey) {
       res.status(400).json({
@@ -40,6 +37,9 @@ export const testHandler = async (
       disableDefaultRules: request.disableDefaultRules,
       enableDefaultRules: request.enableDefaultRules,
       includeApprovedRules: request.includeApprovedRules !== false,
+      enableAI,
+      aiApiKey: enableAI ? aiApiKey : undefined,
+      model: req.body.model || env.OPENAI_MODEL,
     };
 
     const testResult =
@@ -65,30 +65,6 @@ export const testHandler = async (
         customRules: testResult.customRules || [],
       };
 
-      if (customTests.includes('responsive')) {
-        if (!aiApiKey) {
-          response.responsive = {
-            error: 'AI API key is required for responsive testing',
-            passed: false,
-          };
-        } else {
-          try {
-            const responsiveResult = await responsiveService.testResponsive({
-              url: request.url,
-              timeout: request.timeout,
-              skipCache: request.skipCache,
-              aiApiKey,
-            });
-            response.responsive = responsiveResult;
-          } catch (error) {
-            response.responsive = {
-              error: error instanceof Error ? error.message : 'Unknown error',
-              passed: false,
-            };
-          }
-        }
-      }
-
       res.json(response);
     } else {
       const aiResult = await aiService.processAccessibilityIssues(
@@ -109,30 +85,6 @@ export const testHandler = async (
         metadata: aiResult.metadata,
         customRules: testResult.customRules || [],
       };
-
-      if (customTests.includes('responsive')) {
-        if (!aiApiKey) {
-          response.responsive = {
-            error: 'AI API key is required for responsive testing',
-            passed: false,
-          };
-        } else {
-          try {
-            const responsiveResult = await responsiveService.testResponsive({
-              url: request.url,
-              timeout: request.timeout,
-              skipCache: request.skipCache,
-              aiApiKey,
-            });
-            response.responsive = responsiveResult;
-          } catch (error) {
-            response.responsive = {
-              error: error instanceof Error ? error.message : 'Unknown error',
-              passed: false,
-            };
-          }
-        }
-      }
 
       res.json(response);
     }

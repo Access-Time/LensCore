@@ -415,6 +415,44 @@ export class HtmlGeneratorService {
       .join('');
   }
 
+  static generateTestSections(testData: any): string {
+    let html = '';
+
+    // Violations section
+    html += `
+      <div class="card">
+        <h2 class="section-title">Violations</h2>
+        <div>${this.generateTestViolationsSection(testData.violations || [])}</div>
+      </div>
+    `;
+
+    // Passed Checks section
+    html += `
+      <div class="card">
+        <h2 class="section-title">Passed Checks</h2>
+        <div>${this.generateTestPassedChecksSection(testData.passes || [])}</div>
+      </div>
+    `;
+
+    // Responsive section (sama seperti di scan)
+    if (testData.customRules) {
+      const responsiveRule = testData.customRules.find(
+        (rule: any) => rule.id === 'responsive'
+      );
+      if (responsiveRule) {
+        const responsiveData: any = {
+          passed: responsiveRule.passed,
+          issues: responsiveRule.violations || [],
+          screenshots: responsiveRule.metadata?.screenshots || [],
+          warnings: responsiveRule.metadata?.warnings || [],
+        };
+        html += this.generateResponsiveSection(responsiveData);
+      }
+    }
+
+    return html;
+  }
+
   static extractScreenshotPath(screenshotUrl: string): string {
     if (!screenshotUrl) return '';
     if (
@@ -433,7 +471,7 @@ export class HtmlGeneratorService {
       if (fileName && fileName !== screenshotUrl) {
         if (fileName.startsWith('responsive/')) {
           const responsiveFileName = fileName.replace('responsive/', '');
-          return `/storage/screenshots/${responsiveFileName}`;
+          return `/storage/screenshots/responsive/${responsiveFileName}`;
         }
         return `/storage/screenshots/${fileName}`;
       }
@@ -667,7 +705,25 @@ export class HtmlGeneratorService {
             : ''
         }
 
-        ${result.responsive ? this.generateResponsiveSection(result.responsive) : ''}
+        ${
+          result.customRules
+            ? (() => {
+                const responsiveRule = result.customRules.find(
+                  (rule: any) => rule.id === 'responsive'
+                );
+                if (responsiveRule) {
+                  const responsiveData: any = {
+                    passed: responsiveRule.passed,
+                    issues: responsiveRule.violations || [],
+                    screenshots: responsiveRule.metadata?.screenshots || [],
+                    warnings: responsiveRule.metadata?.warnings || [],
+                  };
+                  return this.generateResponsiveSection(responsiveData);
+                }
+                return '';
+              })()
+            : ''
+        }
       </div>
     `;
       })
@@ -924,7 +980,25 @@ export class HtmlGeneratorService {
             : ''
         }
 
-        ${result.responsive ? this.generateResponsiveSection(result.responsive) : ''}
+        ${
+          result.customRules
+            ? (() => {
+                const responsiveRule = result.customRules.find(
+                  (rule: any) => rule.id === 'responsive'
+                );
+                if (responsiveRule) {
+                  const responsiveData: any = {
+                    passed: responsiveRule.passed,
+                    issues: responsiveRule.violations || [],
+                    screenshots: responsiveRule.metadata?.screenshots || [],
+                    warnings: responsiveRule.metadata?.warnings || [],
+                  };
+                  return this.generateResponsiveSection(responsiveData);
+                }
+                return '';
+              })()
+            : ''
+        }
       </div>
     `
       )
@@ -932,7 +1006,7 @@ export class HtmlGeneratorService {
   }
 
   static generateResponsiveSection(responsive: any): string {
-    if (!responsive) {
+    if (!responsive || responsive === null || responsive === undefined) {
       return '';
     }
 
@@ -972,22 +1046,48 @@ export class HtmlGeneratorService {
         .join('');
     }
 
+    let warningsHtml = '';
+    const warnings = responsive.metadata?.warnings || responsive.warnings || [];
+    if (warnings && warnings.length > 0) {
+      warningsHtml = warnings
+        .map(
+          (warning: any) => `
+        <div class="responsive-warning">
+          <div class="responsive-warning-header">
+            <span class="responsive-warning-icon">⚠️</span>
+            <span class="responsive-warning-type">${this.escapeHtml(warning.type || 'Warning')}</span>
+            <span class="responsive-warning-viewport">${this.escapeHtml(warning.viewport || 'all')}</span>
+          </div>
+          <p class="responsive-warning-description">${this.escapeHtml(warning.description || '')}</p>
+        </div>
+      `
+        )
+        .join('');
+    }
+
     let issuesHtml = '';
     if (responsive.issues && responsive.issues.length > 0) {
       issuesHtml = responsive.issues
         .map(
-          (issue: any) => `
+          (issue: any) => {
+            const issueMetadata = issue.metadata || {};
+            const issueType = issueMetadata.type || 'other';
+            const issueViewport = issueMetadata.viewport || 'desktop';
+            const issueElement = issueMetadata.element;
+            const issueRemediation = issueMetadata.remediation;
+            return `
         <div class="responsive-issue">
           <div class="responsive-issue-header">
-            <span class="responsive-issue-type">${this.escapeHtml(issue.type)}</span>
+            <span class="responsive-issue-type">${this.escapeHtml(issueType)}</span>
             <span class="responsive-issue-severity responsive-severity-${issue.severity}">${this.escapeHtml(issue.severity)}</span>
-            <span class="responsive-issue-viewport">${this.escapeHtml(issue.viewport)}</span>
+            <span class="responsive-issue-viewport">${this.escapeHtml(issueViewport)}</span>
           </div>
           <p class="responsive-issue-description">${this.escapeHtml(issue.description)}</p>
-          ${issue.element ? `<p class="responsive-issue-element"><strong>Element:</strong> ${this.escapeHtml(issue.element)}</p>` : ''}
-          ${issue.remediation ? `<div class="responsive-issue-remediation"><strong>Remediation:</strong> ${this.markdownToHtml(issue.remediation)}</div>` : ''}
+          ${issueElement ? `<p class="responsive-issue-element"><strong>Element:</strong> ${this.escapeHtml(issueElement)}</p>` : ''}
+          ${issueRemediation ? `<div class="responsive-issue-remediation"><strong>Remediation:</strong> ${this.markdownToHtml(issueRemediation)}</div>` : ''}
         </div>
-      `
+      `;
+          }
         )
         .join('');
     } else if (responsive.passed) {
@@ -1000,15 +1100,25 @@ export class HtmlGeneratorService {
       `;
     }
 
+    const hasContent = screenshotsHtml || warningsHtml || issuesHtml;
+
     return `
-      <div class="responsive-section" style="margin-top: 1.5rem;">
-        <h4 class="responsive-section-title">Responsive Test Results</h4>
+      <div class="card responsive-section" style="margin-top: 1.5rem;">
+        <h2 class="section-title">Responsive Test</h2>
         <div class="responsive-status ${statusClass}">
           <span class="responsive-status-icon">${statusIcon}</span>
           <span class="responsive-status-text">${statusText}</span>
         </div>
         ${screenshotsHtml ? `<div class="responsive-screenshots">${screenshotsHtml}</div>` : ''}
-        ${issuesHtml ? `<div class="responsive-issues"><h4 class="responsive-issues-title">Issues</h4>${issuesHtml}</div>` : ''}
+        ${warningsHtml ? `<div class="responsive-warnings"><h4 class="responsive-warnings-title">Warnings</h4>${warningsHtml}</div>` : ''}
+        ${issuesHtml ? `<div class="responsive-issues"><h4 class="responsive-issues-title">${responsive.issues && responsive.issues.length > 0 ? 'Issues' : 'Results'}</h4>${issuesHtml}</div>` : ''}
+        ${!hasContent && responsive.passed ? `
+          <div class="success">
+            <div class="success-icon">🎉</div>
+            <h3 class="success-title">No responsive issues found!</h3>
+            <p class="success-desc">The page looks good across all viewport sizes.</p>
+          </div>
+        ` : ''}
       </div>
     `;
   }

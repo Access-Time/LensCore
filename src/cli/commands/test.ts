@@ -37,24 +37,17 @@ export async function testCommand(url: string, options: any) {
 
     spinner.text = 'Starting accessibility test...';
 
-    const customTests = CommandUtils.parseCommaSeparated(options.customTests);
-
-    if (customTests.includes('responsive') && !aiConfig) {
-      throw new Error(
-        'Responsive test requires AI API key. Use --enable-ai or --openai-key option.'
-      );
-    }
-
     const testOptions = {
       url,
       enableAI: !!aiConfig,
       openaiKey: aiConfig?.apiKey,
+      model: aiConfig?.model,
       projectContext,
       includeScreenshot: options.screenshot !== false,
       skipCache: options.skipCache || false,
       rules: CommandUtils.parseCommaSeparated(options.rules),
       tags: CommandUtils.parseCommaSeparated(options.tags),
-      customTests,
+      customTests: CommandUtils.parseCommaSeparated(options.customTests),
       customRulesConfig: CommandUtils.parseCommaSeparated(
         options.customRulesConfig
       ),

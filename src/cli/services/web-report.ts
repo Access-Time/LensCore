@@ -62,7 +62,13 @@ export class WebReportService {
       }
       if (url.includes('screenshots/')) {
         const parts = url.split('screenshots/');
-        return `/storage/screenshots/${parts[parts.length - 1]}`;
+        const fileName = parts[parts.length - 1];
+        if (fileName && fileName !== url) {
+          if (fileName.startsWith('responsive/')) {
+            return `/storage/screenshots/${fileName}`;
+          }
+          return `/storage/screenshots/${fileName}`;
+        }
       }
       if (url.includes('/')) {
         const parts = url.split('/');
@@ -90,8 +96,21 @@ export class WebReportService {
     });
 
     Handlebars.registerHelper('responsiveSection', (responsive: any) => {
+      if (!responsive) {
+        return new Handlebars.SafeString('');
+      }
       return new Handlebars.SafeString(
         HtmlGeneratorService.generateResponsiveSection(responsive)
+      );
+    });
+
+    Handlebars.registerHelper('responsiveSectionHtml', (html: string) => {
+      return new Handlebars.SafeString(html || '');
+    });
+
+    Handlebars.registerHelper('testSections', (testData: any) => {
+      return new Handlebars.SafeString(
+        HtmlGeneratorService.generateTestSections(testData || {})
       );
     });
 
@@ -164,9 +183,8 @@ export class WebReportService {
       TEST_TIME: new Date().toLocaleString(),
       violations: testData.violations || [],
       passes: testData.passes || [],
+      testData: testData, // Pass full testData untuk testSections helper
     };
-
-    data.responsive = testData.responsive || null;
 
     return this.generateReport('test-results.html', data, 'test');
   }

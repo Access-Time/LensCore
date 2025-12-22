@@ -854,9 +854,16 @@ details summary::-moz-list-bullet,
 }
 
 .responsive-section {
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #e5e7eb;
+  margin-top: 1.5rem !important;
+  padding-top: 1.5rem !important;
+  border-top: 1px solid #e5e7eb !important;
+  display: block !important;
+  visibility: visible !important;
+}
+
+.card.responsive-section {
+  display: block !important;
+  visibility: visible !important;
 }
 
 .responsive-section-title {
@@ -867,13 +874,14 @@ details summary::-moz-list-bullet,
 }
 
 .responsive-status {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  margin-bottom: 1.5rem;
-  font-weight: 600;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  padding: 1rem !important;
+  border-radius: 0.5rem !important;
+  margin-bottom: 1.5rem !important;
+  font-weight: 600 !important;
+  visibility: visible !important;
 }
 
 .responsive-status.success {
@@ -891,10 +899,11 @@ details summary::-moz-list-bullet,
 }
 
 .responsive-screenshots {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 2rem;
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)) !important;
+  gap: 1.5rem !important;
+  margin-bottom: 2rem !important;
+  visibility: visible !important;
 }
 
 .responsive-screenshot-item {

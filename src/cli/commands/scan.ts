@@ -40,21 +40,14 @@ export async function scanCommand(url: string, options: any) {
 
     spinner.text = 'Starting crawl and accessibility scan...';
 
-    const customTests = CommandUtils.parseCommaSeparated(options.customTests);
-
-    if (customTests.includes('responsive') && !aiConfig) {
-      throw new Error(
-        'Responsive test requires AI API key. Use --enable-ai or --openai-key option.'
-      );
-    }
-
     const scanOptions = {
       url,
       enableAI: !!aiConfig,
       openaiKey: aiConfig?.apiKey,
+      model: aiConfig?.model,
       projectContext,
       skipCache: options.skipCache || false,
-      customTests,
+      customTests: CommandUtils.parseCommaSeparated(options.customTests),
       customRulesConfig: CommandUtils.parseCommaSeparated(
         options.customRulesConfig
       ),
