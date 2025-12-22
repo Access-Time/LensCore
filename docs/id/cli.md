@@ -400,20 +400,15 @@ Dokumentasi dibuild dan dideploy ke GitHub Pages oleh `.github/workflows/deploy-
 
 ### Merilis Versi CLI Baru ke npm
 
-Rilis paket npm `@accesstime/lenscore` saat ini dilakukan secara manual (belum otomatis dari CI). Alur rilis yang umum:
+Rilis paket npm `@accesstime/lenscore` dipublikasikan secara otomatis pada setiap push ke branch main ketika versi di-bump. Workflow CI (`npm-release.yml`) menangani proses publikasi:
 
-1. **Pastikan branch main hijau**
-   - Semua workflow GitHub Actions (build, test, lint, security) harus lulus.
-2. **Update versi**
+1. **Update versi**
    - Gunakan `npm version patch|minor|major` (disarankan) atau edit `package.json` secara manual.
    - Perintah `npm version` akan mengupdate field versi dan membuat Git tag.
-3. **Build project**
-   - Jalankan `npm run build` untuk menghasilkan output `dist/`, termasuk `dist/cli.js` yang digunakan oleh `bin/index.js`.
-4. **Publish ke npm**
-   - Login terlebih dahulu dengan `npm login` (sekali per environment).
-   - Untuk paket publik yang sudah pernah dirilis: `npm publish`
-   - Untuk rilis pertama paket scoped ini: `npm publish --access public`
-5. **Verifikasi versi baru**
+2. **Push ke branch main**
+   - Push perubahan Anda (termasuk perubahan versi) ke branch main.
+   - Workflow CI akan secara otomatis mengecek apakah versi sudah ada, build project, dan publish ke npm jika versi baru.
+3. **Verifikasi versi baru**
    - Instal global di environment bersih: `npm install -g @accesstime/lenscore`
    - Jalankan `lens-core --version` untuk memastikan versi yang terpasang sama dengan yang dirilis.
 
