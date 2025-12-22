@@ -245,7 +245,7 @@ OPENAI_TEMPERATURE=0.7
 
 - `latest` - Release stabil terbaru
 - `0.1.x` - Tag versi spesifik
-- Versi otomatis dipublish saat push ke branch main
+- Versi otomatis dipublish ketika GitHub release dibuat
 
 ## Troubleshooting
 

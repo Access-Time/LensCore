@@ -245,7 +245,7 @@ OPENAI_TEMPERATURE=0.7
 
 - `latest` - Latest stable release
 - `0.1.x` - Specific version tags
-- Versions are automatically published on push to main branch
+- Versions are automatically published when a GitHub release is created
 
 ## Troubleshooting
 
