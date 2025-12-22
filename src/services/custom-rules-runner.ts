@@ -4,8 +4,13 @@ import {
   CustomTestResult,
   CustomRuleResult,
   PlaywrightTestContext,
+  CustomRulesManifest,
 } from '../types/custom-rules';
 import type { Page } from 'playwright';
+import { readFile } from 'fs/promises';
+import { join } from 'path';
+import { existsSync } from 'fs';
+import { PathConfig } from '../config/paths';
 
 interface AxeRuleConfigValue {
   enabled: boolean;
@@ -60,6 +65,59 @@ interface WindowWithAxe extends Window {
 }
 
 export class CustomRulesRunner {
+  private approvedRuleIds: Set<string> | null = null;
+
+  private async getApprovedRuleIds(): Promise<Set<string>> {
+    if (this.approvedRuleIds !== null) {
+      return this.approvedRuleIds;
+    }
+
+    const approvedIds = new Set<string>();
+    try {
+      const approvedRulesPath = PathConfig.getApprovedRulesPath();
+      const manifestPath = join(approvedRulesPath, 'manifest.json');
+      
+      if (existsSync(manifestPath)) {
+        const manifestContent = await readFile(manifestPath, 'utf-8');
+        const manifest: CustomRulesManifest = JSON.parse(manifestContent);
+        
+        for (const rule of manifest.rules) {
+          if (rule.enabled && rule.type === 'axe') {
+            approvedIds.add(rule.id);
+          }
+        }
+      }
+    } catch {
+      // If we can't load approved rules, assume none are approved
+    }
+
+    this.approvedRuleIds = approvedIds;
+    return approvedIds;
+  }
+
+  private isApprovedRule(ruleId: string, approvedIds: Set<string>): boolean {
+    return approvedIds.has(ruleId);
+  }
+
+  private validateEvaluateString(evaluate: string): boolean {
+    // Block dangerous patterns that could lead to code injection
+    const dangerousPatterns = [
+      /eval\s*\(/i,
+      /Function\s*\(/i,
+      /setTimeout\s*\(/i,
+      /setInterval\s*\(/i,
+      /import\s*\(/i,
+      /require\s*\(/i,
+      /document\.write/i,
+      /innerHTML\s*=/i,
+      /outerHTML\s*=/i,
+      /\.exec\s*\(/i,
+      /\.compile\s*\(/i,
+    ];
+
+    return !dangerousPatterns.some((pattern) => pattern.test(evaluate));
+  }
+
   async runAxeRules(
     rules: CustomAxeRule[],
     page: Page,
@@ -103,19 +161,48 @@ export class CustomRulesRunner {
     _axe: unknown
   ): Promise<CustomRuleResult> {
     const ruleIdToCheck = rule.rule?.id || rule.id;
+    const approvedIds = await this.getApprovedRuleIds();
+    const isApproved = this.isApprovedRule(rule.id, approvedIds);
 
     if (rule.checks) {
+      // Filter out evaluate strings from non-approved rules or validate them
+      const safeChecks: Record<string, AxeCheckConfig> = {};
+      for (const [checkId, check] of Object.entries(rule.checks)) {
+        if (check.evaluate) {
+          if (isApproved) {
+            // Approved rules can use Function evaluation
+            safeChecks[checkId] = check;
+          } else if (this.validateEvaluateString(check.evaluate)) {
+            // Non-approved rules must pass validation
+            safeChecks[checkId] = check;
+          } else {
+            // Skip dangerous evaluate strings from non-approved rules
+            safeChecks[checkId] = {
+              id: check.id,
+              metadata: check.metadata,
+            };
+          }
+        } else {
+          safeChecks[checkId] = check;
+        }
+      }
+
       await page.evaluate(
-        (checks: Record<string, AxeCheckConfig>) => {
+        (params: {
+          checks: Record<string, AxeCheckConfig>;
+          approved: boolean;
+        }) => {
           const windowWithAxe = window as unknown as WindowWithAxe;
           const axe = windowWithAxe.axe;
           if (axe && axe.configure) {
             const checksConfig: Record<string, AxeCheckConfig> = {};
-            for (const [checkId, check] of Object.entries(checks)) {
+            for (const [checkId, check] of Object.entries(params.checks)) {
               checksConfig[checkId] = {
                 id: check.id,
                 evaluate: check.evaluate
-                  ? new Function('return ' + check.evaluate)()
+                  ? params.approved
+                    ? new Function('return ' + check.evaluate)()
+                    : undefined
                   : undefined,
                 metadata: check.metadata,
               };
@@ -123,7 +210,10 @@ export class CustomRulesRunner {
             axe.configure({ checks: checksConfig });
           }
         },
-        rule.checks as Record<string, AxeCheckConfig>
+        {
+          checks: safeChecks as Record<string, AxeCheckConfig>,
+          approved: isApproved,
+        }
       );
     }
 

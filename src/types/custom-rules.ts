@@ -1,4 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import type { Page, Browser } from 'playwright';
+import type { StorageService } from '../storage/types';
+import type { CacheService } from '../services/cache';
 
 export interface CustomAxeRule {
   id: string;
@@ -45,15 +47,15 @@ export interface CustomPlaywrightTest {
 }
 
 export interface PlaywrightTestContext {
-  page: any;
+  page: Page;
   url: string;
-  browser: any;
+  browser: Browser | null;
   timeout?: number;
   enableAI?: boolean;
   aiApiKey?: string;
   model?: string;
-  storageService?: any;
-  cacheService?: any;
+  storageService?: StorageService;
+  cacheService?: CacheService;
 }
 
 export interface CustomTestResult {
@@ -68,7 +70,7 @@ export interface CustomTestResult {
     failureSummary: string;
   }>;
   error?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface CustomRuleConfig {
@@ -102,5 +104,5 @@ export interface CustomRuleResult {
   name: string;
   passed: boolean;
   violations: CustomTestResult[];
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
