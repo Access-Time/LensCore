@@ -47,12 +47,16 @@ jobs:
           VERSION=${{ steps.current-version.outputs.version }}
           # Use curl to check npm registry API (no auth required for public packages)
           PACKAGE_ESC=$(echo "$PACKAGE_NAME" | sed 's/@/%40/g' | sed 's/\//%2F/g')
-          if curl -s -f "https://registry.npmjs.org/${PACKAGE_ESC}/${VERSION}" > /dev/null 2>&1; then
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "https://registry.npmjs.org/${PACKAGE_ESC}/${VERSION}")
+          if [ "$HTTP_CODE" = "200" ]; then
             echo "exists=true" >> $GITHUB_OUTPUT
             echo "Version $VERSION already exists in NPM registry"
-          else
+          elif [ "$HTTP_CODE" = "404" ]; then
             echo "exists=false" >> $GITHUB_OUTPUT
             echo "Version $VERSION is new, will publish"
+          else
+            echo "::error::Failed to check version in NPM registry (HTTP $HTTP_CODE). Check network connectivity and npm registry status."
+            exit 1
           fi
 
       - name: Validate NPM token
