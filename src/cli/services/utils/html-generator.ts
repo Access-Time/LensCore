@@ -1068,14 +1068,13 @@ export class HtmlGeneratorService {
     let issuesHtml = '';
     if (responsive.issues && responsive.issues.length > 0) {
       issuesHtml = responsive.issues
-        .map(
-          (issue: any) => {
-            const issueMetadata = issue.metadata || {};
-            const issueType = issueMetadata.type || 'other';
-            const issueViewport = issueMetadata.viewport || 'desktop';
-            const issueElement = issueMetadata.element;
-            const issueRemediation = issueMetadata.remediation;
-            return `
+        .map((issue: any) => {
+          const issueMetadata = issue.metadata || {};
+          const issueType = issueMetadata.type || 'other';
+          const issueViewport = issueMetadata.viewport || 'desktop';
+          const issueElement = issueMetadata.element;
+          const issueRemediation = issueMetadata.remediation;
+          return `
         <div class="responsive-issue">
           <div class="responsive-issue-header">
             <span class="responsive-issue-type">${this.escapeHtml(issueType)}</span>
@@ -1087,8 +1086,7 @@ export class HtmlGeneratorService {
           ${issueRemediation ? `<div class="responsive-issue-remediation"><strong>Remediation:</strong> ${this.markdownToHtml(issueRemediation)}</div>` : ''}
         </div>
       `;
-          }
-        )
+        })
         .join('');
     } else if (responsive.passed) {
       issuesHtml = `
@@ -1112,13 +1110,17 @@ export class HtmlGeneratorService {
         ${screenshotsHtml ? `<div class="responsive-screenshots">${screenshotsHtml}</div>` : ''}
         ${warningsHtml ? `<div class="responsive-warnings"><h4 class="responsive-warnings-title">Warnings</h4>${warningsHtml}</div>` : ''}
         ${issuesHtml ? `<div class="responsive-issues"><h4 class="responsive-issues-title">${responsive.issues && responsive.issues.length > 0 ? 'Issues' : 'Results'}</h4>${issuesHtml}</div>` : ''}
-        ${!hasContent && responsive.passed ? `
+        ${
+          !hasContent && responsive.passed
+            ? `
           <div class="success">
             <div class="success-icon">🎉</div>
             <h3 class="success-title">No responsive issues found!</h3>
             <p class="success-desc">The page looks good across all viewport sizes.</p>
           </div>
-        ` : ''}
+        `
+            : ''
+        }
       </div>
     `;
   }

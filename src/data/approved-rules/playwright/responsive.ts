@@ -168,8 +168,9 @@ const responsiveRule: CustomPlaywrightTest = {
                 'gpt-4o-mini',
               ];
               const currentModel = model || 'gpt-3.5-turbo';
-              const useVisionModel =
-                visionModels.some((vm) => currentModel.includes(vm));
+              const useVisionModel = visionModels.some((vm) =>
+                currentModel.includes(vm)
+              );
 
               if (!useVisionModel) {
                 warnings.push({
@@ -204,9 +205,9 @@ Respond in JSON format:
   ]
 }`;
 
-              const visionModel = visionModels.find((vm) =>
-                currentModel.includes(vm)
-              ) || 'gpt-4o';
+              const visionModel =
+                visionModels.find((vm) => currentModel.includes(vm)) ||
+                'gpt-4o';
 
               const response = await openaiService.generateResponse(
                 [
@@ -239,8 +240,7 @@ Respond in JSON format:
                         type: issue.type || 'Layout Issue',
                         viewport: viewport.name,
                         description: issue.description || 'Unknown issue',
-                        severity:
-                          issue.severity || ('moderate' as const),
+                        severity: issue.severity || ('moderate' as const),
                         element: issue.element,
                         remediation: issue.remediation,
                       });
@@ -308,4 +308,3 @@ Respond in JSON format:
 };
 
 export default responsiveRule;
-

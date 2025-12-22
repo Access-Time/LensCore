@@ -43,8 +43,7 @@ export const combinedHandler = async (
         aiApiKey: enableAI ? aiApiKey : undefined,
         model: req.body.model || env.OPENAI_MODEL,
         ...(request.testOptions || {}),
-        includeScreenshot:
-          request.testOptions?.includeScreenshot !== false,
+        includeScreenshot: request.testOptions?.includeScreenshot !== false,
       })
     );
 
