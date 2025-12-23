@@ -99,13 +99,13 @@ export class PathConfig {
     const paths = [
       join('/app', this.LENSCORE_DIR_NAME, this.WEB_DIR, this.OUTPUT_DIR),
       join('/app', this.WEB_DIR, this.OUTPUT_DIR),
-      join(this.getLenscoreHomeDir(), this.WEB_DIR, this.OUTPUT_DIR),
       join(
         this.getLenscoreProjectDir(process.cwd()),
         this.WEB_DIR,
         this.OUTPUT_DIR
       ),
       join(process.cwd(), this.WEB_DIR, this.OUTPUT_DIR),
+      join(this.getLenscoreHomeDir(), this.WEB_DIR, this.OUTPUT_DIR),
     ];
 
     const packagePath = resolvePackage('@accesstime/lenscore');
