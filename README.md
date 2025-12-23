@@ -48,6 +48,20 @@
 - **Docker** & **Docker Compose** (for containerized deployment)
 - **Git** (for cloning the repository)
 
+### Using Docker Image from Docker Hub
+
+Run LensCore directly from Docker Hub without cloning the repository. See the [Docker Hub documentation](docs/en/docker-hub.md) for detailed instructions on installation, configuration, and updates.
+
+Quick start:
+
+```bash
+docker run -d \
+  --name lenscore \
+  -p 3001:3001 \
+  --env-file .env \
+  accesstimeco/lenscore:latest
+```
+
 ### Using Docker (Recommended)
 
 1. **Clone the repository:**

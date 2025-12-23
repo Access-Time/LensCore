@@ -400,20 +400,15 @@ Documentation is built and deployed to GitHub Pages by `.github/workflows/deploy
 
 ### Releasing a New CLI Version to npm
 
-Releases of the `@accesstime/lenscore` npm package are currently performed manually, outside of CI. A typical release flow is:
+Releases of the `@accesstime/lenscore` npm package are automatically published when a GitHub release is created. The CI workflow (`npm-release.yml`) handles the publishing process:
 
-1. **Ensure the main branch is green**
-   - All GitHub Actions workflows (build, test, lint, security) should be passing.
-2. **Update the version**
+1. **Update the version**
    - Use `npm version patch|minor|major` (preferred) or edit `package.json` manually.
    - This updates the version field and creates a Git tag when using `npm version`.
-3. **Build the project**
-   - Run `npm run build` to generate the `dist/` output, including `dist/cli.js` used by `bin/index.js`.
-4. **Publish to npm**
-   - Log in with `npm login` (once per environment).
-   - For an existing public package: `npm publish`
-   - For the first publish of the scoped package: `npm publish --access public`
-5. **Verify the new version**
+2. **Create a GitHub release**
+   - Create a new GitHub release with the version tag.
+   - The CI workflow will automatically check if the version exists, build the project, and publish to npm if it's a new version.
+3. **Verify the new version**
    - Install globally on a clean environment: `npm install -g @accesstime/lenscore`
    - Run `lens-core --version` to confirm the published version.
 
