@@ -20,12 +20,25 @@ interface ConfigOptions {
   list?: boolean;
 }
 
-const SECRET_KEYS = ["apikey", "apiKey"];
+const SECRET_KEYS = ['apikey', 'apiKey'];
 
-function maskSensitiveValue(key: string, value: ConfigValue): string | ConfigValue {
+function maskSensitiveValue(
+  key: string,
+  value: ConfigValue,
+  parentKey?: string
+): string | ConfigValue {
   const keyLower = key.toLowerCase();
-  
-  if (SECRET_KEYS.some(sk => keyLower.includes(sk))) {
+  const contextKey = parentKey ? parentKey.toLowerCase() : keyLower;
+
+  const isSecretKey = (k: string) =>
+    SECRET_KEYS.some((sk) => {
+      const skLower = sk.toLowerCase();
+      return (
+        k === skLower || k.endsWith(`.${skLower}`) || k.endsWith(`_${skLower}`)
+      );
+    });
+
+  if (isSecretKey(contextKey) || isSecretKey(keyLower)) {
     if (typeof value === 'string' && value.length > 0) {
       if (value.length <= 8) {
         return '***';
@@ -37,21 +50,30 @@ function maskSensitiveValue(key: string, value: ConfigValue): string | ConfigVal
   return value;
 }
 
-function maskConfig(config: ConfigObject | null): MaskedConfig | null {
+function maskConfig(
+  config: ConfigObject | null,
+  parentKey?: string
+): MaskedConfig | null {
   if (typeof config !== 'object' || config === null) {
     return null;
   }
-  
+
   if (Array.isArray(config)) {
-    return config.map(item => maskConfig(item as ConfigObject)) as unknown as MaskedConfig;
+    return config.map((item) =>
+      maskConfig(item as ConfigObject, parentKey)
+    ) as unknown as MaskedConfig;
   }
-  
+
   const masked: MaskedConfig = {};
   for (const [key, value] of Object.entries(config)) {
     if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-      masked[key] = maskConfig(value as ConfigObject);
+      masked[key] = maskConfig(value as ConfigObject, key);
+    } else if (Array.isArray(value)) {
+      masked[key] = value.map((item) =>
+        typeof item === 'string' ? maskSensitiveValue(key, item, key) : item
+      );
     } else {
-      masked[key] = maskSensitiveValue(key, value as ConfigValue);
+      masked[key] = maskSensitiveValue(key, value as ConfigValue, parentKey);
     }
   }
   return masked;
@@ -111,7 +133,11 @@ export async function configCommand(options: ConfigOptions): Promise<void> {
       let current: ConfigValue | ConfigObject | ConfigValue[] = config;
 
       for (const key of keys) {
-        if (typeof current === 'object' && current !== null && !Array.isArray(current)) {
+        if (
+          typeof current === 'object' &&
+          current !== null &&
+          !Array.isArray(current)
+        ) {
           current = (current as ConfigObject)[key];
           if (current === undefined) {
             console.log(chalk.red(`Key "${options.get}" not found`));
@@ -145,7 +171,8 @@ export async function configCommand(options: ConfigOptions): Promise<void> {
       );
     }
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error occurred';
     console.error(chalk.red('Error:'), errorMessage);
     process.exit(1);
   }
