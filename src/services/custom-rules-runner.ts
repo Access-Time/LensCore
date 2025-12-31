@@ -60,7 +60,6 @@ interface WindowWithAxe extends Window {
 }
 
 export class CustomRulesRunner {
-
   private validateEvaluateString(evaluate: string): boolean {
     // Block dangerous patterns that could lead to code injection
     const dangerousPatterns = [
@@ -138,9 +137,7 @@ export class CustomRulesRunner {
       }
 
       await page.evaluate(
-        (params: {
-          checks: Record<string, AxeCheckConfig>;
-        }) => {
+        (params: { checks: Record<string, AxeCheckConfig> }) => {
           const windowWithAxe = window as unknown as WindowWithAxe;
           const axe = windowWithAxe.axe;
           if (axe && axe.configure) {

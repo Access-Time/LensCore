@@ -1,8 +1,6 @@
 import type { Page } from 'playwright';
 
-export async function scrollPageToWaitForAnimations(
-  page: Page
-): Promise<void> {
+export async function scrollPageToWaitForAnimations(page: Page): Promise<void> {
   try {
     await page.evaluate(async () => {
       const scrollHeight = document.documentElement.scrollHeight;
@@ -55,4 +53,3 @@ export async function scrollPageToWaitForAnimations(
     // Silently handle scroll errors
   }
 }
-

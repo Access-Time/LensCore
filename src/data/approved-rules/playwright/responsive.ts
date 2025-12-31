@@ -165,8 +165,7 @@ const responsiveRule: CustomPlaywrightTest = {
 6. Buttons or interactive elements that are too small or overlapping`;
 
             const visionModel =
-              visionModels.find((vm) => currentModel.includes(vm)) ||
-              'gpt-4o';
+              visionModels.find((vm) => currentModel.includes(vm)) || 'gpt-4o';
 
             const jsonSchema = {
               name: 'responsive_analysis',
@@ -207,27 +206,28 @@ const responsiveRule: CustomPlaywrightTest = {
               strict: true,
             };
 
-            const response = await openaiService.generateStructuredResponse<ResponsiveAnalysisResponse>(
-              [
-                {
-                  role: 'user',
-                  content: [
-                    {
-                      type: 'text',
-                      text: prompt,
-                    },
-                    {
-                      type: 'image_url',
-                      image_url: {
-                        url: imageUrl,
+            const response =
+              await openaiService.generateStructuredResponse<ResponsiveAnalysisResponse>(
+                [
+                  {
+                    role: 'user',
+                    content: [
+                      {
+                        type: 'text',
+                        text: prompt,
                       },
-                    },
-                  ],
-                },
-              ],
-              jsonSchema,
-              { model: visionModel }
-            );
+                      {
+                        type: 'image_url',
+                        image_url: {
+                          url: imageUrl,
+                        },
+                      },
+                    ],
+                  },
+                ],
+                jsonSchema,
+                { model: visionModel }
+              );
 
             const analysis = response.content;
             if (analysis.issues && Array.isArray(analysis.issues)) {
@@ -292,7 +292,8 @@ const responsiveRule: CustomPlaywrightTest = {
 
 const getResponsiveStyles = (): string => {
   try {
-    const currentDir = typeof __dirname !== 'undefined' ? __dirname : process.cwd();
+    const currentDir =
+      typeof __dirname !== 'undefined' ? __dirname : process.cwd();
     const stylesPath = join(currentDir, 'styles', 'responsive-styles.css');
     if (existsSync(stylesPath)) {
       return readFileSync(stylesPath, 'utf-8');

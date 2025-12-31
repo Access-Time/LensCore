@@ -170,7 +170,10 @@ export class WebReportService {
     return this.generateReport('crawl-results.html', data, 'crawl');
   }
 
-  generateTestReport(testData: AccessibilityTestResponse, testUrl: string): string {
+  generateTestReport(
+    testData: AccessibilityTestResponse,
+    testUrl: string
+  ): string {
     const data = {
       TEST_URL: testUrl,
       SCORE: testData.score || 'N/A',

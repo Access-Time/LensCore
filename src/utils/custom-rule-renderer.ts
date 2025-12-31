@@ -31,4 +31,3 @@ export function hasCustomRenderer(ruleId: string): boolean {
 export function getAllCustomStyles(): string {
   return Array.from(stylesRegistry.values()).join('\n\n');
 }
-

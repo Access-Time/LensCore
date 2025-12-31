@@ -485,7 +485,6 @@ export class AccessibilityService {
     return Math.round(score);
   }
 
-
   async testMultiplePages(
     requests: AccessibilityRequest[]
   ): Promise<AccessibilityResponse> {
