@@ -106,3 +106,7 @@ export interface CustomRuleResult {
   violations: CustomTestResult[];
   metadata?: Record<string, unknown>;
 }
+
+export interface CustomRuleReportRenderer {
+  renderReportSection(result: CustomRuleResult): string;
+}

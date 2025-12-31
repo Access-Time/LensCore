@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import Handlebars from 'handlebars';
 import marked from 'marked';
+import { getCustomRuleRenderer } from '../../../utils/custom-rule-renderer';
 
 export class HtmlGeneratorService {
   private static escapeHtml(text: string): string {
@@ -434,19 +435,12 @@ export class HtmlGeneratorService {
       </div>
     `;
 
-    // Responsive section (sama seperti di scan)
     if (testData.customRules) {
-      const responsiveRule = testData.customRules.find(
-        (rule: any) => rule.id === 'responsive'
-      );
-      if (responsiveRule) {
-        const responsiveData: any = {
-          passed: responsiveRule.passed,
-          issues: responsiveRule.violations || [],
-          screenshots: responsiveRule.metadata?.screenshots || [],
-          warnings: responsiveRule.metadata?.warnings || [],
-        };
-        html += this.generateResponsiveSection(responsiveData);
+      for (const rule of testData.customRules) {
+        const renderer = getCustomRuleRenderer(rule.id);
+        if (renderer) {
+          html += renderer.renderReportSection(rule);
+        }
       }
     }
 
@@ -707,21 +701,12 @@ export class HtmlGeneratorService {
 
         ${
           result.customRules
-            ? (() => {
-                const responsiveRule = result.customRules.find(
-                  (rule: any) => rule.id === 'responsive'
-                );
-                if (responsiveRule) {
-                  const responsiveData: any = {
-                    passed: responsiveRule.passed,
-                    issues: responsiveRule.violations || [],
-                    screenshots: responsiveRule.metadata?.screenshots || [],
-                    warnings: responsiveRule.metadata?.warnings || [],
-                  };
-                  return this.generateResponsiveSection(responsiveData);
-                }
-                return '';
-              })()
+            ? result.customRules
+                .map((rule: any) => {
+                  const renderer = getCustomRuleRenderer(rule.id);
+                  return renderer ? renderer.renderReportSection(rule) : '';
+                })
+                .join('')
             : ''
         }
       </div>
@@ -982,21 +967,12 @@ export class HtmlGeneratorService {
 
         ${
           result.customRules
-            ? (() => {
-                const responsiveRule = result.customRules.find(
-                  (rule: any) => rule.id === 'responsive'
-                );
-                if (responsiveRule) {
-                  const responsiveData: any = {
-                    passed: responsiveRule.passed,
-                    issues: responsiveRule.violations || [],
-                    screenshots: responsiveRule.metadata?.screenshots || [],
-                    warnings: responsiveRule.metadata?.warnings || [],
-                  };
-                  return this.generateResponsiveSection(responsiveData);
-                }
-                return '';
-              })()
+            ? result.customRules
+                .map((rule: any) => {
+                  const renderer = getCustomRuleRenderer(rule.id);
+                  return renderer ? renderer.renderReportSection(rule) : '';
+                })
+                .join('')
             : ''
         }
       </div>

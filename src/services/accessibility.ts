@@ -1,4 +1,4 @@
-import { chromium, Browser, Page, LaunchOptions } from 'playwright';
+import { chromium, Browser, LaunchOptions } from 'playwright';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs/promises';
 import os from 'os';
@@ -18,6 +18,7 @@ import crypto from 'crypto';
 import { CustomRulesLoader } from './custom-rules-loader';
 import { CustomRulesRunner } from './custom-rules-runner';
 import { CustomRuleResult } from '../types/custom-rules';
+import { scrollPageToWaitForAnimations } from '../utils/playwright-scroll';
 
 interface AxeRuleConfigValue {
   enabled: boolean;
@@ -167,7 +168,7 @@ export class AccessibilityService {
           throw new Error('Operation aborted');
         }
 
-        await this.scrollPageToWaitForAnimations(page);
+        await scrollPageToWaitForAnimations(page);
 
         let screenshotUrl: string | undefined;
 
@@ -484,47 +485,6 @@ export class AccessibilityService {
     return Math.round(score);
   }
 
-  private async scrollPageToWaitForAnimations(page: Page): Promise<void> {
-    try {
-      await page.evaluate(async () => {
-        const scrollHeight = document.documentElement.scrollHeight;
-        const viewportHeight = window.innerHeight;
-
-        if (scrollHeight > viewportHeight) {
-          const scrollSteps = Math.max(
-            3,
-            Math.ceil(scrollHeight / viewportHeight)
-          );
-          const stepDelay = 300;
-          const finalDelay = 500;
-
-          for (let i = 0; i <= scrollSteps; i++) {
-            const progress = i / scrollSteps;
-            const targetScroll = Math.floor(scrollHeight * progress);
-            window.scrollTo(0, targetScroll);
-            await new Promise((resolve) => setTimeout(resolve, stepDelay));
-          }
-
-          await new Promise((resolve) => setTimeout(resolve, finalDelay));
-
-          for (let i = scrollSteps; i >= 0; i--) {
-            const progress = i / scrollSteps;
-            const targetScroll = Math.floor(scrollHeight * progress);
-            window.scrollTo(0, targetScroll);
-            await new Promise((resolve) => setTimeout(resolve, stepDelay));
-          }
-
-          await new Promise((resolve) => setTimeout(resolve, finalDelay));
-        } else {
-          await new Promise((resolve) => setTimeout(resolve, 500));
-        }
-      });
-    } catch (error) {
-      logger.warn('Scroll animation wait error:', {
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-  }
 
   async testMultiplePages(
     requests: AccessibilityRequest[]

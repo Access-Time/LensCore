@@ -2,12 +2,17 @@ import {
   CustomPlaywrightTest,
   PlaywrightTestContext,
   CustomTestResult,
+  CustomRuleResult,
 } from '../../../types/custom-rules';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs/promises';
+import { readFileSync, existsSync } from 'fs';
 import os from 'os';
 import { join } from 'path';
 import { createOpenAIService } from '../../../utils/openai';
+import { scrollPageToWaitForAnimations } from '../../../utils/playwright-scroll';
+import { registerCustomRuleRenderer } from '../../../utils/custom-rule-renderer';
+import { HtmlGeneratorService } from '../../../cli/services/utils/html-generator';
 
 interface Viewport {
   name: string;
@@ -31,6 +36,19 @@ interface ResponsiveScreenshot {
     height: number;
   };
   screenshotUrl: string;
+}
+
+interface ResponsiveAnalysisIssue {
+  type: string;
+  description: string;
+  severity: 'minor' | 'moderate' | 'serious' | 'critical';
+  element?: string;
+  remediation?: string;
+}
+
+interface ResponsiveAnalysisResponse {
+  hasIssues: boolean;
+  issues: ResponsiveAnalysisIssue[];
 }
 
 const viewports: Viewport[] = [
@@ -82,56 +100,7 @@ const responsiveRule: CustomPlaywrightTest = {
           height: viewport.height,
         });
 
-        await page.waitForTimeout(500);
-
-        await page.evaluate(async () => {
-          const scrollHeight = document.documentElement.scrollHeight;
-          const viewportHeight = window.innerHeight;
-
-          if (scrollHeight > viewportHeight) {
-            const scrollSteps = Math.max(
-              3,
-              Math.ceil(scrollHeight / viewportHeight)
-            );
-            const stepDelay = 300;
-            const finalDelay = 500;
-
-            for (let i = 0; i <= scrollSteps; i++) {
-              const progress = i / scrollSteps;
-              const targetScroll = Math.floor(scrollHeight * progress);
-              window.scrollTo({
-                top: targetScroll,
-                behavior: 'smooth',
-              });
-              await new Promise((resolve) => setTimeout(resolve, stepDelay));
-            }
-
-            window.scrollTo({
-              top: scrollHeight,
-              behavior: 'smooth',
-            });
-            await new Promise((resolve) => setTimeout(resolve, finalDelay));
-
-            for (let i = scrollSteps; i >= 0; i--) {
-              const progress = i / scrollSteps;
-              const targetScroll = Math.floor(scrollHeight * progress);
-              window.scrollTo({
-                top: targetScroll,
-                behavior: 'smooth',
-              });
-              await new Promise((resolve) => setTimeout(resolve, stepDelay));
-            }
-
-            window.scrollTo({
-              top: 0,
-              behavior: 'smooth',
-            });
-            await new Promise((resolve) => setTimeout(resolve, finalDelay));
-          } else {
-            await new Promise((resolve) => setTimeout(resolve, 500));
-          }
-        });
-
+        await scrollPageToWaitForAnimations(page);
         await page.waitForTimeout(500);
 
         const screenshot = await page.screenshot({ fullPage: true });
@@ -159,122 +128,131 @@ const responsiveRule: CustomPlaywrightTest = {
           screenshotUrl,
         });
 
-        if (enableAI && aiApiKey) {
-          try {
-            const openaiService = createOpenAIService(aiApiKey);
-            if (openaiService) {
-              const base64Image = screenshot.toString('base64');
-              const imageUrl = `data:image/png;base64,${base64Image}`;
+        try {
+          const openaiService = createOpenAIService(aiApiKey);
+          if (openaiService) {
+            const base64Image = screenshot.toString('base64');
+            const imageUrl = `data:image/png;base64,${base64Image}`;
 
-              const visionModels = [
-                'gpt-4o',
-                'gpt-4-turbo',
-                'gpt-4-vision-preview',
-                'gpt-4o-mini',
-              ];
-              const currentModel = model || 'gpt-3.5-turbo';
-              const useVisionModel = visionModels.some((vm) =>
-                currentModel.includes(vm)
-              );
+            const visionModels = [
+              'gpt-4o',
+              'gpt-4-turbo',
+              'gpt-4-vision-preview',
+              'gpt-4o-mini',
+            ];
+            const currentModel = model || 'gpt-3.5-turbo';
+            const useVisionModel = visionModels.some((vm) =>
+              currentModel.includes(vm)
+            );
 
-              if (!useVisionModel) {
-                warnings.push({
-                  type: 'Model Limitation',
-                  viewport: viewport.name,
-                  description:
-                    'Current model does not support image analysis. Please use a vision-capable model like gpt-4o, gpt-4-turbo, or gpt-4-vision-preview.',
-                  severity: 'minor',
-                });
-                continue;
-              }
+            if (!useVisionModel) {
+              warnings.push({
+                type: 'Model Limitation',
+                viewport: viewport.name,
+                description:
+                  'Current model does not support image analysis. Please use a vision-capable model like gpt-4o, gpt-4-turbo, or gpt-4-vision-preview.',
+                severity: 'minor',
+              });
+              continue;
+            }
 
-              const prompt = `Analyze this screenshot of a webpage at ${viewport.name} viewport (${viewport.width}x${viewport.height}). Check for:
+            const prompt = `Analyze this screenshot of a webpage at ${viewport.name} viewport (${viewport.width}x${viewport.height}). Check for:
 1. Horizontal scrolling issues
 2. Content overflow issues
 3. Layout breaking issues
 4. Elements that are cut off or not visible
 5. Text that is too small or unreadable
-6. Buttons or interactive elements that are too small or overlapping
+6. Buttons or interactive elements that are too small or overlapping`;
 
-Respond in JSON format:
-{
-  "hasIssues": boolean,
-  "issues": [
-    {
-      "type": string,
-      "description": string,
-      "severity": "minor" | "moderate" | "serious" | "critical",
-      "element": string (optional),
-      "remediation": string (optional)
-    }
-  ]
-}`;
+            const visionModel =
+              visionModels.find((vm) => currentModel.includes(vm)) ||
+              'gpt-4o';
 
-              const visionModel =
-                visionModels.find((vm) => currentModel.includes(vm)) ||
-                'gpt-4o';
-
-              const response = await openaiService.generateResponse(
-                [
-                  {
-                    role: 'user',
-                    content: [
-                      {
-                        type: 'text',
-                        text: prompt,
-                      },
-                      {
-                        type: 'image_url',
-                        image_url: {
-                          url: imageUrl,
+            const jsonSchema = {
+              name: 'responsive_analysis',
+              schema: {
+                type: 'object',
+                properties: {
+                  hasIssues: {
+                    type: 'boolean',
+                  },
+                  issues: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        type: {
+                          type: 'string',
+                        },
+                        description: {
+                          type: 'string',
+                        },
+                        severity: {
+                          type: 'string',
+                          enum: ['minor', 'moderate', 'serious', 'critical'],
+                        },
+                        element: {
+                          type: 'string',
+                        },
+                        remediation: {
+                          type: 'string',
                         },
                       },
-                    ],
+                      required: ['type', 'description', 'severity'],
+                    },
                   },
-                ],
-                { model: visionModel }
-              );
+                },
+                required: ['hasIssues', 'issues'],
+              },
+              strict: true,
+            };
 
-              try {
-                const jsonMatch = response.content.match(/\{[\s\S]*\}/);
-                if (jsonMatch) {
-                  const analysis = JSON.parse(jsonMatch[0]);
-                  if (analysis.issues && Array.isArray(analysis.issues)) {
-                    for (const issue of analysis.issues) {
-                      issues.push({
-                        type: issue.type || 'Layout Issue',
-                        viewport: viewport.name,
-                        description: issue.description || 'Unknown issue',
-                        severity: issue.severity || ('moderate' as const),
-                        element: issue.element,
-                        remediation: issue.remediation,
-                      });
-                    }
-                  }
-                }
-              } catch {
-                if (response.content.toLowerCase().includes('issue')) {
-                  issues.push({
-                    type: 'Layout Issue',
-                    viewport: viewport.name,
-                    description:
-                      'AI detected potential responsive issues but could not parse details',
-                    severity: 'moderate',
-                  });
-                }
+            const response = await openaiService.generateStructuredResponse<ResponsiveAnalysisResponse>(
+              [
+                {
+                  role: 'user',
+                  content: [
+                    {
+                      type: 'text',
+                      text: prompt,
+                    },
+                    {
+                      type: 'image_url',
+                      image_url: {
+                        url: imageUrl,
+                      },
+                    },
+                  ],
+                },
+              ],
+              jsonSchema,
+              { model: visionModel }
+            );
+
+            const analysis = response.content;
+            if (analysis.issues && Array.isArray(analysis.issues)) {
+              for (const issue of analysis.issues) {
+                issues.push({
+                  type: issue.type || 'Layout Issue',
+                  viewport: viewport.name,
+                  description: issue.description || 'Unknown issue',
+                  severity: issue.severity || ('moderate' as const),
+                  element: issue.element,
+                  remediation: issue.remediation,
+                });
               }
             }
-          } catch (aiError) {
-            issues.push({
-              type: 'AI Analysis Error',
-              viewport: viewport.name,
-              description:
-                aiError instanceof Error
-                  ? aiError.message
-                  : 'Failed to analyze screenshot with AI',
-              severity: 'minor',
-            });
           }
+        } catch (aiError) {
+          issues.push({
+            type: 'AI Analysis Error',
+            viewport: viewport.name,
+            description:
+              aiError instanceof Error
+                ? aiError.message
+                : 'Failed to analyze screenshot with AI',
+            severity: 'minor',
+          });
         }
       }
     } catch (error) {
@@ -311,5 +289,37 @@ Respond in JSON format:
     };
   },
 };
+
+const getResponsiveStyles = (): string => {
+  try {
+    const currentDir = typeof __dirname !== 'undefined' ? __dirname : process.cwd();
+    const stylesPath = join(currentDir, 'styles', 'responsive-styles.css');
+    if (existsSync(stylesPath)) {
+      return readFileSync(stylesPath, 'utf-8');
+    }
+    return '';
+  } catch {
+    return '';
+  }
+};
+
+const responsiveRenderer = {
+  renderReportSection(result: CustomRuleResult): string {
+    const responsiveData = {
+      passed: result.passed,
+      issues: result.violations || [],
+      screenshots: (result.metadata?.['screenshots'] as unknown[]) || [],
+      warnings: (result.metadata?.['warnings'] as unknown[]) || [],
+    };
+    const html = HtmlGeneratorService.generateResponsiveSection(responsiveData);
+    const styles = getResponsiveStyles();
+    return styles ? `<style>${styles}</style>${html}` : html;
+  },
+  getCustomStyles(): string {
+    return getResponsiveStyles();
+  },
+};
+
+registerCustomRuleRenderer('responsive', responsiveRenderer);
 
 export default responsiveRule;

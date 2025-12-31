@@ -4,13 +4,8 @@ import {
   CustomTestResult,
   CustomRuleResult,
   PlaywrightTestContext,
-  CustomRulesManifest,
 } from '../types/custom-rules';
 import type { Page } from 'playwright';
-import { readFile } from 'fs/promises';
-import { join } from 'path';
-import { existsSync } from 'fs';
-import { PathConfig } from '../config/paths';
 
 interface AxeRuleConfigValue {
   enabled: boolean;
@@ -65,39 +60,6 @@ interface WindowWithAxe extends Window {
 }
 
 export class CustomRulesRunner {
-  private approvedRuleIds: Set<string> | null = null;
-
-  private async getApprovedRuleIds(): Promise<Set<string>> {
-    if (this.approvedRuleIds !== null) {
-      return this.approvedRuleIds;
-    }
-
-    const approvedIds = new Set<string>();
-    try {
-      const approvedRulesPath = PathConfig.getApprovedRulesPath();
-      const manifestPath = join(approvedRulesPath, 'manifest.json');
-
-      if (existsSync(manifestPath)) {
-        const manifestContent = await readFile(manifestPath, 'utf-8');
-        const manifest: CustomRulesManifest = JSON.parse(manifestContent);
-
-        for (const rule of manifest.rules) {
-          if (rule.enabled && rule.type === 'axe') {
-            approvedIds.add(rule.id);
-          }
-        }
-      }
-    } catch {
-      // If we can't load approved rules, assume none are approved
-    }
-
-    this.approvedRuleIds = approvedIds;
-    return approvedIds;
-  }
-
-  private isApprovedRule(ruleId: string, approvedIds: Set<string>): boolean {
-    return approvedIds.has(ruleId);
-  }
 
   private validateEvaluateString(evaluate: string): boolean {
     // Block dangerous patterns that could lead to code injection
@@ -161,36 +123,23 @@ export class CustomRulesRunner {
     _axe: unknown
   ): Promise<CustomRuleResult> {
     const ruleIdToCheck = rule.rule?.id || rule.id;
-    const approvedIds = await this.getApprovedRuleIds();
-    const isApproved = this.isApprovedRule(rule.id, approvedIds);
 
     if (rule.checks) {
-      // Filter out evaluate strings from non-approved rules or validate them
       const safeChecks: Record<string, AxeCheckConfig> = {};
       for (const [checkId, check] of Object.entries(rule.checks)) {
-        if (check.evaluate) {
-          if (isApproved) {
-            // Approved rules can use Function evaluation
-            safeChecks[checkId] = check;
-          } else if (this.validateEvaluateString(check.evaluate)) {
-            // Non-approved rules must pass validation
-            safeChecks[checkId] = check;
-          } else {
-            // Skip dangerous evaluate strings from non-approved rules
-            safeChecks[checkId] = {
-              id: check.id,
-              metadata: check.metadata,
-            };
-          }
-        } else {
+        if (check.evaluate && this.validateEvaluateString(check.evaluate)) {
           safeChecks[checkId] = check;
+        } else {
+          safeChecks[checkId] = {
+            id: check.id,
+            metadata: check.metadata,
+          };
         }
       }
 
       await page.evaluate(
         (params: {
           checks: Record<string, AxeCheckConfig>;
-          approved: boolean;
         }) => {
           const windowWithAxe = window as unknown as WindowWithAxe;
           const axe = windowWithAxe.axe;
@@ -200,9 +149,13 @@ export class CustomRulesRunner {
               checksConfig[checkId] = {
                 id: check.id,
                 evaluate: check.evaluate
-                  ? params.approved
-                    ? new Function('return ' + check.evaluate)()
-                    : undefined
+                  ? (() => {
+                      try {
+                        return new Function('return ' + check.evaluate)();
+                      } catch {
+                        return undefined;
+                      }
+                    })()
                   : undefined,
                 metadata: check.metadata,
               };
@@ -212,7 +165,6 @@ export class CustomRulesRunner {
         },
         {
           checks: safeChecks as Record<string, AxeCheckConfig>,
-          approved: isApproved,
         }
       );
     }

@@ -2,6 +2,7 @@
 import fs from 'fs';
 import path from 'path';
 import Handlebars from 'handlebars';
+import { AccessibilityTestResponse } from '../../types/accessibility';
 import { PathResolverService } from './utils/path-resolver';
 import { DataProcessorService } from './utils/data-processor';
 import { HtmlGeneratorService } from './utils/html-generator';
@@ -169,8 +170,8 @@ export class WebReportService {
     return this.generateReport('crawl-results.html', data, 'crawl');
   }
 
-  generateTestReport(testData: any, testUrl: string): string {
-    const data: any = {
+  generateTestReport(testData: AccessibilityTestResponse, testUrl: string): string {
+    const data = {
       TEST_URL: testUrl,
       SCORE: testData.score || 'N/A',
       PASSED_CHECKS: testData.passes?.length || 0,
@@ -180,7 +181,7 @@ export class WebReportService {
       TEST_TIME: new Date().toLocaleString(),
       violations: testData.violations || [],
       passes: testData.passes || [],
-      testData: testData, // Pass full testData untuk testSections helper
+      testData: testData,
     };
 
     return this.generateReport('test-results.html', data, 'test');
