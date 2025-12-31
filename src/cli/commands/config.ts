@@ -40,7 +40,7 @@ function maskSensitiveValue(
 
   if (isSecretKey(contextKey) || isSecretKey(keyLower)) {
     if (typeof value === 'string' && value.length > 0) {
-      if (value.length < 8) {
+      if (value.length <= 8) {
         return '****';
       }
       return `${value.substring(0, 4)}${'*'.repeat(Math.min(value.length - 8, 20))}${value.substring(value.length - 4)}`;
@@ -70,7 +70,7 @@ function maskConfig(
       masked[key] = maskConfig(value as ConfigObject, key);
     } else if (Array.isArray(value)) {
       masked[key] = value.map((item) =>
-        typeof item === 'string' ? maskSensitiveValue(key, item, key) : item
+        typeof item === 'string' ? maskSensitiveValue('', item, key) : item
       );
     } else {
       masked[key] = maskSensitiveValue(key, value as ConfigValue, parentKey);
@@ -156,7 +156,11 @@ export async function configCommand(options: ConfigOptions): Promise<void> {
         return;
       }
       const parentKey = keys.length > 1 ? keys[keys.length - 2] : undefined;
-      const displayValue = maskSensitiveValue(lastKey, current as ConfigValue, parentKey);
+      const displayValue = maskSensitiveValue(
+        lastKey,
+        current as ConfigValue,
+        parentKey
+      );
       console.log(chalk.blue(`${options.get}: ${displayValue}`));
     } else if (options.list) {
       console.log(chalk.blue.bold('\n📋 Current Configuration:'));
