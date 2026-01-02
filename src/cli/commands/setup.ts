@@ -113,7 +113,7 @@ export async function setupCommand(options: any) {
           default: false,
         },
         {
-          type: 'input',
+          type: 'password',
           name: 'openaiKey',
           message: 'Enter your OpenAI API key:',
           when: (answers) => answers.enableAI,
