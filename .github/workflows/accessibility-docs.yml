@@ -57,6 +57,9 @@ jobs:
           rm -rf "$CONFIG_BASE"
           mkdir -p "$CONFIG_BASE"
 
+          # Create empty .env file for docker-compose
+          touch .env
+
           cat > "$CONFIG_BASE/config.json" <<EOF
           {
             "mode": "local",
