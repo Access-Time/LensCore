@@ -37,6 +37,8 @@ services:
       - ./.lenscore/web:/app/.lenscore/web
     depends_on:
       - redis
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
 
   redis:
     image: redis:7-alpine

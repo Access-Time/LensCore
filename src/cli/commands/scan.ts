@@ -3,12 +3,18 @@
 import chalk from 'chalk';
 import ora from 'ora';
 import { CommandUtils } from '../utils/command-utils';
+import { CIOutputService } from '../services/ci-output';
 
 export async function scanCommand(url: string, options: any) {
   const spinner = ora('Starting scan...').start();
 
   try {
-    console.log(chalk.blue.bold(`\n🔍 Scanning: ${url}\n`));
+    if (!options.ci) {
+      console.log(chalk.blue.bold(`\n🔍 Scanning: ${url}\n`));
+    } else {
+      console.log(`- Starting scan...`);
+      console.log(`🔍 Scanning: ${url}`);
+    }
 
     await CommandUtils.ensureLensCoreReady();
 
@@ -38,7 +44,13 @@ export async function scanCommand(url: string, options: any) {
       };
     }
 
-    spinner.text = 'Starting crawl and accessibility scan...';
+    if (!options.ci) {
+      spinner.text = 'Starting crawl and accessibility scan...';
+    } else {
+      console.log('- Ensuring LensCore is ready...');
+      console.log('✔ LensCore ready');
+      console.log('- Running accessibility scan...');
+    }
 
     const scanOptions = {
       url,
@@ -65,10 +77,73 @@ export async function scanCommand(url: string, options: any) {
     };
 
     const client = await CommandUtils.getClient();
-    const result = await client.scan(scanOptions);
+    let result: any;
 
-    spinner.succeed('Scan completed');
+    try {
+      result = await client.scan(scanOptions);
+      if (!options.ci) {
+        spinner.succeed('Scan completed');
+      }
+    } catch (error: any) {
+      if (options.ci) {
+        console.log('✖ Scan failed');
+        // Try fallback with test command
+        console.log('Scan failed, trying with test command...');
+        try {
+          const testResult = await client.test({
+            url,
+            enableAI: !!aiConfig,
+            openaiKey: aiConfig?.apiKey,
+            projectContext,
+            skipCache: options.skipCache || false,
+            timeout: numericOptions['timeout'],
+          });
 
+          // Create scan-like structure from test result
+          const scanResult = {
+            crawl: {
+              pages: [],
+              totalPages: 1,
+              crawlTime: 0,
+            },
+            accessibility: {
+              results: [testResult],
+              totalPages: 1,
+              testTime: testResult.metadata?.processingTime || 0,
+            },
+            totalTime: testResult.metadata?.processingTime || 0,
+          };
+
+          // Handle fallback result
+          const exitCode = await CIOutputService.handleScanResult(scanResult, {
+            exitOnViolations: options.exitOnViolations !== false,
+            outputFile: options.output || 'report.json',
+            showDetails: options.showDetails !== false,
+          });
+
+          process.exit(exitCode);
+        } catch (testError: any) {
+          console.log('✖ Scan failed');
+          console.error('Error:', testError.message);
+          process.exit(1);
+        }
+      } else {
+        throw error;
+      }
+    }
+
+    // CI mode output
+    if (options.ci) {
+      const exitCode = await CIOutputService.handleScanResult(result, {
+        exitOnViolations: options.exitOnViolations !== false,
+        outputFile: options.output || 'report.json',
+        showDetails: options.showDetails !== false,
+      });
+
+      process.exit(exitCode);
+    }
+
+    // Normal mode output
     const totalTime = result.totalTime || 0;
     const totalPages = result.crawl?.totalPages || 0;
 
@@ -86,6 +161,12 @@ export async function scanCommand(url: string, options: any) {
     CommandUtils.displayAIStatus(options, result);
     await CommandUtils.displayFooter(options, reportFilename || undefined);
   } catch (error: any) {
-    CommandUtils.handleError(error, spinner, 'Scan');
+    if (options.ci) {
+      console.log('✖ Scan failed');
+      console.error('Error:', error.message);
+      process.exit(1);
+    } else {
+      CommandUtils.handleError(error, spinner, 'Scan');
+    }
   }
 }

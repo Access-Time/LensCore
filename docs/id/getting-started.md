@@ -246,7 +246,7 @@ curl http://localhost:3001/api/health
 
 ## Struktur Project
 
-Ketika menjalankan LensCore, ini akan membuat struktur berikut:
+**Struktur Runtime** (dibuat saat menjalankan LensCore):
 
 ```
 ~/.lenscore/
@@ -254,13 +254,9 @@ Ketika menjalankan LensCore, ini akan membuat struktur berikut:
 ├── logs/                # Log aplikasi
 │   ├── combined.log
 │   └── error.log
-└── cache/               # Direktori cache
-
-./
-├── storage/             # Penyimpanan screenshot
-│   └── screenshots/
-└── web/                 # Laporan HTML
-    └── output/
+├── cache/               # Direktori cache
+└── web/                 # Web templates (disalin dari package)
+    └── output/          # Laporan HTML yang di-generate
 ```
 
 ## Opsi Konfigurasi

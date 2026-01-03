@@ -1,0 +1,127 @@
+name: LensCore Accessibility Docs Check
+
+on:
+  push:
+    branches: ['main']
+  pull_request:
+
+jobs:
+  accessibility-docs:
+    runs-on: ubuntu-latest
+    env:
+      LENSCORE_CI_HOME: /home/runner/.lenscore
+      VITEPRESS_PORT: 5173
+      VITEPRESS_BASE_PATH: /LensCore/en/
+      LENSCORE_PORT: 3001
+      MAX_URLS: 20
+      SCAN_DEPTH: 2
+      TIMEOUT: 10000
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies and build CLI
+        run: |
+          npm ci
+          npm run build
+          npm link
+      - name: Install docker-compose
+        run: |
+          sudo curl -SL "https://github.com/docker/compose/releases/download/v2.33.1/docker-compose-$(uname -s)-$(uname -m)" \
+            -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+          docker-compose version
+
+      - name: Build and serve VitePress docs
+        run: |
+          npm run docs:build
+          npm run docs:preview -- --host 0.0.0.0 --port ${VITEPRESS_PORT} &
+          sleep 5
+
+      - name: Setup LensCore config
+        run: |
+          CONFIG_BASE="${LENSCORE_CI_HOME:-$HOME/.lenscore-ci}"
+          rm -rf "$CONFIG_BASE"
+          mkdir -p "$CONFIG_BASE"
+
+          # Create empty .env file for docker-compose
+          touch .env
+
+          cat > "$CONFIG_BASE/config.json" <<EOF
+          {
+            "mode": "local",
+            "docker": {
+              "image": "lenscore:latest",
+              "port": $LENSCORE_PORT
+            },
+            "remote": {
+              "baseUrl": "http://localhost:$LENSCORE_PORT"
+            },
+            "openai": {
+              "apiKey": "",
+              "model": "gpt-3.5-turbo",
+              "enabled": false
+            }
+          }
+          EOF
+
+          HOME="$CONFIG_BASE" lens-core build
+
+      - name: Wait for docs
+        id: extract_port
+        run: |
+          for i in {1..30}; do
+            if curl -sSf "http://localhost:${VITEPRESS_PORT}${VITEPRESS_BASE_PATH}" > /dev/null 2>&1; then
+              echo "VitePress is ready!"
+              break
+            fi
+            echo "Waiting... ($i/30)"
+            sleep 2
+          done
+
+          # Final check
+          if ! curl -sSf "http://localhost:${VITEPRESS_PORT}${VITEPRESS_BASE_PATH}" > /dev/null 2>&1; then
+            echo "::error::VitePress failed to start"
+            exit 1
+          fi
+
+          # Use host.docker.internal so LensCore Docker container can reach the host
+          echo "localhost_url=http://host.docker.internal:${VITEPRESS_PORT}${VITEPRESS_BASE_PATH}" >> "$GITHUB_OUTPUT"
+
+      - name: Preview VitePress response
+        run: |
+          # Use localhost for host-side check (host.docker.internal is only for Docker containers)
+          PREVIEW_URL="http://localhost:${VITEPRESS_PORT}${VITEPRESS_BASE_PATH}"
+          echo "Fetching homepage from: $PREVIEW_URL"
+          RESPONSE=$(curl -sS "$PREVIEW_URL")
+          echo "----- Begin VitePress response (first 40 lines) -----"
+          echo "$RESPONSE" | head -n 40
+          echo "----- End VitePress response -----"
+          if ! echo "$RESPONSE" | grep -q "LensCore"; then
+            echo "::warning::Expected marker text not found in VitePress response."
+          fi
+
+      - name: Run accessibility scan
+        run: |
+          SCAN_URL="${scan_url:-${{ steps.extract_port.outputs.localhost_url }}}"
+          HOME="$LENSCORE_CI_HOME" lens-core scan "$SCAN_URL" \
+            -u "${MAX_URLS}" \
+            -d "${SCAN_DEPTH}" \
+            -t "${TIMEOUT}" \
+            --skip-cache \
+            --ci \
+            -o report.json
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: lenscore-accessibility-report
+          path: |
+            report.json
+          retention-days: 7
+          if-no-files-found: warn
