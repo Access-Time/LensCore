@@ -50,7 +50,10 @@ jobs:
 
       - name: Setup LensCore
         run: |
-          npm install -g @accesstime/lenscore@latest
+          # Build and link local CLI
+          npm ci
+          npm run build
+          npm link
 
           CONFIG_BASE="${LENSCORE_CI_HOME:-$HOME/.lenscore-ci}"
           rm -rf "$CONFIG_BASE"
