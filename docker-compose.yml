@@ -38,7 +38,7 @@ services:
     depends_on:
       - redis
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - 'host.docker.internal:host-gateway'
 
   redis:
     image: redis:7-alpine
