@@ -37,8 +37,15 @@ jobs:
           sudo chmod +x /usr/local/bin/docker-compose
           docker-compose version
 
+      - name: Install dependencies and build CLI
+        run: |
+          npm ci
+          npm run build
+          npm link
+
       - name: Run VitePress docs container
         run: |
+          # Container reuses node_modules from host (already installed above)
           docker run -d --rm \
             --name lenscore-docs \
             --user "$(id -u):$(id -g)" \
@@ -48,15 +55,10 @@ jobs:
             -e HOST=0.0.0.0 \
             -e HOME=/tmp \
             node:20 \
-            sh -c "npm ci && npm run docs:dev -- --host 0.0.0.0 --port ${VITEPRESS_PORT} --strictPort"
+            sh -c "npm run docs:dev -- --host 0.0.0.0 --port ${VITEPRESS_PORT} --strictPort"
 
-      - name: Setup LensCore
+      - name: Setup LensCore config
         run: |
-          # Build and link local CLI
-          npm ci
-          npm run build
-          npm link
-
           CONFIG_BASE="${LENSCORE_CI_HOME:-$HOME/.lenscore-ci}"
           rm -rf "$CONFIG_BASE"
           mkdir -p "$CONFIG_BASE"
