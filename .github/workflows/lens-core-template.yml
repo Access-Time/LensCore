@@ -76,38 +76,37 @@ jobs:
         id: scan
         run: |
           echo "Scanning ${{ inputs.url }}..."
-
-          RESPONSE=$(curl -sf -X POST http://localhost:3001/api/combined \
-            -H "Content-Type: application/json" \
-            -d '{
-              "url": "${{ inputs.url }}",
-              "crawlOptions": {
-                "maxUrls": ${{ inputs.max_urls }},
-                "maxDepth": ${{ inputs.scan_depth }}
-              },
-              "testOptions": {
-                "timeout": ${{ inputs.timeout }},
-                "skipCache": true
-              }
-            }')
-
-          echo "$RESPONSE" > report.json
-
-          # Extract summary
-          TOTAL_PAGES=$(echo "$RESPONSE" | jq -r '.accessibility.totalPages // 0')
-          TOTAL_VIOLATIONS=$(echo "$RESPONSE" | jq '[.accessibility.results[].violations // [] | length] | add // 0')
-
-          echo "## Accessibility Scan Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **URL:** ${{ inputs.url }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Pages scanned:** $TOTAL_PAGES" >> $GITHUB_STEP_SUMMARY
-          echo "- **Total violations:** $TOTAL_VIOLATIONS" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-
-          if [ "$TOTAL_VIOLATIONS" -gt 0 ]; then
-            echo "::warning::Found $TOTAL_VIOLATIONS accessibility violations across $TOTAL_PAGES pages"
-          else
-            echo "No accessibility violations found"
+          
+          # Run CLI scan inside the container
+          docker exec lenscore node dist/cli.js scan "${{ inputs.url }}" \
+            --ci \
+            -u ${{ inputs.max_urls }} \
+            -d ${{ inputs.scan_depth }} \
+            -t ${{ inputs.timeout }} \
+            --skip-cache \
+            -o /app/report.json \
+            --no-exit-on-violations || SCAN_EXIT=$?
+          
+          # Copy report from container
+          docker cp lenscore:/app/report.json ./report.json || true
+          
+          # Generate summary
+          if [ -f report.json ]; then
+            TOTAL_PAGES=$(jq -r '.accessibility.totalPages // .totalPages // 1' report.json)
+            TOTAL_VIOLATIONS=$(jq '[.accessibility.results[].violations // [] | length] | add // 0' report.json 2>/dev/null || jq '.violations | length // 0' report.json)
+            
+            echo "## Accessibility Scan Results" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "- **URL:** ${{ inputs.url }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Pages scanned:** $TOTAL_PAGES" >> $GITHUB_STEP_SUMMARY
+            echo "- **Total violations:** $TOTAL_VIOLATIONS" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            
+            if [ "$TOTAL_VIOLATIONS" -gt 0 ]; then
+              echo "::warning::Found $TOTAL_VIOLATIONS accessibility violations across $TOTAL_PAGES pages"
+            else
+              echo "No accessibility violations found"
+            fi
           fi
 
       - name: Upload report
