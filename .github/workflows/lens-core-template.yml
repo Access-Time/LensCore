@@ -76,7 +76,7 @@ jobs:
         id: scan
         run: |
           echo "Scanning ${{ inputs.url }}..."
-          
+
           RESPONSE=$(curl -sf -X POST http://localhost:3001/api/combined \
             -H "Content-Type: application/json" \
             -d '{
@@ -90,20 +90,20 @@ jobs:
                 "skipCache": true
               }
             }')
-          
+
           echo "$RESPONSE" > report.json
-          
+
           # Extract summary
           TOTAL_PAGES=$(echo "$RESPONSE" | jq -r '.accessibility.totalPages // 0')
           TOTAL_VIOLATIONS=$(echo "$RESPONSE" | jq '[.accessibility.results[].violations // [] | length] | add // 0')
-          
+
           echo "## Accessibility Scan Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **URL:** ${{ inputs.url }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Pages scanned:** $TOTAL_PAGES" >> $GITHUB_STEP_SUMMARY
           echo "- **Total violations:** $TOTAL_VIOLATIONS" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           if [ "$TOTAL_VIOLATIONS" -gt 0 ]; then
             echo "::warning::Found $TOTAL_VIOLATIONS accessibility violations across $TOTAL_PAGES pages"
           else
