@@ -25,18 +25,6 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install jq
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y jq
-
-      - name: Install docker-compose
-        run: |
-          sudo curl -SL "https://github.com/docker/compose/releases/download/v2.33.1/docker-compose-$(uname -s)-$(uname -m)" \
-            -o /usr/local/bin/docker-compose
-          sudo chmod +x /usr/local/bin/docker-compose
-          docker-compose version
-
       - name: Install dependencies and build CLI
         run: |
           npm ci
