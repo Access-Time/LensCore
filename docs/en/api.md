@@ -63,7 +63,8 @@ Test accessibility of a single web page.
   "timeout": 30000,
   "rules": [],
   "tags": ["wcag2a", "wcag2aa"],
-  "includeScreenshot": true
+  "includeScreenshot": true,
+  "customTests": ["responsive"]
 }
 ```
 
@@ -76,6 +77,7 @@ Test accessibility of a single web page.
 - `rules` (optional): Specific axe rules to test
 - `tags` (optional): WCAG tags to test
 - `includeScreenshot` (optional): Include screenshot in response (default: true)
+- `customTests` (optional): Custom tests to run (array of strings, e.g., `["responsive"]`)
 
 **Response Example:**
 
@@ -102,9 +104,50 @@ Test accessibility of a single web page.
   "incomplete": [],
   "inapplicable": [],
   "screenshot": "data:image/png;base64,...",
-  "aiRecommendations": null
+  "aiRecommendations": null,
+  "responsive": {
+    "status": "pass",
+    "viewports": [
+      {
+        "name": "mobile",
+        "width": 375,
+        "height": 667,
+        "screenshot": "screenshots/responsive/xxx-mobile.png",
+        "status": "pass"
+      },
+      {
+        "name": "tablet",
+        "width": 768,
+        "height": 1024,
+        "screenshot": "screenshots/responsive/xxx-tablet.png",
+        "status": "pass"
+      },
+      {
+        "name": "desktop",
+        "width": 1920,
+        "height": 1080,
+        "screenshot": "screenshots/responsive/xxx-desktop.png",
+        "status": "pass"
+      }
+    ],
+    "issues": [
+      {
+        "viewport": "mobile",
+        "severity": "warning",
+        "description": "Text may be too small on mobile viewport",
+        "element": "body > p",
+        "remediation": "Consider increasing font size for mobile"
+      }
+    ]
+  }
 }
 ```
+
+**Notes about Custom Tests:**
+
+- `customTests: ["responsive"]` - Runs responsive test that analyzes layout across different viewports
+- Responsive test requires `enableAI: true` or `aiApiKey` for AI-powered analysis
+- Responsive test results will appear in the `responsive` field in the response
 
 ---
 
@@ -193,12 +236,13 @@ Crawl a website and test all discovered pages for accessibility.
   },
   "testOptions": {
     "enableAI": false,
-    "tags": ["wcag2a", "wcag2aa"]
+    "tags": ["wcag2a", "wcag2aa"],
+    "customTests": ["responsive"]
   }
 }
 ```
 
-**Response:** Crawl results with accessibility test results for each page.
+**Response:** Crawl results with accessibility test results for each page. If `customTests` includes `"responsive"`, each page will have a `responsive` field with responsive test results.
 
 ---
 
@@ -290,6 +334,15 @@ curl -X POST http://localhost:3001/api/test \
   -d '{
     "url": "https://example.com",
     "enableAI": false
+  }'
+
+# Test a page with responsive test
+curl -X POST http://localhost:3001/api/test \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://example.com",
+    "enableAI": true,
+    "customTests": ["responsive"]
   }'
 
 # Crawl a website

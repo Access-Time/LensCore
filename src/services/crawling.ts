@@ -1,4 +1,4 @@
-import puppeteer, { Browser } from 'puppeteer';
+import { chromium, Browser, LaunchOptions } from 'playwright';
 import * as cheerio from 'cheerio';
 import { CrawlRequest, CrawlResponse, CrawlResult, CrawlRules } from '../types';
 import { env } from '../utils/env';
@@ -17,7 +17,9 @@ export class CrawlingService {
 
   async initialize(): Promise<void> {
     try {
-      this.browser = await puppeteer.launch({
+      const executablePath = process.env['PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH'];
+
+      const launchOptions: LaunchOptions = {
         headless: true,
         args: [
           '--no-sandbox',
@@ -32,7 +34,13 @@ export class CrawlingService {
           '--disable-renderer-backgrounding',
         ],
         timeout: 30000,
-      });
+      };
+
+      if (executablePath) {
+        launchOptions.executablePath = executablePath;
+      }
+
+      this.browser = await chromium.launch(launchOptions);
 
       logger.info('Browser initialized successfully');
     } catch (error) {
@@ -65,6 +73,16 @@ export class CrawlingService {
     };
 
     return `crawl:${crypto.createHash('md5').update(JSON.stringify(keyData)).digest('hex')}`;
+  }
+
+  private mapWaitUntilOption(
+    waitUntil?: string
+  ): 'load' | 'domcontentloaded' | 'networkidle' {
+    const value = waitUntil || env.CRAWL_WAIT_UNTIL;
+    if (value === 'networkidle0' || value === 'networkidle2')
+      return 'networkidle';
+    if (value === 'domcontentloaded') return 'domcontentloaded';
+    return 'load';
   }
 
   async crawlWebsite(request: CrawlRequest): Promise<CrawlResponse> {
@@ -136,14 +154,12 @@ export class CrawlingService {
           page = await this.browser!.newPage();
           page.setDefaultTimeout(Math.min(timeout, 15000));
 
-          await page.setViewport({ width: 1280, height: 720 });
-          await page.setUserAgent(
-            'Mozilla/5.0 (compatible; LensCore/1.0; +https://github.com/accesslens/lenscore)'
-          );
-
-          if (request.headers) {
-            await page.setExtraHTTPHeaders(request.headers);
-          }
+          await page.setViewportSize({ width: 1280, height: 720 });
+          await page.setExtraHTTPHeaders({
+            'User-Agent':
+              'Mozilla/5.0 (compatible; LensCore/1.0; +https://github.com/accesslens/lenscore)',
+            ...(request.headers || {}),
+          });
 
           const pageController = new AbortController();
           const pageTimeoutId = setTimeout(
@@ -155,18 +171,13 @@ export class CrawlingService {
 
           try {
             const response = await page.goto(url, {
-              waitUntil:
-                request.waitUntil ||
-                (env.CRAWL_WAIT_UNTIL as
-                  | 'domcontentloaded'
-                  | 'networkidle0'
-                  | 'networkidle2'),
+              waitUntil: this.mapWaitUntilOption(request.waitUntil),
               timeout: Math.min(timeout, 15000),
             });
 
             clearTimeout(pageTimeoutId);
 
-            const statusCode = response?.status() || 0;
+            const statusCode = response?.status() ?? 0;
 
             if (statusCode >= 400) {
               logger.warn('HTTP error status', { url, statusCode });

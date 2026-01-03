@@ -1,0 +1,74 @@
+name: NPM Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Get current version from package.json
+        id: current-version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Current version: $VERSION"
+
+      - name: Check if version exists in NPM
+        id: check-version
+        run: |
+          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          VERSION=${{ steps.current-version.outputs.version }}
+          # Use curl to check npm registry API (no auth required for public packages)
+          PACKAGE_ESC=$(echo "$PACKAGE_NAME" | sed 's/@/%40/g' | sed 's/\//%2F/g')
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "https://registry.npmjs.org/${PACKAGE_ESC}/${VERSION}")
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Version $VERSION already exists in NPM registry"
+          elif [ "$HTTP_CODE" = "404" ]; then
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Version $VERSION is new, will publish"
+          else
+            echo "::error::Failed to check version in NPM registry (HTTP $HTTP_CODE). Check network connectivity and npm registry status."
+            exit 1
+          fi
+
+      - name: Validate NPM token
+        if: steps.check-version.outputs.exists == 'false'
+        run: |
+          if [ -z "${{ secrets.NPM_TOKEN }}" ]; then
+            echo "::error::NPM_TOKEN secret is missing. Please check NPM_TOKEN secret."
+            exit 1
+          fi
+
+      - name: Install dependencies
+        if: steps.check-version.outputs.exists == 'false'
+        run: npm ci
+
+      - name: Build project
+        if: steps.check-version.outputs.exists == 'false'
+        run: npm run build
+
+      - name: Publish to NPM
+        if: steps.check-version.outputs.exists == 'false'
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Skip publish
+        if: steps.check-version.outputs.exists == 'true'
+        run: echo "Skipping publish - version ${{ steps.current-version.outputs.version }} already exists in NPM registry"

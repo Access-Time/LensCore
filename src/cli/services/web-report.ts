@@ -2,6 +2,7 @@
 import fs from 'fs';
 import path from 'path';
 import Handlebars from 'handlebars';
+import { AccessibilityTestResponse } from '../../types/accessibility';
 import { PathResolverService } from './utils/path-resolver';
 import { DataProcessorService } from './utils/data-processor';
 import { HtmlGeneratorService } from './utils/html-generator';
@@ -62,7 +63,10 @@ export class WebReportService {
       }
       if (url.includes('screenshots/')) {
         const parts = url.split('screenshots/');
-        return `/storage/screenshots/${parts[parts.length - 1]}`;
+        const fileName = parts[parts.length - 1];
+        if (fileName && fileName !== url) {
+          return `/storage/screenshots/${fileName}`;
+        }
       }
       if (url.includes('/')) {
         const parts = url.split('/');
@@ -86,6 +90,25 @@ export class WebReportService {
     Handlebars.registerHelper('pageResults', (results: any[]) => {
       return new Handlebars.SafeString(
         HtmlGeneratorService.generatePageResults(results || [])
+      );
+    });
+
+    Handlebars.registerHelper('responsiveSection', (responsive: any) => {
+      if (!responsive) {
+        return new Handlebars.SafeString('');
+      }
+      return new Handlebars.SafeString(
+        HtmlGeneratorService.generateResponsiveSection(responsive)
+      );
+    });
+
+    Handlebars.registerHelper('responsiveSectionHtml', (html: string) => {
+      return new Handlebars.SafeString(html || '');
+    });
+
+    Handlebars.registerHelper('testSections', (testData: any) => {
+      return new Handlebars.SafeString(
+        HtmlGeneratorService.generateTestSections(testData || {})
       );
     });
 
@@ -147,7 +170,10 @@ export class WebReportService {
     return this.generateReport('crawl-results.html', data, 'crawl');
   }
 
-  generateTestReport(testData: any, testUrl: string): string {
+  generateTestReport(
+    testData: AccessibilityTestResponse,
+    testUrl: string
+  ): string {
     const data = {
       TEST_URL: testUrl,
       SCORE: testData.score || 'N/A',
@@ -158,6 +184,7 @@ export class WebReportService {
       TEST_TIME: new Date().toLocaleString(),
       violations: testData.violations || [],
       passes: testData.passes || [],
+      testData: testData,
     };
 
     return this.generateReport('test-results.html', data, 'test');

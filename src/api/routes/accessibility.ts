@@ -4,7 +4,7 @@ import { AccessibilityService } from '../../services/accessibility';
 import { aiService } from '../../services/ai';
 import { accessibilityRequestSchema } from '../schemas';
 import { env } from '../../utils/env';
-import { AccessibilityRequest } from '../../types';
+import { AccessibilityRequest, AccessibilityTestResponse } from '../../types';
 import { ProjectContext } from '../../utils/ai-prompts';
 
 const accessibilityService = new AccessibilityService();
@@ -30,7 +30,16 @@ export const testHandler = async (
       return;
     }
 
-    const testResult = await accessibilityService.testAccessibility(request);
+    const accessibilityRequest: AccessibilityRequest = {
+      ...request,
+      includeApprovedRules: request.includeApprovedRules !== false,
+      enableAI,
+      aiApiKey: enableAI ? aiApiKey : undefined,
+      model: req.body.model || env.OPENAI_MODEL,
+    };
+
+    const testResult =
+      await accessibilityService.testAccessibility(accessibilityRequest);
 
     if (testResult.violations && testResult.violations.length > 0) {
       const aiResult = await aiService.processAccessibilityIssues(
@@ -43,13 +52,16 @@ export const testHandler = async (
         }
       );
 
-      res.json({
+      const response: AccessibilityTestResponse = {
         ...testResult,
         violations: aiResult.issues,
         aiEnabled: aiResult.enabled,
         aiError: aiResult.error,
         metadata: aiResult.metadata,
-      });
+        customRules: testResult.customRules || [],
+      };
+
+      res.json(response);
     } else {
       const aiResult = await aiService.processAccessibilityIssues(
         testResult.violations || [],
@@ -61,13 +73,16 @@ export const testHandler = async (
         }
       );
 
-      res.json({
+      const response: AccessibilityTestResponse = {
         ...testResult,
         violations: aiResult.issues,
         aiEnabled: aiResult.enabled,
         aiError: aiResult.error,
         metadata: aiResult.metadata,
-      });
+        customRules: testResult.customRules || [],
+      };
+
+      res.json(response);
     }
   } catch (error) {
     next(error);
@@ -144,6 +159,7 @@ export const testMultipleHandler = async (
           aiEnabled: aiResult.enabled,
           aiError: aiResult.error,
           metadata: aiResult.metadata,
+          customRules: result.customRules || [],
         };
       })
     );

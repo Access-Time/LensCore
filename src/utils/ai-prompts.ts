@@ -61,7 +61,7 @@ Rule ID: ${issue.id}
 Description: ${issue.description}
 Impact: ${issue.impact}
 Help: ${issue.help}
-Help URL: ${issue.helpUrl}
+${issue.helpUrl ? `Help URL: ${issue.helpUrl}` : ''}
 
 ${htmlContexts ? `CURRENT PROBLEMATIC CODE:\n${htmlContexts}\n` : ''}
 

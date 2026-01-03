@@ -35,7 +35,7 @@ features:
 
   - icon: ⚡
     title: Performa Tinggi
-    details: Dibangun dengan TypeScript dan Puppeteer untuk testing yang cepat dan reliable dalam skala besar
+    details: Dibangun dengan TypeScript dan Playwright untuk testing yang cepat dan reliable dalam skala besar
 
   - icon: 🌐
     title: Multi-Bahasa
@@ -90,6 +90,7 @@ LensCore menggabungkan testing aksesibilitas yang powerful dengan web crawling y
 <div class="vp-doc">
 
 - [Panduan Memulai](/id/getting-started) - Pelajari dasar-dasar dan setup environment Anda
+- [Panduan Docker Hub](/id/docker-hub) - Jalankan LensCore dari Docker Hub tanpa build
 - [Dokumentasi CLI](/id/cli) - Jelajahi semua perintah dan opsi CLI
 - [Referensi API](/id/api) - Integrasikan LensCore ke aplikasi Anda
 - [Panduan Kontribusi](/id/contributing) - Bantu membuat LensCore lebih baik

@@ -1,0 +1,21 @@
+{
+  "id": "link-has-accessible-name",
+  "enabled": true,
+  "metadata": {
+    "description": "Ensures links have accessible names",
+    "help": "Links must have accessible names",
+    "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/link-name"
+  },
+  "rule": {
+    "id": "link-name",
+    "enabled": true,
+    "tags": [
+      "cat.name-role-value",
+      "wcag2a",
+      "wcag412",
+      "section508",
+      "section508.22.a"
+    ]
+  },
+  "severity": "serious"
+}

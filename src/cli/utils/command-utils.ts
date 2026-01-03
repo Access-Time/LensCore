@@ -3,8 +3,7 @@
 import chalk from 'chalk';
 import ora from 'ora';
 import { promises as fs } from 'fs';
-import path from 'path';
-import os from 'os';
+import { PathConfig } from '../../config/paths';
 import { LensCoreClient } from '../services/lenscore-client';
 import { DockerService } from '../services/docker';
 import { WebReportService } from '../services/web-report';
@@ -28,7 +27,18 @@ export class CommandUtils {
         await dockerService.ensureServicesReady();
 
         spinner.text = 'Waiting for LensCore to be ready...';
-        await client.waitForReady();
+        await client.waitForReady(60000);
+      } else {
+        spinner.text = 'Verifying LensCore is fully ready...';
+        try {
+          await client.waitForReady(10000);
+        } catch {
+          spinner.text =
+            'Service responding but may need restart, rebuilding...';
+          const dockerService = await this.getDockerService();
+          await dockerService.ensureServicesReady();
+          await client.waitForReady(60000);
+        }
       }
 
       spinner.succeed('LensCore ready');
@@ -223,7 +233,7 @@ export class CommandUtils {
    */
   static async loadConfig(): Promise<any> {
     try {
-      const configPath = path.join(os.homedir(), '.lenscore', 'config.json');
+      const configPath = PathConfig.getConfigPath();
       const configData = await fs.readFile(configPath, 'utf8');
       return JSON.parse(configData);
     } catch {

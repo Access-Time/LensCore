@@ -4,9 +4,17 @@ LensCore CLI adalah antarmuka baris perintah yang powerful untuk testing aksesib
 
 ## Instalasi
 
+LensCore CLI dipublikasikan sebagai paket npm `@accesstime/lenscore` dan membutuhkan **Node.js 20+**.
+
 ```bash
+# Instal global (direkomendasikan)
 npm install -g @accesstime/lenscore
+
+# Atau jalankan tanpa instal global
+npx @accesstime/lenscore --help
 ```
+
+Setelah instal global, CLI tersedia di mana saja sebagai perintah `lens-core`.
 
 ## Panduan Mulai Cepat
 
@@ -66,8 +74,9 @@ lens-core setup
 **Opsi:**
 
 - `--port <port>`: Set port API (default: 3001)
+- `-u, --url <url>`: Set base URL kustom (contoh: `http://localhost:3003`)
 - `--ai`: Aktifkan fitur AI saat setup
-- `--openai-key <key>`: Set OpenAI API key
+- `-k, --openai-key <key>`: Set OpenAI API key
 
 ---
 
@@ -112,7 +121,13 @@ Test aksesibilitas satu halaman.
 - `-t, --timeout <ms>`: Timeout load halaman (default: 30000)
 - `-r, --rules <rules>`: Rule spesifik untuk di-test (dipisahkan koma)
 - `-g, --tags <tags>`: Tag WCAG untuk di-test (contoh: "wcag2a,wcag2aa")
+- `--custom-tests <tests>`: Custom tests untuk dijalankan (dipisahkan koma, contoh: "responsive")
 - `--no-screenshot`: Skip capture screenshot
+- `--ci`: Mode CI: output terformat untuk continuous integration
+- `-o, --output <file>`: File output untuk laporan JSON (default: report.json saat menggunakan --ci)
+- `--no-exit-on-violations`: Jangan exit dengan error code saat violations ditemukan (mode CI)
+- `--no-show-details`: Sembunyikan informasi detail violations (mode CI)
+- `--skip-cache`: Lewati cache dan paksa test baru
 
 **Contoh:**
 
@@ -124,6 +139,7 @@ lens-core test https://example.com --rules "color-contrast,keyboard"
 lens-core test https://example.com --project-context "react,tailwind"
 lens-core test https://example.com --web
 lens-core test https://example.com --no-screenshot
+lens-core test https://example.com --custom-tests=responsive --enable-ai
 ```
 
 ---
@@ -154,6 +170,7 @@ Crawl website dan temukan halaman.
 - `-t, --timeout <ms>`: Timeout load halaman
 - `-j, --concurrency <number>`: Request bersamaan
 - `-l, --wait-until <event>`: Tunggu hingga event (load|domcontentloaded|networkidle)
+- `--skip-cache`: Lewati cache dan paksa crawl baru
 
 **Contoh:**
 
@@ -170,6 +187,22 @@ lens-core crawl https://example.com --web
 
 Crawl website dan test aksesibilitas (operasi gabungan).
 
+**Opsi:**
+
+- `--enable-ai`: Aktifkan analisis berbasis AI
+- `-k, --openai-key <key>`: OpenAI API key
+- `-c, --project-context <context>`: Konteks proyek (contoh: "react,tailwind")
+- `-w, --web`: Generate laporan HTML
+- `-u, --max-urls <number>`: Maksimum URL untuk di-crawl (default: 10)
+- `-d, --max-depth <number>`: Kedalaman maksimum crawl (default: 2)
+- `-t, --timeout <ms>`: Timeout request dalam milliseconds (default: 15000)
+- `-j, --concurrency <number>`: Jumlah request bersamaan (default: 3)
+- `--skip-cache`: Bypass cache dan paksa scan baru
+- `--ci`: Mode CI: output terformat untuk continuous integration
+- `-o, --output <file>`: File output untuk laporan JSON (default: report.json saat menggunakan --ci)
+- `--no-exit-on-violations`: Jangan exit dengan error code saat violations ditemukan (mode CI)
+- `--no-show-details`: Sembunyikan informasi detail violations (mode CI)
+
 **Contoh:**
 
 ```bash
@@ -178,7 +211,15 @@ lens-core scan https://example.com --enable-ai
 lens-core scan https://example.com --max-urls 50 --max-depth 3
 lens-core scan https://example.com --project-context "react,tailwind"
 lens-core scan https://example.com --web
+lens-core scan https://example.com --ci
+lens-core scan https://example.com --ci --no-exit-on-violations
+lens-core scan https://example.com --custom-tests=responsive --enable-ai --max-urls 10
 ```
+
+**Ringkasan opsi:**
+
+- Semua opsi `crawl`: `--max-urls`, `--max-depth`, `--timeout`, `--concurrency`, `--wait-until`, `--skip-cache`
+- Semua opsi `test`: `--enable-ai`, `--openai-key`, `--project-context`, `--web`, `--timeout`, `--rules`, `--tags`, `--custom-tests`, `--no-screenshot`
 
 ## Manajemen Docker
 
@@ -230,6 +271,24 @@ Cek API health endpoint.
 lens-core health
 ```
 
+## Manajemen Cache
+
+### `cache:clear`
+
+Menghapus semua data cache yang digunakan oleh LensCore (baik in-memory maupun cache eksternal tergantung konfigurasi Anda).
+
+```bash
+lens-core cache:clear
+```
+
+### `cache:stats`
+
+Menampilkan statistik cache seperti hit rate dan ukuran cache.
+
+```bash
+lens-core cache:stats
+```
+
 ## Format Output
 
 ### Output JSON (Default)
@@ -259,6 +318,84 @@ Generate laporan HTML disimpan ke direktori `web/output/` dengan:
 - Preview screenshot
 - Code snippets
 - Rekomendasi
+
+### Output CI (Continuous Integration)
+
+Flag `--ci` menyediakan output terformat yang dioptimalkan untuk pipeline CI/CD:
+
+```bash
+lens-core scan https://example.com --ci
+lens-core test https://example.com --ci
+```
+
+**Fitur:**
+
+- ✅ **Output terformat**: Output bersih dan terstruktur untuk log CI
+- ✅ **Exit code otomatis**: Exit code 1 jika violations ditemukan, 0 jika tidak ada
+- ✅ **Detail violations**: Menampilkan detail violations dengan help URL
+- ✅ **Laporan JSON**: Otomatis menyimpan laporan ke `report.json` (atau file kustom dengan `-o`)
+- ✅ **Fallback handling**: Otomatis fallback ke test command jika scan gagal
+- ✅ **Integrasi GitHub Actions**: Termasuk anotasi `::error::` untuk violations
+
+**Opsi Mode CI:**
+
+- `--ci`: Aktifkan mode CI dengan output terformat
+- `-o, --output <file>`: Tentukan file output untuk laporan JSON (default: `report.json`)
+- `--no-exit-on-violations`: Jangan gagalkan workflow pada violations (berguna untuk monitoring)
+- `--no-show-details`: Sembunyikan informasi detail violations (hanya ringkasan)
+
+**Contoh Output CI:**
+
+```
+==========================================
+ACCESSIBILITY VIOLATIONS DETECTED
+==========================================
+
+Pages scanned: 3
+Total violations: 5
+
+--- Violation Details ---
+
+Page: https://example.com
+  ❌ color-contrast [serious]
+     Description: Ensures the contrast between foreground and background colors meets WCAG 2 AA contrast ratio thresholds
+     Help: Elements must have sufficient color contrast
+     Help URL: https://dequeuniversity.com/rules/axe/4.8/color-contrast
+     - Element: button.submit-btn
+       HTML: <button class="submit-btn">Submit</button>
+       Summary: Element has insufficient color contrast
+
+==========================================
+How to fix:
+  1. Review each violation above
+  2. Check the Help URL for detailed guidance
+  3. Fix the issues in your code
+  4. Re-run the workflow to verify fixes
+==========================================
+
+::error::Accessibility violations detected: 5
+```
+
+**Kasus Penggunaan:**
+
+1. **Enforcing Quality** (perilaku default):
+
+   ```bash
+   lens-core scan https://example.com --ci
+   # Workflow gagal jika violations ditemukan
+   ```
+
+2. **Monitoring Saja** (non-blocking):
+
+   ```bash
+   lens-core scan https://example.com --ci --no-exit-on-violations
+   # Workflow sukses tapi violations dilaporkan
+   ```
+
+3. **File Output Kustom**:
+   ```bash
+   lens-core scan https://example.com --ci -o custom-report.json
+   ```
 
 ## File Konfigurasi
 
@@ -332,12 +469,93 @@ lens-core crawl https://example.com \
 
 ### Integrasi CI/CD
 
+LensCore menyediakan mode CI khusus untuk integrasi seamless dengan pipeline CI/CD:
+
+**Integrasi CI Dasar:**
+
+```bash
+lens-core setup --port 3001
+lens-core build
+lens-core scan https://example.com --ci
+```
+
+**Contoh GitHub Actions:**
+
+```yaml
+- name: Run accessibility scan
+  run: |
+    lens-core scan "$SCAN_URL" \
+      -u 20 \
+      -d 2 \
+      -t 10000 \
+      --skip-cache \
+      --ci \
+      -o report.json
+```
+
+**Integrasi CI Lanjutan:**
+
+```bash
+# Dengan analisis AI
+lens-core scan https://example.com --ci --enable-ai
+
+# Non-blocking (monitoring saja)
+lens-core scan https://example.com --ci --no-exit-on-violations
+
+# File output kustom
+lens-core scan https://example.com --ci -o accessibility-report.json
+
+# Output minimal (tanpa detail)
+lens-core scan https://example.com --ci --no-show-details
+```
+
+**Integrasi Legacy (tanpa --ci):**
+
 ```bash
 lens-core setup --port 3001 --ai --openai-key $OPENAI_API_KEY
 lens-core build
 lens-core health
 lens-core test https://example.com > results.json
 ```
+
+## Alur CI & Rilis
+
+Bagian ini ditujukan untuk kontributor dan maintainer yang mengerjakan LensCore CLI.
+
+### Continuous Integration (GitHub Actions)
+
+Setiap push ke `main` dan setiap pull request akan menjalankan workflow GitHub Actions berikut:
+
+- **Build Check** (`.github/workflows/build.yml`): menjalankan `npm run typecheck` dan `npm run build`
+- **Test Check** (`.github/workflows/test.yml`): menjalankan `npm run test` dan `npm run test:coverage`
+- **Lint Check** (`.github/workflows/lint.yml`): menjalankan `npm run lint` dan `npm run format:check`
+
+Selain itu, workflow **Security Check** (`.github/workflows/security.yml`) berjalan terjadwal untuk:
+
+- Menjalankan `npm audit` dengan threshold severitas _moderate_
+- Menghasilkan laporan dependency yang ketinggalan versi
+
+### Deploy Dokumentasi
+
+Dokumentasi dibuild dan dideploy ke GitHub Pages oleh `.github/workflows/deploy-docs.yml`:
+
+- Terpicu saat push ke `main` yang menyentuh `docs/**`, `package.json`, `package-lock.json`, atau workflow itu sendiri
+- Menjalankan `npm ci` dan `npm run docs:build`
+- Mempublikasikan dokumentasi ke GitHub Pages
+
+### Merilis Versi CLI Baru ke npm
+
+Rilis paket npm `@accesstime/lenscore` dipublikasikan secara otomatis ketika GitHub release dibuat. Workflow CI (`npm-release.yml`) menangani proses publikasi:
+
+1. **Update versi**
+   - Gunakan `npm version patch|minor|major` (disarankan) atau edit `package.json` secara manual.
+   - Perintah `npm version` akan mengupdate field versi dan membuat Git tag.
+2. **Buat GitHub release**
+   - Buat GitHub release baru dengan tag versi tersebut.
+   - Workflow CI akan secara otomatis mengecek apakah versi sudah ada, build project, dan publish ke npm jika versi baru.
+3. **Verifikasi versi baru**
+   - Instal global di environment bersih: `npm install -g @accesstime/lenscore`
+   - Jalankan `lens-core --version` untuk memastikan versi yang terpasang sama dengan yang dirilis.
 
 ## Troubleshooting
 
@@ -365,9 +583,136 @@ lens-core config --reset
 
 ## Penggunaan Lanjutan
 
-### Rule Kustom
+### Custom Tests
 
-Test rule aksesibilitas spesifik:
+LensCore mendukung custom tests tambahan untuk analisis yang lebih mendalam. Saat ini tersedia:
+
+#### Responsive Test
+
+Test responsivitas layout website menggunakan AI untuk mendeteksi masalah desain responsif di berbagai ukuran viewport.
+
+**Persyaratan:**
+
+- Memerlukan `--enable-ai` atau `--openai-key` untuk mengaktifkan analisis AI
+- Menggunakan model OpenAI yang mendukung Vision API (otomatis menggunakan `gpt-4o` jika diperlukan)
+
+**Cara Menggunakan:**
+
+```bash
+# Test responsivitas satu halaman
+lens-core test https://example.com --custom-tests=responsive --enable-ai
+
+# Test responsivitas dengan scan
+lens-core scan https://example.com --custom-tests=responsive --enable-ai --max-urls 10
+
+# Dengan web report
+lens-core test https://example.com --custom-tests=responsive --enable-ai --web
+```
+
+**Apa yang Dilakukan:**
+
+- Mengambil screenshot di berbagai viewport (mobile, tablet, desktop)
+- Menganalisis screenshot menggunakan AI untuk mendeteksi masalah responsif
+- Menghasilkan laporan dengan screenshot dan rekomendasi perbaikan
+
+**Hasil Test:**
+
+- Screenshot untuk setiap viewport
+- Daftar masalah responsif yang terdeteksi
+- Rekomendasi perbaikan untuk setiap masalah
+- Status pass/fail untuk setiap viewport
+
+### Custom Rules
+
+LensCore mendukung custom rules untuk menambahkan aturan aksesibilitas tambahan. Custom rules dapat berupa Axe-core rules atau Playwright tests.
+
+#### Approved Rules
+
+LensCore menyediakan set approved rules yang sudah dikurasi dan tersedia secara default:
+
+- `button-has-accessible-name` - Memastikan button punya accessible name
+- `link-has-accessible-name` - Memastikan link punya accessible name
+- `heading-order` - Memastikan heading punya hierarchy yang logis
+- `page-has-heading-one` - Memastikan halaman punya heading level 1
+- `image-alt-text` - Memastikan image punya alt text yang sesuai
+
+Approved rules otomatis dijalankan saat test. Untuk menonaktifkan:
+
+```bash
+lens-core test https://example.com --no-approved-rules
+```
+
+#### Custom Rules dari Project
+
+Buat custom rules di project dengan membuat file di salah satu lokasi berikut:
+
+- `.lenscore/rules/`
+- `lenscore-rules/`
+- `.lenscore-rules/`
+
+**Contoh Axe Rule:**
+
+Buat file `.lenscore/rules/my-rule.json`:
+
+```json
+{
+  "id": "my-custom-rule",
+  "enabled": true,
+  "metadata": {
+    "description": "Custom rule description",
+    "help": "Help text for the rule"
+  },
+  "rule": {
+    "id": "color-contrast",
+    "enabled": true,
+    "tags": ["wcag2aa"]
+  },
+  "severity": "serious"
+}
+```
+
+**Contoh Playwright Test:**
+
+Buat file `.lenscore/rules/my-test.js`:
+
+```javascript
+export default {
+  id: 'my-test',
+  name: 'My Custom Test',
+  enabled: true,
+  severity: 'moderate',
+  run: async (context) => {
+    const { page } = context;
+    const elements = await page.$$eval('button', (buttons) => buttons.length);
+    return {
+      id: 'my-test',
+      name: 'My Custom Test',
+      passed: elements > 0,
+      severity: 'moderate',
+      description:
+        elements > 0 ? `Found ${elements} buttons` : 'No buttons found',
+    };
+  },
+};
+```
+
+#### Opsi Custom Rules
+
+```bash
+# Gunakan custom rules dari path tertentu
+lens-core test https://example.com --custom-rules-paths ./my-rules,./team-rules
+
+# Gunakan custom rules dari config file
+lens-core test https://example.com --custom-rules-config ./rules-config.json
+
+# Nonaktifkan default rules
+lens-core test https://example.com --disable-default-rules color-contrast,keyboard
+
+# Aktifkan specific default rules
+lens-core test https://example.com --enable-default-rules color-contrast
+```
+
+### Test Rule Aksesibilitas Spesifik
 
 ```bash
 lens-core test https://example.com --rules "color-contrast,keyboard"

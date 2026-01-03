@@ -7,7 +7,7 @@ Selamat datang di LensCore! Panduan ini akan membantu Anda memulai dengan platfo
 LensCore adalah platform open-source yang menggabungkan:
 
 - **Testing Aksesibilitas** dengan axe-core
-- **Web Crawling Cerdas** menggunakan Puppeteer
+- **Web Crawling Cerdas** menggunakan Playwright
 - **Analisis Berbasis AI** dengan OpenAI (opsional)
 - **Pelaporan Komprehensif** dalam format HTML dan JSON
 
@@ -246,7 +246,7 @@ curl http://localhost:3001/api/health
 
 ## Struktur Project
 
-Ketika menjalankan LensCore, ini akan membuat struktur berikut:
+**Struktur Runtime** (dibuat saat menjalankan LensCore):
 
 ```
 ~/.lenscore/
@@ -254,13 +254,9 @@ Ketika menjalankan LensCore, ini akan membuat struktur berikut:
 ├── logs/                # Log aplikasi
 │   ├── combined.log
 │   └── error.log
-└── cache/               # Direktori cache
-
-./
-├── storage/             # Penyimpanan screenshot
-│   └── screenshots/
-└── web/                 # Laporan HTML
-    └── output/
+├── cache/               # Direktori cache
+└── web/                 # Web templates (disalin dari package)
+    └── output/          # Laporan HTML yang di-generate
 ```
 
 ## Opsi Konfigurasi

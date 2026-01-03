@@ -40,8 +40,8 @@ export class UserStoryService {
     try {
       const dataPath =
         process.env['NODE_ENV'] === 'production'
-          ? path.join(__dirname, '..', '..', 'src', 'data', 'rulesData.json')
-          : path.join(__dirname, '..', 'data', 'rulesData.json');
+          ? path.join(__dirname, '..', '..', 'data', 'rules-data.json')
+          : path.join(__dirname, '..', 'data', 'rules-data.json');
       const data = await fs.readFile(dataPath, 'utf8');
       this.rulesData = JSON.parse(data);
 
@@ -89,7 +89,8 @@ export class UserStoryService {
     return stories.length > 0;
   }
 
-  getRuleData(ruleId: string) {
+  async getRuleData(ruleId: string) {
+    await this.loadRulesData();
     return this.rulesData[ruleId];
   }
 }

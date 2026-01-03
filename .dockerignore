@@ -8,3 +8,11 @@ coverage
 .cache
 .DS_Store
 *.log
+node_modules
+dist
+tests
+.vscode
+.idea
+*.swp
+*.swo
+*~
