@@ -156,16 +156,6 @@ jobs:
             --ci \
             -o report.json
 
-      - name: Generate HTML report
-        run: |
-          SCAN_URL="${scan_url:-${{ steps.extract_port.outputs.localhost_url }}}"
-          HOME="$LENSCORE_CI_HOME" lens-core scan "$SCAN_URL" \
-            -u "${MAX_URLS}" \
-            -d "${SCAN_DEPTH}" \
-            -t "${TIMEOUT}" \
-            --skip-cache \
-            --web || true
-
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
