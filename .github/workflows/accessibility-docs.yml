@@ -41,10 +41,12 @@ jobs:
         run: |
           docker run -d --rm \
             --name lenscore-docs \
+            --user "$(id -u):$(id -g)" \
             -p "${VITEPRESS_PORT}:${VITEPRESS_PORT}" \
             -v "${{ github.workspace }}:/app" \
             -w /app \
             -e HOST=0.0.0.0 \
+            -e HOME=/tmp \
             node:20 \
             sh -c "npm ci && npm run docs:dev -- --host 0.0.0.0 --port ${VITEPRESS_PORT} --strictPort"
 
