@@ -1,0 +1,124 @@
+name: LensCore Accessibility CI
+
+on:
+  workflow_call:
+    inputs:
+      url:
+        description: 'URL to scan (your app must be running and accessible)'
+        required: true
+        type: string
+      version:
+        description: 'LensCore Docker image version'
+        required: false
+        type: string
+        default: 'latest'
+      max_urls:
+        description: 'Maximum number of URLs to crawl'
+        required: false
+        type: number
+        default: 10
+      scan_depth:
+        description: 'Depth of crawling'
+        required: false
+        type: number
+        default: 2
+      timeout:
+        description: 'Timeout for each page scan (ms)'
+        required: false
+        type: number
+        default: 30000
+
+jobs:
+  accessibility:
+    name: Run LensCore Accessibility Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Pull LensCore image
+        run: |
+          echo "Pulling accesstimeco/lenscore:${{ inputs.version }}..."
+          docker pull accesstimeco/lenscore:${{ inputs.version }}
+
+      - name: Start LensCore
+        run: |
+          docker run -d \
+            --name lenscore \
+            --network host \
+            -e CACHE_TYPE=memory \
+            -e NODE_ENV=production \
+            accesstimeco/lenscore:${{ inputs.version }}
+          echo "LensCore container started"
+
+      - name: Wait for LensCore
+        run: |
+          echo "Waiting for LensCore to be ready..."
+          timeout=60
+          elapsed=0
+          while [ $elapsed -lt $timeout ]; do
+            if curl -sf "http://localhost:3001/api/health" > /dev/null 2>&1; then
+              echo "LensCore is ready"
+              exit 0
+            fi
+            sleep 2
+            elapsed=$((elapsed + 2))
+            echo "Waiting... ($elapsed/$timeout seconds)"
+          done
+          echo "::error::LensCore did not become available within $timeout seconds"
+          docker logs lenscore || true
+          exit 1
+
+      - name: Run accessibility scan
+        id: scan
+        run: |
+          echo "Scanning ${{ inputs.url }}..."
+
+          # Run CLI scan inside the container
+          docker exec lenscore node dist/cli.js scan "${{ inputs.url }}" \
+            --ci \
+            -u ${{ inputs.max_urls }} \
+            -d ${{ inputs.scan_depth }} \
+            -t ${{ inputs.timeout }} \
+            --skip-cache \
+            -o /app/report.json \
+            --no-exit-on-violations || SCAN_EXIT=$?
+
+          # Copy report from container
+          docker cp lenscore:/app/report.json ./report.json || true
+
+          # Generate summary
+          if [ -f report.json ]; then
+            TOTAL_PAGES=$(jq -r '.accessibility.totalPages // .totalPages // 1' report.json)
+            TOTAL_VIOLATIONS=$(jq '[.accessibility.results[].violations // [] | length] | add // 0' report.json 2>/dev/null || jq '.violations | length // 0' report.json)
+            
+            echo "## Accessibility Scan Results" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "- **URL:** ${{ inputs.url }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Pages scanned:** $TOTAL_PAGES" >> $GITHUB_STEP_SUMMARY
+            echo "- **Total violations:** $TOTAL_VIOLATIONS" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            
+            if [ "$TOTAL_VIOLATIONS" -gt 0 ]; then
+              echo "::warning::Found $TOTAL_VIOLATIONS accessibility violations across $TOTAL_PAGES pages"
+            else
+              echo "No accessibility violations found"
+            fi
+          fi
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        with:
+          name: lenscore-accessibility-report
+          path: report.json
+          retention-days: 7
+          if-no-files-found: warn
+
+      - name: Stop LensCore
+        if: always()
+        run: |
+          docker stop lenscore || true
+          docker rm lenscore || true
