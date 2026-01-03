@@ -118,8 +118,25 @@ export class DockerOperationsService {
     try {
       const portInUse = await this.validationService.validatePort(this.port);
       if (portInUse) {
-        spinner.succeed('Port already in use - services likely running');
-        return;
+        try {
+          const healthResponse = await fetch(
+            `http://localhost:${this.port}/api/health`,
+            {
+              method: 'GET',
+              signal: AbortSignal.timeout(3000),
+            }
+          );
+          if (healthResponse.ok) {
+            spinner.succeed('Port already in use - services likely running');
+            return;
+          }
+        } catch {
+          spinner.text =
+            'Port in use but service not responding, rebuilding...';
+          await this.stop();
+          await this.build();
+          return;
+        }
       }
 
       const imageExists = await this.validationService.validateImage();

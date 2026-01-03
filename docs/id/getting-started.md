@@ -7,7 +7,7 @@ Selamat datang di LensCore! Panduan ini akan membantu Anda memulai dengan platfo
 LensCore adalah platform open-source yang menggabungkan:
 
 - **Testing Aksesibilitas** dengan axe-core
-- **Web Crawling Cerdas** menggunakan Puppeteer
+- **Web Crawling Cerdas** menggunakan Playwright
 - **Analisis Berbasis AI** dengan OpenAI (opsional)
 - **Pelaporan Komprehensif** dalam format HTML dan JSON
 

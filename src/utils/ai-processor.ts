@@ -3,6 +3,7 @@ import { OpenAIMessage } from '../services/openai';
 import { AIPromptEngine, AIResponse } from './ai-prompts';
 import { CacheService } from '../services/cache';
 import { UserStoryService } from '../services/user-stories';
+import { ViolationTransformer } from './violation-transformer';
 import { CacheKey } from '../types/cache';
 import {
   AccessibilityIssue,
@@ -36,11 +37,13 @@ export class AIProcessor {
     let cacheHits = 0;
     let cacheMisses = 0;
 
+    const transformedIssues = await ViolationTransformer.transformMany(issues);
+
     if (!isAIEnabled(apiKey)) {
       logger.info('AI processing disabled - no API key provided');
       return {
         enabled: false,
-        issues,
+        issues: transformedIssues,
         metadata: {
           cacheHits: 0,
           cacheMisses: 0,
@@ -56,7 +59,7 @@ export class AIProcessor {
         logger.error('Failed to initialize OpenAI service');
         return {
           enabled: false,
-          issues,
+          issues: transformedIssues,
           error: 'Failed to initialize OpenAI service',
           metadata: {
             cacheHits: 0,
@@ -68,17 +71,23 @@ export class AIProcessor {
 
       const processedIssues: AIProcessedIssue[] = [];
 
-      for (const issue of issues) {
-        const processedIssue: AIProcessedIssue = { ...issue };
+      for (const transformedIssue of transformedIssues) {
+        const processedIssue: AIProcessedIssue = {
+          ...transformedIssue,
+        };
+        const originalIssue =
+          issues.find((i) => i.id === transformedIssue.id) || transformedIssue;
 
         try {
-          const userStory = await this.userStoryService.getUserStory(issue.id);
+          const userStory = await this.userStoryService.getUserStory(
+            transformedIssue.id
+          );
           if (userStory) {
             processedIssue.userStory = userStory;
           }
         } catch (error) {
           logger.warn('Failed to get user story', {
-            issueId: issue.id,
+            issueId: transformedIssue.id,
             error: error instanceof Error ? error.message : 'Unknown error',
           });
         }
@@ -86,7 +95,7 @@ export class AIProcessor {
         try {
           const { aiResponse, cacheHit } = await this.processIssueWithCache(
             openaiService,
-            issue,
+            originalIssue,
             projectContext
           );
 
@@ -105,12 +114,12 @@ export class AIProcessor {
           }
         } catch (error) {
           logger.warn('AI processing failed for issue', {
-            issueId: issue.id,
+            issueId: transformedIssue.id,
             error: error instanceof Error ? error.message : 'Unknown error',
           });
 
-          // Use fallback response
-          const fallbackResponse = AIPromptEngine.createFallbackResponse(issue);
+          const fallbackResponse =
+            AIPromptEngine.createFallbackResponse(originalIssue);
 
           if (includeExplanations) {
             processedIssue.aiExplanation = fallbackResponse.plain_explanation;
@@ -140,7 +149,7 @@ export class AIProcessor {
 
       return {
         enabled: true,
-        issues,
+        issues: transformedIssues,
         error:
           error instanceof Error ? error.message : 'Unknown error occurred',
         metadata: {
@@ -156,19 +165,22 @@ export class AIProcessor {
     issues: AccessibilityIssue[]
   ): Promise<AIProcessingResult> {
     const startTime = Date.now();
+    const transformedIssues = await ViolationTransformer.transformMany(issues);
     const processedIssues: AIProcessedIssue[] = [];
 
-    for (const issue of issues) {
-      const processedIssue: AIProcessedIssue = { ...issue };
+    for (const transformedIssue of transformedIssues) {
+      const processedIssue: AIProcessedIssue = { ...transformedIssue };
 
       try {
-        const userStory = await this.userStoryService.getUserStory(issue.id);
+        const userStory = await this.userStoryService.getUserStory(
+          transformedIssue.id
+        );
         if (userStory) {
           processedIssue.userStory = userStory;
         }
       } catch (error) {
         logger.warn('Failed to get user story', {
-          issueId: issue.id,
+          issueId: transformedIssue.id,
           error: error instanceof Error ? error.message : 'Unknown error',
         });
       }
@@ -208,11 +220,10 @@ export class AIProcessor {
       projectContext: projectContext || {},
     };
 
-    // Try to get from cache first
     const cachedEntry = await this.cacheService.get(cacheKey);
-    if (cachedEntry) {
+    if (cachedEntry && this.isAIResponse(cachedEntry.value)) {
       logger.info('Cache hit for AI response', { ruleId: issue.id });
-      return { aiResponse: cachedEntry.value as AIResponse, cacheHit: true };
+      return { aiResponse: cachedEntry.value, cacheHit: true };
     }
 
     logger.info('Cache miss for AI response', { ruleId: issue.id });
@@ -238,5 +249,15 @@ export class AIProcessor {
     }
 
     return { aiResponse, cacheHit: false };
+  }
+
+  private isAIResponse(value: unknown): value is AIResponse {
+    if (!value || typeof value !== 'object') return false;
+    const obj = value as Record<string, unknown>;
+    return (
+      typeof obj['rule_id'] === 'string' &&
+      typeof obj['plain_explanation'] === 'string' &&
+      typeof obj['remediation'] === 'string'
+    );
   }
 }

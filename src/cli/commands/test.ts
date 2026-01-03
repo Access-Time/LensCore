@@ -53,11 +53,26 @@ export async function testCommand(url: string, options: any) {
       url,
       enableAI: !!aiConfig,
       openaiKey: aiConfig?.apiKey,
+      model: aiConfig?.model,
       projectContext,
       includeScreenshot: options.screenshot !== false,
       skipCache: options.skipCache || false,
       rules: CommandUtils.parseCommaSeparated(options.rules),
       tags: CommandUtils.parseCommaSeparated(options.tags),
+      customTests: CommandUtils.parseCommaSeparated(options.customTests),
+      customRulesConfig: CommandUtils.parseCommaSeparated(
+        options.customRulesConfig
+      ),
+      customRulesPaths: CommandUtils.parseCommaSeparated(
+        options.customRulesPaths
+      ),
+      disableDefaultRules: CommandUtils.parseCommaSeparated(
+        options.disableDefaultRules
+      ),
+      enableDefaultRules: CommandUtils.parseCommaSeparated(
+        options.enableDefaultRules
+      ),
+      includeApprovedRules: options.approvedRules !== false,
       ...numericOptions,
     };
 

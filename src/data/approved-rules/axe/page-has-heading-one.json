@@ -1,0 +1,15 @@
+{
+  "id": "page-has-heading-one",
+  "enabled": true,
+  "metadata": {
+    "description": "Ensures the page has a main heading",
+    "help": "Pages must have a level 1 heading",
+    "helpUrl": "https://dequeuniversity.com/rules/axe/4.8/page-has-heading-one"
+  },
+  "rule": {
+    "id": "page-has-heading-one",
+    "enabled": true,
+    "tags": ["cat.semantics", "best-practice"]
+  },
+  "severity": "moderate"
+}

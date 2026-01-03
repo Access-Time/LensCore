@@ -63,7 +63,8 @@ Test aksesibilitas satu halaman web.
   "timeout": 30000,
   "rules": [],
   "tags": ["wcag2a", "wcag2aa"],
-  "includeScreenshot": true
+  "includeScreenshot": true,
+  "customTests": ["responsive"]
 }
 ```
 
@@ -76,6 +77,7 @@ Test aksesibilitas satu halaman web.
 - `rules` (optional): Rule axe spesifik untuk di-test
 - `tags` (optional): Tag WCAG untuk di-test
 - `includeScreenshot` (optional): Sertakan screenshot dalam response (default: true)
+- `customTests` (optional): Custom tests untuk dijalankan (array string, contoh: `["responsive"]`)
 
 **Contoh Response:**
 
@@ -102,9 +104,50 @@ Test aksesibilitas satu halaman web.
   "incomplete": [],
   "inapplicable": [],
   "screenshot": "data:image/png;base64,...",
-  "aiRecommendations": null
+  "aiRecommendations": null,
+  "responsive": {
+    "status": "pass",
+    "viewports": [
+      {
+        "name": "mobile",
+        "width": 375,
+        "height": 667,
+        "screenshot": "screenshots/responsive/xxx-mobile.png",
+        "status": "pass"
+      },
+      {
+        "name": "tablet",
+        "width": 768,
+        "height": 1024,
+        "screenshot": "screenshots/responsive/xxx-tablet.png",
+        "status": "pass"
+      },
+      {
+        "name": "desktop",
+        "width": 1920,
+        "height": 1080,
+        "screenshot": "screenshots/responsive/xxx-desktop.png",
+        "status": "pass"
+      }
+    ],
+    "issues": [
+      {
+        "viewport": "mobile",
+        "severity": "warning",
+        "description": "Text mungkin terlalu kecil di mobile viewport",
+        "element": "body > p",
+        "remediation": "Pertimbangkan untuk meningkatkan ukuran font untuk mobile"
+      }
+    ]
+  }
 }
 ```
+
+**Catatan tentang Custom Tests:**
+
+- `customTests: ["responsive"]` - Menjalankan responsive test yang menganalisis layout di berbagai viewport
+- Responsive test memerlukan `enableAI: true` atau `aiApiKey` untuk analisis berbasis AI
+- Hasil responsive test akan muncul di field `responsive` dalam response
 
 ---
 
@@ -193,12 +236,13 @@ Crawl website dan test semua halaman yang ditemukan untuk aksesibilitas.
   },
   "testOptions": {
     "enableAI": false,
-    "tags": ["wcag2a", "wcag2aa"]
+    "tags": ["wcag2a", "wcag2aa"],
+    "customTests": ["responsive"]
   }
 }
 ```
 
-**Response:** Hasil crawl dengan hasil test aksesibilitas untuk setiap halaman.
+**Response:** Hasil crawl dengan hasil test aksesibilitas untuk setiap halaman. Jika `customTests` termasuk `"responsive"`, setiap halaman akan memiliki field `responsive` dengan hasil test responsivitas.
 
 ---
 
@@ -290,6 +334,15 @@ curl -X POST http://localhost:3001/api/test \
   -d '{
     "url": "https://example.com",
     "enableAI": false
+  }'
+
+# Test halaman dengan responsive test
+curl -X POST http://localhost:3001/api/test \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://example.com",
+    "enableAI": true,
+    "customTests": ["responsive"]
   }'
 
 # Crawl website

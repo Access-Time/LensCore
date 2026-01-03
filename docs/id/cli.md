@@ -121,6 +121,7 @@ Test aksesibilitas satu halaman.
 - `-t, --timeout <ms>`: Timeout load halaman (default: 30000)
 - `-r, --rules <rules>`: Rule spesifik untuk di-test (dipisahkan koma)
 - `-g, --tags <tags>`: Tag WCAG untuk di-test (contoh: "wcag2a,wcag2aa")
+- `--custom-tests <tests>`: Custom tests untuk dijalankan (dipisahkan koma, contoh: "responsive")
 - `--no-screenshot`: Skip capture screenshot
 - `--ci`: Mode CI: output terformat untuk continuous integration
 - `-o, --output <file>`: File output untuk laporan JSON (default: report.json saat menggunakan --ci)
@@ -138,6 +139,7 @@ lens-core test https://example.com --rules "color-contrast,keyboard"
 lens-core test https://example.com --project-context "react,tailwind"
 lens-core test https://example.com --web
 lens-core test https://example.com --no-screenshot
+lens-core test https://example.com --custom-tests=responsive --enable-ai
 ```
 
 ---
@@ -211,12 +213,13 @@ lens-core scan https://example.com --project-context "react,tailwind"
 lens-core scan https://example.com --web
 lens-core scan https://example.com --ci
 lens-core scan https://example.com --ci --no-exit-on-violations
+lens-core scan https://example.com --custom-tests=responsive --enable-ai --max-urls 10
 ```
 
 **Ringkasan opsi:**
 
 - Semua opsi `crawl`: `--max-urls`, `--max-depth`, `--timeout`, `--concurrency`, `--wait-until`, `--skip-cache`
-- Semua opsi `test`: `--enable-ai`, `--openai-key`, `--project-context`, `--web`, `--timeout`, `--rules`, `--tags`, `--no-screenshot`
+- Semua opsi `test`: `--enable-ai`, `--openai-key`, `--project-context`, `--web`, `--timeout`, `--rules`, `--tags`, `--custom-tests`, `--no-screenshot`
 
 ## Manajemen Docker
 
@@ -542,20 +545,15 @@ Dokumentasi dibuild dan dideploy ke GitHub Pages oleh `.github/workflows/deploy-
 
 ### Merilis Versi CLI Baru ke npm
 
-Rilis paket npm `@accesstime/lenscore` saat ini dilakukan secara manual (belum otomatis dari CI). Alur rilis yang umum:
+Rilis paket npm `@accesstime/lenscore` dipublikasikan secara otomatis ketika GitHub release dibuat. Workflow CI (`npm-release.yml`) menangani proses publikasi:
 
-1. **Pastikan branch main hijau**
-   - Semua workflow GitHub Actions (build, test, lint, security) harus lulus.
-2. **Update versi**
+1. **Update versi**
    - Gunakan `npm version patch|minor|major` (disarankan) atau edit `package.json` secara manual.
    - Perintah `npm version` akan mengupdate field versi dan membuat Git tag.
-3. **Build project**
-   - Jalankan `npm run build` untuk menghasilkan output `dist/`, termasuk `dist/cli.js` yang digunakan oleh `bin/index.js`.
-4. **Publish ke npm**
-   - Login terlebih dahulu dengan `npm login` (sekali per environment).
-   - Untuk paket publik yang sudah pernah dirilis: `npm publish`
-   - Untuk rilis pertama paket scoped ini: `npm publish --access public`
-5. **Verifikasi versi baru**
+2. **Buat GitHub release**
+   - Buat GitHub release baru dengan tag versi tersebut.
+   - Workflow CI akan secara otomatis mengecek apakah versi sudah ada, build project, dan publish ke npm jika versi baru.
+3. **Verifikasi versi baru**
    - Instal global di environment bersih: `npm install -g @accesstime/lenscore`
    - Jalankan `lens-core --version` untuk memastikan versi yang terpasang sama dengan yang dirilis.
 
@@ -585,9 +583,136 @@ lens-core config --reset
 
 ## Penggunaan Lanjutan
 
-### Rule Kustom
+### Custom Tests
 
-Test rule aksesibilitas spesifik:
+LensCore mendukung custom tests tambahan untuk analisis yang lebih mendalam. Saat ini tersedia:
+
+#### Responsive Test
+
+Test responsivitas layout website menggunakan AI untuk mendeteksi masalah desain responsif di berbagai ukuran viewport.
+
+**Persyaratan:**
+
+- Memerlukan `--enable-ai` atau `--openai-key` untuk mengaktifkan analisis AI
+- Menggunakan model OpenAI yang mendukung Vision API (otomatis menggunakan `gpt-4o` jika diperlukan)
+
+**Cara Menggunakan:**
+
+```bash
+# Test responsivitas satu halaman
+lens-core test https://example.com --custom-tests=responsive --enable-ai
+
+# Test responsivitas dengan scan
+lens-core scan https://example.com --custom-tests=responsive --enable-ai --max-urls 10
+
+# Dengan web report
+lens-core test https://example.com --custom-tests=responsive --enable-ai --web
+```
+
+**Apa yang Dilakukan:**
+
+- Mengambil screenshot di berbagai viewport (mobile, tablet, desktop)
+- Menganalisis screenshot menggunakan AI untuk mendeteksi masalah responsif
+- Menghasilkan laporan dengan screenshot dan rekomendasi perbaikan
+
+**Hasil Test:**
+
+- Screenshot untuk setiap viewport
+- Daftar masalah responsif yang terdeteksi
+- Rekomendasi perbaikan untuk setiap masalah
+- Status pass/fail untuk setiap viewport
+
+### Custom Rules
+
+LensCore mendukung custom rules untuk menambahkan aturan aksesibilitas tambahan. Custom rules dapat berupa Axe-core rules atau Playwright tests.
+
+#### Approved Rules
+
+LensCore menyediakan set approved rules yang sudah dikurasi dan tersedia secara default:
+
+- `button-has-accessible-name` - Memastikan button punya accessible name
+- `link-has-accessible-name` - Memastikan link punya accessible name
+- `heading-order` - Memastikan heading punya hierarchy yang logis
+- `page-has-heading-one` - Memastikan halaman punya heading level 1
+- `image-alt-text` - Memastikan image punya alt text yang sesuai
+
+Approved rules otomatis dijalankan saat test. Untuk menonaktifkan:
+
+```bash
+lens-core test https://example.com --no-approved-rules
+```
+
+#### Custom Rules dari Project
+
+Buat custom rules di project dengan membuat file di salah satu lokasi berikut:
+
+- `.lenscore/rules/`
+- `lenscore-rules/`
+- `.lenscore-rules/`
+
+**Contoh Axe Rule:**
+
+Buat file `.lenscore/rules/my-rule.json`:
+
+```json
+{
+  "id": "my-custom-rule",
+  "enabled": true,
+  "metadata": {
+    "description": "Custom rule description",
+    "help": "Help text for the rule"
+  },
+  "rule": {
+    "id": "color-contrast",
+    "enabled": true,
+    "tags": ["wcag2aa"]
+  },
+  "severity": "serious"
+}
+```
+
+**Contoh Playwright Test:**
+
+Buat file `.lenscore/rules/my-test.js`:
+
+```javascript
+export default {
+  id: 'my-test',
+  name: 'My Custom Test',
+  enabled: true,
+  severity: 'moderate',
+  run: async (context) => {
+    const { page } = context;
+    const elements = await page.$$eval('button', (buttons) => buttons.length);
+    return {
+      id: 'my-test',
+      name: 'My Custom Test',
+      passed: elements > 0,
+      severity: 'moderate',
+      description:
+        elements > 0 ? `Found ${elements} buttons` : 'No buttons found',
+    };
+  },
+};
+```
+
+#### Opsi Custom Rules
+
+```bash
+# Gunakan custom rules dari path tertentu
+lens-core test https://example.com --custom-rules-paths ./my-rules,./team-rules
+
+# Gunakan custom rules dari config file
+lens-core test https://example.com --custom-rules-config ./rules-config.json
+
+# Nonaktifkan default rules
+lens-core test https://example.com --disable-default-rules color-contrast,keyboard
+
+# Aktifkan specific default rules
+lens-core test https://example.com --enable-default-rules color-contrast
+```
+
+### Test Rule Aksesibilitas Spesifik
 
 ```bash
 lens-core test https://example.com --rules "color-contrast,keyboard"

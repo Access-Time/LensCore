@@ -84,6 +84,30 @@ program
   .option('-t, --timeout <number>', 'Request timeout in milliseconds', '10000')
   .option('-r, --rules <rules>', 'Specific axe-core rules (comma-separated)')
   .option('-g, --tags <tags>', 'WCAG tags (comma-separated)')
+  .option(
+    '--custom-tests <tests>',
+    'Custom tests to run (comma-separated, e.g., responsive)'
+  )
+  .option(
+    '--custom-rules-config <paths>',
+    'Paths to custom rules config files (comma-separated)'
+  )
+  .option(
+    '--custom-rules-paths <paths>',
+    'Paths to custom rules directories (comma-separated)'
+  )
+  .option(
+    '--disable-default-rules <rules>',
+    'Disable default axe rules (comma-separated)'
+  )
+  .option(
+    '--enable-default-rules <rules>',
+    'Enable default axe rules (comma-separated)'
+  )
+  .option(
+    '--no-approved-rules',
+    'Disable approved rules from LensCore repository'
+  )
   .option('--no-screenshot', 'Disable screenshot capture')
   .option('--skip-cache', 'Bypass cache and force fresh test')
   .option('--ci', 'CI mode: formatted output for continuous integration')
@@ -129,6 +153,30 @@ program
   .option('-d, --max-depth <number>', 'Maximum crawl depth', '2')
   .option('-t, --timeout <number>', 'Request timeout in milliseconds', '15000')
   .option('-j, --concurrency <number>', 'Number of concurrent requests', '3')
+  .option(
+    '--custom-tests <tests>',
+    'Custom tests to run (comma-separated, e.g., responsive)'
+  )
+  .option(
+    '--custom-rules-config <paths>',
+    'Paths to custom rules config files (comma-separated)'
+  )
+  .option(
+    '--custom-rules-paths <paths>',
+    'Paths to custom rules directories (comma-separated)'
+  )
+  .option(
+    '--disable-default-rules <rules>',
+    'Disable default axe rules (comma-separated)'
+  )
+  .option(
+    '--enable-default-rules <rules>',
+    'Enable default axe rules (comma-separated)'
+  )
+  .option(
+    '--no-approved-rules',
+    'Disable approved rules from LensCore repository'
+  )
   .option('--skip-cache', 'Bypass cache and force fresh scan')
   .option('--ci', 'CI mode: formatted output for continuous integration')
   .option(

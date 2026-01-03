@@ -9,7 +9,7 @@
 <a href="https://www.typescriptlang.org/"><img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-Ready-blue.svg"></a>
 <a href="https://nodejs.org/"><img alt="Node.js" src="https://img.shields.io/badge/Node.js-20+-green.svg"></a>
 <br/>
-<a href="https://pptr.dev/"><img alt="Puppeteer" src="https://img.shields.io/badge/Puppeteer-Web%20Automation-orange.svg"></a>
+<a href="https://playwright.dev/"><img alt="Playwright" src="https://img.shields.io/badge/Playwright-Web%20Automation-orange.svg"></a>
 <a href="https://github.com/dequelabs/axe-core"><img alt="axe-core" src="https://img.shields.io/badge/axe--core-Accessibility-red.svg"></a>
 <a href="https://expressjs.com/"><img alt="Express" src="https://img.shields.io/badge/Express-API%20Framework-lightgrey.svg"></a>
 </p>
@@ -47,6 +47,20 @@
 - **Node.js** 20+ (for local development)
 - **Docker** & **Docker Compose** (for containerized deployment)
 - **Git** (for cloning the repository)
+
+### Using Docker Image from Docker Hub
+
+Run LensCore directly from Docker Hub without cloning the repository. See the [Docker Hub documentation](docs/en/docker-hub.md) for detailed instructions on installation, configuration, and updates.
+
+Quick start:
+
+```bash
+docker run -d \
+  --name lenscore \
+  -p 3001:3001 \
+  --env-file .env \
+  accesstimeco/lenscore:latest
+```
 
 ### Using Docker (Recommended)
 
@@ -937,7 +951,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙏 Acknowledgments
 
 - [axe-core](https://github.com/dequelabs/axe-core) for accessibility testing
-- [Puppeteer](https://github.com/puppeteer/puppeteer) for web automation
+- [Playwright](https://github.com/microsoft/playwright) for web automation
 - [Express.js](https://expressjs.com/) for the web framework
 - [OpenAI](https://openai.com/) for AI-powered accessibility analysis
 - [Docker](https://www.docker.com/) for containerization

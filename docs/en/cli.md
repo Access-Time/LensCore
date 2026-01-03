@@ -121,6 +121,7 @@ Test accessibility of a single page.
 - `-t, --timeout <ms>`: Page load timeout (default: 30000)
 - `-r, --rules <rules>`: Specific rules to test (comma-separated)
 - `-g, --tags <tags>`: WCAG tags to test (e.g., "wcag2a,wcag2aa")
+- `--custom-tests <tests>`: Custom tests to run (comma-separated, e.g., "responsive")
 - `--no-screenshot`: Skip screenshot capture
 - `--ci`: CI mode: formatted output for continuous integration
 - `-o, --output <file>`: Output file for JSON report (default: report.json when --ci is used)
@@ -138,6 +139,7 @@ lens-core test https://example.com --rules "color-contrast,keyboard"
 lens-core test https://example.com --project-context "react,tailwind"
 lens-core test https://example.com --web
 lens-core test https://example.com --no-screenshot
+lens-core test https://example.com --custom-tests=responsive --enable-ai
 ```
 
 ---
@@ -211,12 +213,13 @@ lens-core scan https://example.com --project-context "react,tailwind"
 lens-core scan https://example.com --web
 lens-core scan https://example.com --ci
 lens-core scan https://example.com --ci --no-exit-on-violations
+lens-core scan https://example.com --custom-tests=responsive --enable-ai --max-urls 10
 ```
 
 **Options (summary):**
 
 - All `crawl` options: `--max-urls`, `--max-depth`, `--timeout`, `--concurrency`, `--wait-until`, `--skip-cache`
-- All `test` options: `--enable-ai`, `--openai-key`, `--project-context`, `--web`, `--timeout`, `--rules`, `--tags`, `--no-screenshot`
+- All `test` options: `--enable-ai`, `--openai-key`, `--project-context`, `--web`, `--timeout`, `--rules`, `--tags`, `--custom-tests`, `--no-screenshot`
 
 ## Docker Management
 
@@ -542,20 +545,15 @@ Documentation is built and deployed to GitHub Pages by `.github/workflows/deploy
 
 ### Releasing a New CLI Version to npm
 
-Releases of the `@accesstime/lenscore` npm package are currently performed manually, outside of CI. A typical release flow is:
+Releases of the `@accesstime/lenscore` npm package are automatically published when a GitHub release is created. The CI workflow (`npm-release.yml`) handles the publishing process:
 
-1. **Ensure the main branch is green**
-   - All GitHub Actions workflows (build, test, lint, security) should be passing.
-2. **Update the version**
+1. **Update the version**
    - Use `npm version patch|minor|major` (preferred) or edit `package.json` manually.
    - This updates the version field and creates a Git tag when using `npm version`.
-3. **Build the project**
-   - Run `npm run build` to generate the `dist/` output, including `dist/cli.js` used by `bin/index.js`.
-4. **Publish to npm**
-   - Log in with `npm login` (once per environment).
-   - For an existing public package: `npm publish`
-   - For the first publish of the scoped package: `npm publish --access public`
-5. **Verify the new version**
+2. **Create a GitHub release**
+   - Create a new GitHub release with the version tag.
+   - The CI workflow will automatically check if the version exists, build the project, and publish to npm if it's a new version.
+3. **Verify the new version**
    - Install globally on a clean environment: `npm install -g @accesstime/lenscore`
    - Run `lens-core --version` to confirm the published version.
 
@@ -585,9 +583,136 @@ lens-core config --reset
 
 ## Advanced Usage
 
+### Custom Tests
+
+LensCore supports additional custom tests for deeper analysis. Currently available:
+
+#### Responsive Test
+
+Test website layout responsiveness using AI to detect responsive design issues across different viewport sizes.
+
+**Requirements:**
+
+- Requires `--enable-ai` or `--openai-key` to enable AI analysis
+- Uses OpenAI models that support Vision API (automatically uses `gpt-4o` if needed)
+
+**Usage:**
+
+```bash
+# Test responsiveness of a single page
+lens-core test https://example.com --custom-tests=responsive --enable-ai
+
+# Test responsiveness with scan
+lens-core scan https://example.com --custom-tests=responsive --enable-ai --max-urls 10
+
+# With web report
+lens-core test https://example.com --custom-tests=responsive --enable-ai --web
+```
+
+**What It Does:**
+
+- Captures screenshots at various viewports (mobile, tablet, desktop)
+- Analyzes screenshots using AI to detect responsive issues
+- Generates a report with screenshots and remediation recommendations
+
+**Test Results:**
+
+- Screenshots for each viewport
+- List of detected responsive issues
+- Remediation recommendations for each issue
+- Pass/fail status for each viewport
+
 ### Custom Rules
 
-Test specific accessibility rules:
+LensCore supports custom rules to add additional accessibility rules. Custom rules can be Axe-core rules or Playwright tests.
+
+#### Approved Rules
+
+LensCore provides a curated set of approved rules available by default:
+
+- `button-has-accessible-name` - Ensures buttons have accessible names
+- `link-has-accessible-name` - Ensures links have accessible names
+- `heading-order` - Ensures headings have logical hierarchy
+- `page-has-heading-one` - Ensures page has a level 1 heading
+- `image-alt-text` - Ensures images have appropriate alt text
+
+Approved rules run automatically during tests. To disable:
+
+```bash
+lens-core test https://example.com --no-approved-rules
+```
+
+#### Custom Rules from Project
+
+Create custom rules in your project by placing files in one of these locations:
+
+- `.lenscore/rules/`
+- `lenscore-rules/`
+- `.lenscore-rules/`
+
+**Example Axe Rule:**
+
+Create file `.lenscore/rules/my-rule.json`:
+
+```json
+{
+  "id": "my-custom-rule",
+  "enabled": true,
+  "metadata": {
+    "description": "Custom rule description",
+    "help": "Help text for the rule"
+  },
+  "rule": {
+    "id": "color-contrast",
+    "enabled": true,
+    "tags": ["wcag2aa"]
+  },
+  "severity": "serious"
+}
+```
+
+**Example Playwright Test:**
+
+Create file `.lenscore/rules/my-test.js`:
+
+```javascript
+export default {
+  id: 'my-test',
+  name: 'My Custom Test',
+  enabled: true,
+  severity: 'moderate',
+  run: async (context) => {
+    const { page } = context;
+    const elements = await page.$$eval('button', (buttons) => buttons.length);
+    return {
+      id: 'my-test',
+      name: 'My Custom Test',
+      passed: elements > 0,
+      severity: 'moderate',
+      description:
+        elements > 0 ? `Found ${elements} buttons` : 'No buttons found',
+    };
+  },
+};
+```
+
+#### Custom Rules Options
+
+```bash
+# Use custom rules from specific paths
+lens-core test https://example.com --custom-rules-paths ./my-rules,./team-rules
+
+# Use custom rules from config file
+lens-core test https://example.com --custom-rules-config ./rules-config.json
+
+# Disable default rules
+lens-core test https://example.com --disable-default-rules color-contrast,keyboard
+
+# Enable specific default rules
+lens-core test https://example.com --enable-default-rules color-contrast
+```
+
+### Test Specific Accessibility Rules
 
 ```bash
 lens-core test https://example.com --rules "color-contrast,keyboard"

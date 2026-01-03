@@ -1,6 +1,8 @@
-import puppeteer, { Browser } from 'puppeteer';
+import { chromium, Browser, LaunchOptions } from 'playwright';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs/promises';
+import os from 'os';
+import { join } from 'path';
 import {
   AccessibilityRequest,
   AccessibilityResponse,
@@ -13,21 +15,73 @@ import logger from '../utils/logger';
 import { CacheService } from './cache';
 import { createCacheConfig } from '../config/cache';
 import crypto from 'crypto';
+import { CustomRulesLoader } from './custom-rules-loader';
+import { CustomRulesRunner } from './custom-rules-runner';
+import { CustomRuleResult } from '../types/custom-rules';
+import { scrollPageToWaitForAnimations } from '../utils/playwright-scroll';
+
+interface AxeRuleConfigValue {
+  enabled: boolean;
+  tags?: string[];
+  matches?: string;
+  excludeHidden?: boolean;
+  all?: string[];
+  any?: string[];
+  none?: string[];
+}
+
+interface WindowWithAxe extends Window {
+  axe?: {
+    run: (
+      document?: Document,
+      options?: {
+        rules?: Record<string, AxeRuleConfigValue>;
+        tags?: string[];
+      }
+    ) => Promise<{
+      violations: Array<{
+        id: string;
+        impact?: 'minor' | 'moderate' | 'serious' | 'critical';
+        description?: string;
+        nodes?: Array<{
+          target?: string[];
+          html?: string;
+          failureSummary?: string;
+        }>;
+      }>;
+      passes?: unknown[];
+      incomplete?: unknown[];
+      inapplicable?: unknown[];
+    }>;
+  };
+}
 
 export class AccessibilityService {
   private browser: Browser | null = null;
   private storageService = createStorageService();
   private cacheService: CacheService;
+  private customRulesLoader: CustomRulesLoader;
+  private customRulesRunner: CustomRulesRunner;
 
   constructor() {
     this.cacheService = CacheService.getInstance(createCacheConfig());
+    this.customRulesLoader = new CustomRulesLoader();
+    this.customRulesRunner = new CustomRulesRunner();
   }
 
   async initialize(): Promise<void> {
-    this.browser = await puppeteer.launch({
+    const executablePath = process.env['PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH'];
+
+    const launchOptions: LaunchOptions = {
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
+    };
+
+    if (executablePath) {
+      launchOptions.executablePath = executablePath;
+    }
+
+    this.browser = await chromium.launch(launchOptions);
   }
 
   async close(): Promise<void> {
@@ -44,6 +98,11 @@ export class AccessibilityService {
       includeScreenshot: request.includeScreenshot,
       rules: request.rules || [],
       tags: request.tags || [],
+      customRulesConfig: request.customRulesConfig || [],
+      customRulesPaths: request.customRulesPaths || [],
+      disableDefaultRules: request.disableDefaultRules || [],
+      enableDefaultRules: request.enableDefaultRules || [],
+      includeApprovedRules: request.includeApprovedRules !== false,
     };
 
     return `accessibility:${crypto.createHash('md5').update(JSON.stringify(keyData)).digest('hex')}`;
@@ -109,51 +168,17 @@ export class AccessibilityService {
           throw new Error('Operation aborted');
         }
 
-        const axeResults = await Promise.race([
-          page.evaluate(
-            async (options) => {
-              try {
-                const script = eval('document').createElement('script');
-                script.src = 'https://unpkg.com/axe-core@4.8.2/axe.min.js';
-                eval('document').head.appendChild(script);
-
-                await new Promise((resolve) => {
-                  script.onload = resolve;
-                });
-
-                const axeOptions = {
-                  rules: options.rules || {},
-                  tags: options.tags || [],
-                };
-
-                return await eval('window').axe.run(
-                  eval('document'),
-                  axeOptions
-                );
-              } catch (error) {
-                logger.error('Axe error:', { error });
-                return null;
-              }
-            },
-            {
-              rules: request.rules,
-              tags: request.tags,
-            }
-          ),
-          new Promise((_, reject) => {
-            controller.signal.addEventListener('abort', () => {
-              reject(new Error('Axe evaluation timeout'));
-            });
-          }),
-        ]);
+        await scrollPageToWaitForAnimations(page);
 
         let screenshotUrl: string | undefined;
 
         if (request.includeScreenshot && !controller.signal.aborted) {
           try {
+            await page.waitForTimeout(500);
+
             const screenshot = await page.screenshot({ fullPage: true });
             const screenshotKey = `screenshots/${uuidv4()}.png`;
-            const tempPath = `/tmp/${uuidv4()}.png`;
+            const tempPath = join(os.tmpdir(), `${uuidv4()}.png`);
 
             await fs.writeFile(tempPath, screenshot);
             screenshotUrl = await this.storageService.uploadFile(
@@ -195,23 +220,186 @@ export class AccessibilityService {
           }
         }
 
+        const customRules = await this.customRulesLoader.loadCustomRules(
+          request.customRulesConfig,
+          request.customRulesPaths,
+          request.includeApprovedRules !== false
+        );
+
+        const axeRulesConfig: Record<string, AxeRuleConfigValue> = {};
+        if (request.disableDefaultRules) {
+          for (const ruleId of request.disableDefaultRules) {
+            axeRulesConfig[ruleId] = { enabled: false };
+          }
+        }
+        if (request.enableDefaultRules) {
+          for (const ruleId of request.enableDefaultRules) {
+            axeRulesConfig[ruleId] = { enabled: true };
+          }
+        }
+        if (request.rules) {
+          for (const ruleId of request.rules) {
+            axeRulesConfig[ruleId] = { enabled: true };
+          }
+        }
+
+        const axeResults = await Promise.race([
+          page.evaluate(
+            async (options) => {
+              try {
+                const script = eval('document').createElement('script');
+                script.src = 'https://unpkg.com/axe-core@4.8.2/axe.min.js';
+                eval('document').head.appendChild(script);
+
+                await new Promise((resolve) => {
+                  script.onload = resolve;
+                });
+
+                const axeOptions = {
+                  rules: options.rules || {},
+                  tags: options.tags || [],
+                };
+
+                return await eval('window').axe.run(
+                  eval('document'),
+                  axeOptions
+                );
+              } catch (error) {
+                logger.error('Axe error:', { error });
+                return null;
+              }
+            },
+            {
+              rules: axeRulesConfig,
+              tags: request.tags,
+            }
+          ),
+          new Promise((_, reject) => {
+            controller.signal.addEventListener('abort', () => {
+              reject(new Error('Axe evaluation timeout'));
+            });
+          }),
+        ]);
+
+        const customRuleResults: CustomRuleResult[] = [];
+
+        if (
+          customRules.axeRules.length > 0 ||
+          customRules.playwrightTests.length > 0
+        ) {
+          try {
+            if (customRules.axeRules.length > 0) {
+              const axe = await page.evaluate(() => {
+                const windowWithAxe = window as unknown as WindowWithAxe;
+                return windowWithAxe.axe;
+              });
+
+              if (axe) {
+                const axeRuleResults = await this.customRulesRunner.runAxeRules(
+                  customRules.axeRules,
+                  page,
+                  axe
+                );
+                customRuleResults.push(...axeRuleResults);
+              }
+            }
+
+            if (customRules.playwrightTests.length > 0) {
+              let testsToRun = customRules.playwrightTests;
+
+              if (
+                request.customTests !== undefined &&
+                request.customTests.length > 0
+              ) {
+                testsToRun = customRules.playwrightTests.filter((test) =>
+                  request.customTests!.includes(test.id)
+                );
+              }
+
+              if (testsToRun.length > 0) {
+                const playwrightContext = {
+                  page,
+                  url: request.url,
+                  browser: this.browser,
+                  timeout: request.timeout,
+                  enableAI: request.enableAI,
+                  aiApiKey: request.aiApiKey,
+                  model: request.model,
+                  storageService: this.storageService,
+                  cacheService: this.cacheService,
+                };
+
+                const playwrightResults =
+                  await this.customRulesRunner.runPlaywrightTests(
+                    testsToRun,
+                    playwrightContext
+                  );
+                customRuleResults.push(...playwrightResults);
+              }
+            }
+          } catch (error) {
+            logger.error('Error running custom rules', {
+              error: error instanceof Error ? error.message : String(error),
+              stack: error instanceof Error ? error.stack : undefined,
+            });
+          }
+        }
+
         let result: AccessibilityResult;
 
         if (axeResults && axeResults.violations) {
-          const score = this.calculateScore(axeResults.violations);
+          const normalizedCustom =
+            this.customRulesRunner.normalizeResults(customRuleResults);
+
+          const allViolations: AccessibilityViolation[] = [
+            ...axeResults.violations,
+            ...normalizedCustom.violations.map((v) => ({
+              id: v.id,
+              impact: v.severity,
+              description: v.description,
+              help: v.description,
+              helpUrl: '',
+              tags: ['custom'],
+              nodes: v.nodes || [],
+            })),
+          ];
+
+          const score = this.calculateScore(allViolations);
 
           result = {
             url: request.url,
             score,
-            violations: axeResults.violations,
+            violations: allViolations,
             passes: axeResults.passes || [],
             incomplete: axeResults.incomplete || [],
             inapplicable: axeResults.inapplicable || [],
             screenshot: screenshotUrl,
             timestamp: new Date(),
+            customRules: customRuleResults,
           };
         } else {
           result = this.getMockResult(request, screenshotUrl);
+          result.customRules = customRuleResults;
+
+          if (customRuleResults.length > 0) {
+            const normalizedCustom =
+              this.customRulesRunner.normalizeResults(customRuleResults);
+            if (normalizedCustom.violations.length > 0) {
+              result.violations = [
+                ...result.violations,
+                ...normalizedCustom.violations.map((v) => ({
+                  id: v.id,
+                  impact: v.severity,
+                  description: v.description,
+                  help: v.description,
+                  helpUrl: '',
+                  tags: ['custom'],
+                  nodes: v.nodes || [],
+                })),
+              ];
+              result.score = this.calculateScore(result.violations);
+            }
+          }
         }
 
         try {
@@ -234,7 +422,11 @@ export class AccessibilityService {
       }
     } catch (error) {
       clearTimeout(timeoutId);
-      logger.error('Test accessibility error:', { error });
+      logger.error('Test accessibility error:', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        url: request.url,
+      });
       return this.getMockResult(request);
     }
   }

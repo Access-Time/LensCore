@@ -158,17 +158,8 @@
       </div>
       {{/if}}
 
-      <!-- Violations -->
-      <div class="card">
-        <h2 class="section-title">Violations</h2>
-        <div>{{{testViolationsSection violations}}}</div>
-      </div>
-
-      <!-- Passed Checks -->
-      <div class="card">
-        <h2 class="section-title">Passed Checks</h2>
-        <div>{{{testPassedChecksSection passes}}}</div>
-      </div>
+      <!-- Test Sections (Violations, Passed Checks, Responsive) -->
+      {{{testSections testData}}}
 
       <!-- Footer -->
       <div class="footer">

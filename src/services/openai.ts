@@ -4,7 +4,15 @@ import { OpenAIConfig, defaultOpenAIConfig } from '../config/openai';
 
 export interface OpenAIMessage {
   role: 'system' | 'user' | 'assistant';
-  content: string;
+  content:
+    | string
+    | Array<{
+        type: 'text' | 'image_url';
+        text?: string;
+        image_url?: {
+          url: string;
+        };
+      }>;
 }
 
 export interface OpenAIOptions {
@@ -14,6 +22,15 @@ export interface OpenAIOptions {
 
 export interface OpenAIResponse {
   content: string;
+  usage?: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  };
+}
+
+export interface OpenAIStructuredResponse<T> {
+  content: T;
   usage?: {
     promptTokens: number;
     completionTokens: number;
@@ -52,7 +69,8 @@ export class OpenAIService {
 
         const response = await this.client.chat.completions.create({
           model: config.model,
-          messages,
+          messages:
+            messages as OpenAI.Chat.Completions.ChatCompletionMessageParam[],
           max_tokens: config.maxTokens,
           temperature: config.temperature,
         });
@@ -147,6 +165,103 @@ export class OpenAIService {
 
   private sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  async generateStructuredResponse<T>(
+    messages: OpenAIMessage[],
+    jsonSchema: {
+      name: string;
+      schema: Record<string, unknown>;
+      strict?: boolean;
+    },
+    options?: Partial<OpenAIConfig>
+  ): Promise<OpenAIStructuredResponse<T>> {
+    const config = { ...this.config, ...options };
+
+    for (let attempt = 1; attempt <= config.retryAttempts; attempt++) {
+      try {
+        logger.info(
+          `OpenAI structured request attempt ${attempt}/${config.retryAttempts}`,
+          {
+            model: config.model,
+            messageCount: messages.length,
+            schemaName: jsonSchema.name,
+          }
+        );
+
+        const response = await this.client.chat.completions.create({
+          model: config.model,
+          messages:
+            messages as OpenAI.Chat.Completions.ChatCompletionMessageParam[],
+          max_tokens: config.maxTokens,
+          temperature: config.temperature,
+          response_format: {
+            type: 'json_schema',
+            json_schema: {
+              name: jsonSchema.name,
+              schema: jsonSchema.schema,
+              strict: jsonSchema.strict ?? true,
+            },
+          },
+        });
+
+        const content = response.choices[0]?.message?.content;
+        if (!content) {
+          throw new Error('No content received from OpenAI');
+        }
+
+        let parsed: T;
+        try {
+          parsed = JSON.parse(content) as T;
+        } catch (error) {
+          throw new Error(
+            `Failed to parse structured response: ${error instanceof Error ? error.message : 'Unknown error'}`
+          );
+        }
+
+        logger.info('OpenAI structured request successful', {
+          model: config.model,
+          usage: response.usage,
+        });
+
+        return {
+          content: parsed as T,
+          usage: response.usage
+            ? {
+                promptTokens: response.usage.prompt_tokens,
+                completionTokens: response.usage.completion_tokens,
+                totalTokens: response.usage.total_tokens,
+              }
+            : undefined,
+        };
+      } catch (error) {
+        const isLastAttempt = attempt === config.retryAttempts;
+
+        if (this.isRetryableError(error) && !isLastAttempt) {
+          const delay = config.retryDelay * Math.pow(2, attempt - 1);
+          logger.warn(
+            `OpenAI structured request failed, retrying in ${delay}ms`,
+            {
+              attempt,
+              error: error instanceof Error ? error.message : 'Unknown error',
+            }
+          );
+
+          await this.sleep(delay);
+          continue;
+        }
+
+        logger.error('OpenAI structured request failed', {
+          attempt,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          isRetryable: this.isRetryableError(error),
+        });
+
+        throw this.handleError(error);
+      }
+    }
+
+    throw new Error('Maximum retry attempts exceeded');
   }
 
   isEnabled(): boolean {

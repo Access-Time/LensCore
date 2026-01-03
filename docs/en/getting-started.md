@@ -7,7 +7,7 @@ Welcome to LensCore! This guide will help you get up and running with our access
 LensCore is an open-source platform that combines:
 
 - **Accessibility Testing** powered by axe-core
-- **Intelligent Web Crawling** with Puppeteer
+- **Intelligent Web Crawling** with Playwright
 - **AI-Enhanced Analysis** using OpenAI (optional)
 - **Comprehensive Reporting** in HTML and JSON formats
 
