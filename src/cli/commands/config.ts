@@ -1,8 +1,7 @@
 /* eslint-disable no-console */
 import chalk from 'chalk';
 import { promises as fs } from 'fs';
-import path from 'path';
-import os from 'os';
+import { PathConfig } from '../../config/paths';
 
 type ConfigValue = string | number | boolean | null | undefined;
 
@@ -80,7 +79,7 @@ function maskConfig(
 }
 
 export async function configCommand(options: ConfigOptions): Promise<void> {
-  const configPath = path.join(os.homedir(), '.lenscore', 'config.json');
+  const configPath = PathConfig.getConfigPath();
 
   try {
     let config: ConfigObject = {};

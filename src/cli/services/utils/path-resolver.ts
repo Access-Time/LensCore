@@ -1,29 +1,11 @@
 /* eslint-disable no-console */
 import fs from 'fs';
-import path from 'path';
-import os from 'os';
+import { dirname } from 'path';
+import { PathConfig } from '../../../config/paths';
 
 export class PathResolverService {
   static findTemplatesDirectory(): string {
-    const possiblePaths: string[] = [
-      path.join(process.cwd(), 'web', 'templates'),
-      path.join(__dirname, '../../../../web/templates'),
-      path.join(os.homedir(), '.lenscore', 'web', 'templates'),
-      path.join(process.cwd(), '.lenscore', 'web', 'templates'),
-    ];
-
-    // Try to add global install paths if available
-    try {
-      const packagePath = require.resolve('@accesstime/lenscore');
-      const packageDir = path.dirname(packagePath);
-      possiblePaths.unshift(
-        path.join(packageDir, 'web', 'templates'),
-        path.join(packageDir, '../web/templates')
-      );
-    } catch {
-      // Package not found, skip this path (development mode)
-    }
-
+    const possiblePaths = PathConfig.getWebTemplatesPaths();
     const foundPath = possiblePaths.find((p) => {
       try {
         return fs.existsSync(p) && fs.statSync(p).isDirectory();
@@ -41,24 +23,10 @@ export class PathResolverService {
   }
 
   static findOutputDirectory(): string {
-    const possiblePaths: string[] = [
-      path.join(os.homedir(), '.lenscore', 'web', 'output'),
-      path.join(process.cwd(), '.lenscore', 'web', 'output'),
-      path.join(process.cwd(), 'web', 'output'),
-    ];
-
-    // Try to add global install path if available
-    try {
-      const packagePath = require.resolve('@accesstime/lenscore');
-      const packageDir = path.dirname(packagePath);
-      possiblePaths.unshift(path.join(packageDir, 'web', 'output'));
-    } catch {
-      // Package not found, skip this path (development mode)
-    }
-
+    const possiblePaths = PathConfig.getWebOutputPaths();
     const foundPath = possiblePaths.find((p) => {
       try {
-        return fs.existsSync(path.dirname(p));
+        return fs.existsSync(dirname(p));
       } catch {
         return false;
       }
@@ -70,25 +38,7 @@ export class PathResolverService {
   }
 
   static findStylesDirectory(): string {
-    const possiblePaths: string[] = [
-      path.join(process.cwd(), 'web', 'styles'),
-      path.join(__dirname, '../../../../web/styles'),
-      path.join(os.homedir(), '.lenscore', 'web', 'styles'),
-      path.join(process.cwd(), '.lenscore', 'web', 'styles'),
-    ];
-
-    // Try to add global install paths if available
-    try {
-      const packagePath = require.resolve('@accesstime/lenscore');
-      const packageDir = path.dirname(packagePath);
-      possiblePaths.unshift(
-        path.join(packageDir, 'web', 'styles'),
-        path.join(packageDir, '../web/styles')
-      );
-    } catch {
-      // Package not found, skip this path (development mode)
-    }
-
+    const possiblePaths = PathConfig.getWebStylesPaths();
     const foundPath = possiblePaths.find((p) => {
       try {
         return fs.existsSync(p) && fs.statSync(p).isDirectory();

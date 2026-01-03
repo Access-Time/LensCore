@@ -1,0 +1,53 @@
+{
+  "version": "1.0.0",
+  "rules": [
+    {
+      "id": "button-has-accessible-name",
+      "type": "axe",
+      "name": "Button Has Accessible Name",
+      "description": "Ensures buttons have accessible names",
+      "enabled": true,
+      "source": "axe/button-has-accessible-name.json"
+    },
+    {
+      "id": "link-has-accessible-name",
+      "type": "axe",
+      "name": "Link Has Accessible Name",
+      "description": "Ensures links have accessible names",
+      "enabled": true,
+      "source": "axe/link-has-accessible-name.json"
+    },
+    {
+      "id": "heading-order",
+      "type": "axe",
+      "name": "Heading Order",
+      "description": "Ensures headings have a logical hierarchy",
+      "enabled": true,
+      "source": "axe/heading-order.json"
+    },
+    {
+      "id": "page-has-heading-one",
+      "type": "axe",
+      "name": "Page Has Heading One",
+      "description": "Ensures the page has a main heading",
+      "enabled": true,
+      "source": "axe/page-has-heading-one.json"
+    },
+    {
+      "type": "playwright",
+      "id": "form-label-association",
+      "name": "Form Label Association",
+      "description": "Ensures form elements have associated labels",
+      "enabled": true,
+      "source": "playwright/form-label-association.ts"
+    },
+    {
+      "type": "playwright",
+      "id": "responsive",
+      "name": "Responsive Design Test",
+      "description": "Tests responsive design by taking screenshots at different viewport sizes and analyzing them with AI",
+      "enabled": true,
+      "source": "playwright/responsive.ts"
+    }
+  ]
+}

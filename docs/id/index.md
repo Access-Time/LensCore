@@ -35,7 +35,7 @@ features:
 
   - icon: ⚡
     title: Performa Tinggi
-    details: Dibangun dengan TypeScript dan Puppeteer untuk testing yang cepat dan reliable dalam skala besar
+    details: Dibangun dengan TypeScript dan Playwright untuk testing yang cepat dan reliable dalam skala besar
 
   - icon: 🌐
     title: Multi-Bahasa

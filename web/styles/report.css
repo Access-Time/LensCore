@@ -848,7 +848,20 @@ details summary::-webkit-details-marker,
   display: none;
 }
 
+details summary::-webkit-details-marker,
+.code-collapsible summary::-webkit-details-marker {
+  display: none;
+}
+
 details summary::-moz-list-bullet,
 .code-collapsible summary::-moz-list-bullet {
   list-style: none;
+}
+
+.error-message {
+  padding: 1rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 0.5rem;
+  color: #dc2626;
 }

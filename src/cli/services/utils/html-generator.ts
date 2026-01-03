@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import Handlebars from 'handlebars';
 import marked from 'marked';
+import { getCustomRuleRenderer } from '../../../utils/custom-rule-renderer';
 
 export class HtmlGeneratorService {
   private static escapeHtml(text: string): string {
@@ -71,7 +72,14 @@ export class HtmlGeneratorService {
 
   private static markdownToHtml(text: string): string {
     if (!text) return '';
-    return marked.parse(text) as string;
+    try {
+      if (marked && typeof (marked as any).parse === 'function') {
+        return (marked as any).parse(text) as string;
+      }
+      return String(text);
+    } catch {
+      return String(text);
+    }
   }
 
   private static generateCollapsibleCode(
@@ -408,6 +416,37 @@ export class HtmlGeneratorService {
       .join('');
   }
 
+  static generateTestSections(testData: any): string {
+    let html = '';
+
+    // Violations section
+    html += `
+      <div class="card">
+        <h2 class="section-title">Violations</h2>
+        <div>${this.generateTestViolationsSection(testData.violations || [])}</div>
+      </div>
+    `;
+
+    // Passed Checks section
+    html += `
+      <div class="card">
+        <h2 class="section-title">Passed Checks</h2>
+        <div>${this.generateTestPassedChecksSection(testData.passes || [])}</div>
+      </div>
+    `;
+
+    if (testData.customRules) {
+      for (const rule of testData.customRules) {
+        const renderer = getCustomRuleRenderer(rule.id);
+        if (renderer) {
+          html += renderer.renderReportSection(rule);
+        }
+      }
+    }
+
+    return html;
+  }
+
   static extractScreenshotPath(screenshotUrl: string): string {
     if (!screenshotUrl) return '';
     if (
@@ -424,6 +463,10 @@ export class HtmlGeneratorService {
       const parts = screenshotUrl.split('screenshots/');
       const fileName = parts[parts.length - 1];
       if (fileName && fileName !== screenshotUrl) {
+        if (fileName.startsWith('responsive/')) {
+          const responsiveFileName = fileName.replace('responsive/', '');
+          return `/storage/screenshots/responsive/${responsiveFileName}`;
+        }
         return `/storage/screenshots/${fileName}`;
       }
     }
@@ -653,6 +696,17 @@ export class HtmlGeneratorService {
           </div>
         </div>
         `
+            : ''
+        }
+
+        ${
+          result.customRules
+            ? result.customRules
+                .map((rule: any) => {
+                  const renderer = getCustomRuleRenderer(rule.id);
+                  return renderer ? renderer.renderReportSection(rule) : '';
+                })
+                .join('')
             : ''
         }
       </div>
@@ -910,9 +964,140 @@ export class HtmlGeneratorService {
         `
             : ''
         }
+
+        ${
+          result.customRules
+            ? result.customRules
+                .map((rule: any) => {
+                  const renderer = getCustomRuleRenderer(rule.id);
+                  return renderer ? renderer.renderReportSection(rule) : '';
+                })
+                .join('')
+            : ''
+        }
       </div>
     `
       )
       .join('');
+  }
+
+  static generateResponsiveSection(responsive: any): string {
+    if (!responsive || responsive === null || responsive === undefined) {
+      return '';
+    }
+
+    if (responsive.error) {
+      return `
+        <div class="card" style="margin-top: 1rem;">
+          <h2 class="section-title">Responsive Test</h2>
+          <div class="error-message">
+            <p><strong>Error:</strong> ${this.escapeHtml(responsive.error)}</p>
+          </div>
+        </div>
+      `;
+    }
+
+    const statusClass = responsive.passed ? 'success' : 'error';
+    const statusIcon = responsive.passed ? '✅' : '❌';
+    const statusText = responsive.passed ? 'Passed' : 'Failed';
+
+    let screenshotsHtml = '';
+    if (responsive.screenshots && responsive.screenshots.length > 0) {
+      screenshotsHtml = responsive.screenshots
+        .map(
+          (screenshot: any) => `
+        <div class="responsive-screenshot-item">
+          <h4 class="responsive-viewport-title">${screenshot.viewport.name.toUpperCase()} (${screenshot.viewport.width}x${screenshot.viewport.height})</h4>
+          <div class="responsive-screenshot-wrapper">
+            <img
+              src="${this.extractScreenshotPath(screenshot.screenshotUrl)}"
+              alt="${screenshot.viewport.name} screenshot"
+              class="responsive-screenshot-image"
+              onclick="window.open('${this.extractScreenshotPath(screenshot.screenshotUrl)}', '_blank')"
+            />
+          </div>
+        </div>
+      `
+        )
+        .join('');
+    }
+
+    let warningsHtml = '';
+    const warnings = responsive.metadata?.warnings || responsive.warnings || [];
+    if (warnings && warnings.length > 0) {
+      warningsHtml = warnings
+        .map(
+          (warning: any) => `
+        <div class="responsive-warning">
+          <div class="responsive-warning-header">
+            <span class="responsive-warning-icon">⚠️</span>
+            <span class="responsive-warning-type">${this.escapeHtml(warning.type || 'Warning')}</span>
+            <span class="responsive-warning-viewport">${this.escapeHtml(warning.viewport || 'all')}</span>
+          </div>
+          <p class="responsive-warning-description">${this.escapeHtml(warning.description || '')}</p>
+        </div>
+      `
+        )
+        .join('');
+    }
+
+    let issuesHtml = '';
+    if (responsive.issues && responsive.issues.length > 0) {
+      issuesHtml = responsive.issues
+        .map((issue: any) => {
+          const issueMetadata = issue.metadata || {};
+          const issueType = issueMetadata.type || 'other';
+          const issueViewport = issueMetadata.viewport || 'desktop';
+          const issueElement = issueMetadata.element;
+          const issueRemediation = issueMetadata.remediation;
+          return `
+        <div class="responsive-issue">
+          <div class="responsive-issue-header">
+            <span class="responsive-issue-type">${this.escapeHtml(issueType)}</span>
+            <span class="responsive-issue-severity responsive-severity-${issue.severity}">${this.escapeHtml(issue.severity)}</span>
+            <span class="responsive-issue-viewport">${this.escapeHtml(issueViewport)}</span>
+          </div>
+          <p class="responsive-issue-description">${this.escapeHtml(issue.description)}</p>
+          ${issueElement ? `<p class="responsive-issue-element"><strong>Element:</strong> ${this.escapeHtml(issueElement)}</p>` : ''}
+          ${issueRemediation ? `<div class="responsive-issue-remediation"><strong>Remediation:</strong> ${this.markdownToHtml(issueRemediation)}</div>` : ''}
+        </div>
+      `;
+        })
+        .join('');
+    } else if (responsive.passed) {
+      issuesHtml = `
+        <div class="success">
+          <div class="success-icon">🎉</div>
+          <h3 class="success-title">No responsive issues found!</h3>
+          <p class="success-desc">The page looks good across all viewport sizes.</p>
+        </div>
+      `;
+    }
+
+    const hasContent = screenshotsHtml || warningsHtml || issuesHtml;
+
+    return `
+      <div class="card responsive-section" style="margin-top: 1.5rem;">
+        <h2 class="section-title">Responsive Test</h2>
+        <div class="responsive-status ${statusClass}">
+          <span class="responsive-status-icon">${statusIcon}</span>
+          <span class="responsive-status-text">${statusText}</span>
+        </div>
+        ${screenshotsHtml ? `<div class="responsive-screenshots">${screenshotsHtml}</div>` : ''}
+        ${warningsHtml ? `<div class="responsive-warnings"><h4 class="responsive-warnings-title">Warnings</h4>${warningsHtml}</div>` : ''}
+        ${issuesHtml ? `<div class="responsive-issues"><h4 class="responsive-issues-title">${responsive.issues && responsive.issues.length > 0 ? 'Issues' : 'Results'}</h4>${issuesHtml}</div>` : ''}
+        ${
+          !hasContent && responsive.passed
+            ? `
+          <div class="success">
+            <div class="success-icon">🎉</div>
+            <h3 class="success-title">No responsive issues found!</h3>
+            <p class="success-desc">The page looks good across all viewport sizes.</p>
+          </div>
+        `
+            : ''
+        }
+      </div>
+    `;
   }
 }

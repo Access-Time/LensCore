@@ -1,3 +1,6 @@
+import { AIProcessedIssue } from './ai';
+import { CustomRuleResult } from './custom-rules';
+
 export interface AccessibilityViolation {
   id: string;
   impact: 'minor' | 'moderate' | 'serious' | 'critical';
@@ -21,6 +24,7 @@ export interface AccessibilityResult {
   inapplicable: AccessibilityViolation[];
   screenshot?: string | undefined;
   timestamp: Date;
+  customRules?: CustomRuleResult[];
 }
 
 export interface AccessibilityRequest {
@@ -29,10 +33,32 @@ export interface AccessibilityRequest {
   includeScreenshot?: boolean;
   rules?: string[];
   tags?: string[];
+  customTests?: string[];
+  customRulesConfig?: string[];
+  customRulesPaths?: string[];
+  disableDefaultRules?: string[];
+  enableDefaultRules?: string[];
+  includeApprovedRules?: boolean;
+  enableAI?: boolean;
+  aiApiKey?: string;
+  model?: string;
 }
 
 export interface AccessibilityResponse {
   results: AccessibilityResult[];
   totalPages: number;
   testTime: number;
+}
+
+export interface AccessibilityTestResponse
+  extends Omit<AccessibilityResult, 'violations'> {
+  violations: AIProcessedIssue[];
+  aiEnabled?: boolean;
+  aiError?: string;
+  metadata?: {
+    enabled?: boolean;
+    error?: string;
+    processingTime?: number;
+  };
+  customRules?: CustomRuleResult[];
 }

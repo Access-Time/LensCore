@@ -29,6 +29,12 @@ export const accessibilityRequestSchema = z.object({
   rules: z.array(z.string()).optional(),
   tags: z.array(z.string()).optional(),
   skipCache: z.boolean().optional(),
+  customTests: z.array(z.string()).optional(),
+  customRulesConfig: z.array(z.string()).optional(),
+  customRulesPaths: z.array(z.string()).optional(),
+  disableDefaultRules: z.array(z.string()).optional(),
+  enableDefaultRules: z.array(z.string()).optional(),
+  includeApprovedRules: z.boolean().optional(),
 });
 
 export const combinedRequestSchema = z.object({

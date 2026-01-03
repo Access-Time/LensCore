@@ -44,8 +44,23 @@ export async function scanCommand(url: string, options: any) {
       url,
       enableAI: !!aiConfig,
       openaiKey: aiConfig?.apiKey,
+      model: aiConfig?.model,
       projectContext,
       skipCache: options.skipCache || false,
+      customTests: CommandUtils.parseCommaSeparated(options.customTests),
+      customRulesConfig: CommandUtils.parseCommaSeparated(
+        options.customRulesConfig
+      ),
+      customRulesPaths: CommandUtils.parseCommaSeparated(
+        options.customRulesPaths
+      ),
+      disableDefaultRules: CommandUtils.parseCommaSeparated(
+        options.disableDefaultRules
+      ),
+      enableDefaultRules: CommandUtils.parseCommaSeparated(
+        options.enableDefaultRules
+      ),
+      includeApprovedRules: options.approvedRules !== false,
       ...numericOptions,
     };
 
