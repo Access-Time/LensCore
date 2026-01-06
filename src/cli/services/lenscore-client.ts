@@ -75,10 +75,10 @@ export class LensCoreClient {
         },
         body: JSON.stringify({
           url: options.url,
-          max_depth: options.maxDepth || 2,
-          maxUrls: options.maxUrls || 10,
+          max_depth: options.maxDepth || 3,
+          maxUrls: options.maxUrls || 50,
           timeout: options.timeout || 10000,
-          concurrency: options.concurrency || 3,
+          concurrency: options.concurrency || 5,
           waitUntil: options.waitUntil || 'domcontentloaded',
           rules: options.rules || {},
           enableAI: options.enableAI,

@@ -13,10 +13,10 @@ export async function crawlCommand(url: string, options: any) {
     await CommandUtils.ensureLensCoreReady();
 
     const numericOptions = CommandUtils.parseNumericOptions(options, {
-      maxUrls: 10,
-      concurrency: 3,
+      maxUrls: 50,
+      concurrency: 5,
       timeout: 10000,
-      maxDepth: 2,
+      maxDepth: 3,
     });
 
     spinner.text = 'Starting website crawl...';

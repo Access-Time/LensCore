@@ -90,17 +90,21 @@ export class CrawlingService {
     const cacheKey = this.generateCacheKey(request);
 
     try {
-      const cachedResult = await this.cacheService.get({
-        ruleId: cacheKey,
-        projectContext: {},
-      });
+      if (!request.skipCache) {
+        const cachedResult = await this.cacheService.get({
+          ruleId: cacheKey,
+          projectContext: {},
+        });
 
-      if (cachedResult) {
-        logger.info('Cache hit for crawl result', { url: request.url });
-        return cachedResult.value as CrawlResponse;
+        if (cachedResult) {
+          logger.info('Cache hit for crawl result', { url: request.url });
+          return cachedResult.value as CrawlResponse;
+        }
+
+        logger.info('Cache miss for crawl result', { url: request.url });
+      } else {
+        logger.info('Skipping cache for crawl result', { url: request.url });
       }
-
-      logger.info('Cache miss for crawl result', { url: request.url });
     } catch (error) {
       logger.warn('Cache error during crawl', { error });
     }
@@ -208,7 +212,7 @@ export class CrawlingService {
               const links = this.extractLinks($, url, baseUrl, rules);
 
               for (const link of links) {
-                if (!visited.has(link) && nextItems.length < concurrency) {
+                if (!visited.has(link)) {
                   nextItems.push({ url: link, depth: depth + 1 });
                 }
               }
