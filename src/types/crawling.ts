@@ -23,6 +23,7 @@ export interface CrawlRequest {
   waitUntil?: 'domcontentloaded' | 'networkidle0' | 'networkidle2';
   headers?: Record<string, string>;
   rules?: CrawlRules;
+  skipCache?: boolean;
 }
 
 export interface CrawlResponse {
